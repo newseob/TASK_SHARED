@@ -158,7 +158,7 @@ function SortableBox({
             e.stopPropagation();
             setCollapsed((prev) => !prev); // 클릭 시 토글
           }}
-          className="mx-1 text-gray-500 cursor-pointer text-xl transition"
+          className="mx-1 text-gray-500 cursor-pointer text-sm transition"
           title="길게 누르면 드래그 / 클릭하면 접기/펼치기"
         >
           {collapsed ? "▷" : "▽"}
@@ -470,7 +470,7 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-2">
             {todoBoxes.map((b, i) => (
               <SortableBox
                 key={b.id}

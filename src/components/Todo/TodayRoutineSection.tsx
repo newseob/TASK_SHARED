@@ -166,7 +166,7 @@ export default function TodayRoutineSection() {
       <div className="flex justify-between items-center mb-2">
         <button
           onClick={() => setCollapsedRoutine((prev) => !prev)}
-          className="mx-1 text-gray-500 cursor-pointer text-xl transition"
+          className="mx-1 text-gray-500 cursor-pointer text-sm transition"
           title={collapsedRoutine ? "펼치기" : "숨기기"}
         >
           {collapsedRoutine ? "▷" : "▽"}

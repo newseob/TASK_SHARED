@@ -155,7 +155,7 @@ export default function TodoBoxSection() {
         <div className="flex justify-between items-center mb-2">
           <button
             onClick={() => setCollapsedDaily((prev) => !prev)}
-            className="mx-1 text-gray-500 cursor-pointer text-xl transition"
+            className="mx-1 text-gray-500 cursor-pointer text-sm transition"
             title={collapsedDaily ? "펼치기" : "숨기기"}
           >
             {collapsedDaily ? "▷" : "▽"}
