@@ -1,0 +1,37 @@
+# 📦 Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn.lock
+
+# 🏗️ Vite 빌드 결과물
+dist/
+.vite/
+
+# 📁 환경 설정 파일
+.env
+.env.local
+.env.*.local
+
+# 🧪 테스트 결과
+coverage/
+
+# ⚙️ IDE 설정 파일들
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# 🔄 캐시
+.cache/
+*.log
+*.tsbuildinfo
+
+# 🐳 도커나 Codesandbox 관련
+.devcontainer/
+.codesandbox/
+
+# 📦 Firebase 키 등 민감 정보 (예: firebase_key.json)
+firebase_key.json
