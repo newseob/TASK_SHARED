@@ -40,12 +40,12 @@ export default function KyunginTab() {
   }, []);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-screen h-screen">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="경인 메모를 입력하세요..."
-        className="w-full h-full p-0 m-0 border-none resize-none outline-none text-base leading-relaxed whitespace-pre-wrap bg-white box-border overflow-y-auto"
+        className="w-full h-full p-4 border-none resize-none outline-none text-base leading-relaxed whitespace-pre-wrap bg-white box-border overflow-y-scroll"
       />
     </div>
   );
