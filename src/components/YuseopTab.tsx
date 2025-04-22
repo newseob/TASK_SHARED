@@ -40,12 +40,12 @@ export default function YuseopTab() {
   }, []);
 
   return (
-    <div className="w-screen h-screen">
+    <div className="w-full h-full">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="유섭 메모를 입력하세요..."
-        className="w-full h-full p-4 border-none resize-none outline-none text-base leading-relaxed whitespace-pre-wrap bg-white box-border overflow-y-scroll"
+        className="w-full h-full p-0 m-0 border-none resize-none outline-none text-base leading-relaxed whitespace-pre-wrap bg-white box-border"
       />
     </div>
   );
