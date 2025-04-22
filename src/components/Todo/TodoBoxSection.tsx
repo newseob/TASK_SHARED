@@ -138,7 +138,7 @@ function SortableBox({
       className="border p-2 rounded shadow bg-white w-full transition-opacity"
     >
       {/* 제목 + 핸들러 */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex items-center gap-1 mb-2">
         <button
           {...attributes}
           {...listeners} // ① DnD Kit 리스너 흘려주기
@@ -165,7 +165,7 @@ function SortableBox({
         </button>
 
         <input
-          className="flex-1 font-semibold bg-transparent outline-none truncate"
+          className="flex-1 min-w-0 font-semibold bg-transparent outline-none truncate"
           value={box.title}
           onChange={(e) => onChangeTitle(box.id, e.target.value)}
         />
