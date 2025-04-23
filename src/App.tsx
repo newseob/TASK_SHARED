@@ -20,7 +20,7 @@ function App() {
         {activeTab === "유섭" && <YuseopTab />}
       </div>
       {/* 하단 탭 메뉴 */}
-      <div className="fixed bottom-0 left-0 right-0 h-8 bg-white border-t shadow-md flex z-20">
+      <div className="fixed bottom-0 left-0 right-0 h-10 bg-white border-t shadow-md flex z-20">
         {tabs.map((tab) => (
           <button
             key={tab}
