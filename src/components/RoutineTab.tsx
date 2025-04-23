@@ -33,10 +33,8 @@ export default function RoutineTab() {
 
   // 컬럼 정의 with SortKey for type safety
   const columns: { key: SortKey; label: string }[] = [
-    { key: "category", label: "구분" },
     { key: "name", label: "이름" },
     { key: "memo", label: "메모" },
-
     { key: "lastChecked", label: "최종확인" },
     { key: "lastReplaced", label: "최종교체" },
     { key: "cycle", label: "주기" },
@@ -129,13 +127,7 @@ export default function RoutineTab() {
               <thead>
                 <tr className="bg-gray-100 text-center text-xs">
                   <th
-                    className="border px-2 py-1 w-24 cursor-pointer hover:bg-gray-200"
-                    onClick={() => handleSort("category")}
-                  >
-                    구분
-                  </th>
-                  <th
-                    className="border px-2 py-1 w-64 cursor-pointer hover:bg-gray-200"
+                    className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
                     onClick={() => handleSort("name")}
                   >
                     이름
@@ -170,13 +162,6 @@ export default function RoutineTab() {
             <tbody>
                 {/* 맨 위에 입력 행 */}
                   <tr className="text-center bg-gray-50">
-                    <td className="border px-2 py-1">
-                      <input
-                        className="w-full p-1"
-                        value={newItem.category}
-                        onChange={(e) => setNewItem((prev) => ({ ...prev, category: e.target.value }))}
-                      />
-                    </td>
                     <td className="border px-2 py-1">
                       <input
                         className="w-full p-1"
@@ -228,13 +213,6 @@ export default function RoutineTab() {
                   </tr>
               {sortedItems.map((item) => (
                 <tr key={item.id} className="text-center">
-                  <td className="border px-2 py-1">
-                    <input
-                      className="w-full border-none bg-transparent p-1 focus:outline-none"
-                      value={item.category}
-                      onChange={(e) => handleInlineChange(item.id, "category", e.target.value)}
-                    />
-                  </td>
                   <td className="border px-2 py-1">
                     <input
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
