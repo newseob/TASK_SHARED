@@ -141,7 +141,7 @@ export default function RoutineTab() {
                     이름
                   </th>
                   <th
-                    className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                    className="border px-2 py-1 w-64 cursor-pointer hover:bg-gray-200"
                     onClick={() => handleSort("memo")}
                   >
                     메모
