@@ -131,14 +131,12 @@ export default function TodayRoutine() {
                     </span>
 
                   </div>
-                  <div className="flex justify-between items-start text-[10px] pl-7">
+                  <div className="flex flex-col text-xs] pl-7">
                     <span className="whitespace-pre-wrap break-words">
                       {item.memo}
                     </span>
                     {item.lastReplaced && (
-                      <span
-                        className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrapr"
-                      >
+                      <span className="flex items-center gap-1 self-end mt-1 whitespace-nowrap">
                         {item.lastReplaced}
                         <div className="relative w-5 h-5">
                           <input
