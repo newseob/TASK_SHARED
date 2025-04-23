@@ -13,7 +13,7 @@ function App() {
       {" "}
       {/* 아래 여백 확보 */}
       {/* 본문 영역 */}
-      <div style={{ height: "calc(100dvh - 64px)" }} className="mx-2 pb-20 overflow-auto">
+      <div style={{ height: "calc(100dvh - 50px)" }} className="mx-2 pb-20 overflow-auto">
         {activeTab === "할일" && <TodoTab />}
         {activeTab === "루틴" && <RoutineTab />}
         {activeTab === "경인" && <KyunginTab />}

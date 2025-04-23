@@ -74,7 +74,7 @@ export default function TodayRoutine() {
 
       {/* 항목 리스트 */}
       {showList && (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
           {sortedItems
             .filter((item) => item.remaining >= -3) // ✅ 필터 추가
             .map((item) => {
