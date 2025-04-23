@@ -13,7 +13,7 @@ function App() {
       {" "}
       {/* 아래 여백 확보 */}
       {/* 본문 영역 */}
-      <div className="mx-2 h-[calc(100vh-120px)]">
+      <div className="mx-2 h-[calc(100vh-120px)] pb-20">
         {activeTab === "할일" && <TodoTab />}
         {activeTab === "루틴" && <RoutineTab />}
         {activeTab === "경인" && <KyunginTab />}
