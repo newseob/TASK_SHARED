@@ -118,7 +118,7 @@ export default function TodayRoutine() {
                         <input
                           type="date"
                           className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => handleInlineDateChange(item.id, "lastReplaced", e.target.value)}
+                          onChange={(e) => handleInlineDateChange(item.id, "lastChecked", e.target.value)}
                         />
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
