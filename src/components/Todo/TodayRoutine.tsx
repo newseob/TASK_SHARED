@@ -80,11 +80,9 @@ export default function TodayRoutine() {
             .map((item) => {
               // ✅ 조건별 스타일 클래스 분기
               const liClass =
-                item.remaining > 0
+                item.remaining >= 0
                   ? "bg-red-50 text-red-600 border-red-400"
-                  : item.remaining === 0
-                    ? "bg-red-50 text-red-600 border-red-400"
-                    : "text-gray-400 border-gray-300";
+                  : "text-gray-400 border-gray-300";
 
               const circleBorderClass =
                 item.remaining > 0 ? "border-red-400" : "border-gray-300";
