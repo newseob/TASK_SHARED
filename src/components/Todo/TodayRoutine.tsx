@@ -85,7 +85,7 @@ export default function TodayRoutine() {
                   : "text-gray-400 border-gray-300";
 
               const circleBorderClass =
-                item.remaining > 0 ? "border-red-400" : "border-gray-300";
+                item.remaining >= 0 ? "border-red-400" : "border-gray-300";
 
               return (
                 <li
