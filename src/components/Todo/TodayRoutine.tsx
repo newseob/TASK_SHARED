@@ -131,7 +131,7 @@ export default function TodayRoutine() {
                     </span>
 
                   </div>
-                  <div className="flex justify-between items-start text-xs pl-7">
+                  <div className="flex justify-between items-start text-[10px] pl-7">
                     <span className="whitespace-pre-wrap break-words">
                       {item.memo}
                     </span>
