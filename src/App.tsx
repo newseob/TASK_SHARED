@@ -20,16 +20,15 @@ function App() {
         {activeTab === "유섭" && <YuseopTab />}
       </div>
       {/* 하단 탭 메뉴 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md flex">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md flex z-20 h-16">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-1 font-semibold transition-all duration-200 ${
-              activeTab === tab
+            className={`flex-1 py-1 font-semibold transition-all duration-200 ${activeTab === tab
                 ? "bg-white text-gray-700"
                 : "bg-gray-100 text-gray-700"
-            }`}
+              }`}
           >
             {tab}
           </button>
