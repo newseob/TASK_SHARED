@@ -56,20 +56,27 @@ export default function SortableItem({
 
   const baseBg =
     item.status === "blue"
-      ? "bg-blue-100 text-blue-800"
+      ? "bg-blue-50 text-blue-800"
       : item.status === "red"
-      ? "bg-red-100 text-red-800"
+      ? "bg-red-50 text-red-800"
       : "bg-white text-black";
 
   const textColorClass = isSelected
-    ? "text-[#66A3FF]"
+    ? "text-blue-600"
     : isLowCount
-    ? "text-[#CC6666]"
+    ? "text-red-600"
     : "text-gray-500";
+
+  const borderColorClass =
+  item.status === "blue"
+    ? "border-blue-400"
+    : item.status === "red"
+    ? "border-red-400"
+    : "border-gray-300";
 
   const handleToggleStatus = () => {
     const nextStatus =
-      item.status === "none" ? "blue" : item.status === "blue" ? "red" : "none";
+      item.status === "none" ? "red" : item.status === "red" ? "blue" : "none";
 
     onChangeItem(boxId, item.id, nextStatus, "status");
   };
@@ -79,7 +86,7 @@ export default function SortableItem({
       {...attributes}
       ref={setNodeRef}
       style={style}
-      className={`p-1 mb-1 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg}`}
+      className={`p-1 mb-1 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg} ${borderColorClass}`}
     >
       {/* ✅ 왼쪽 체크 버튼 */}
       <button
@@ -93,7 +100,7 @@ export default function SortableItem({
           item.status === "blue"
             ? "bg-blue-500 text-white border-blue-500"
             : item.status === "red"
-            ? "bg-red-500 text-white border-red-500"
+            ? "bg-white text-white border-red-400"
             : "bg-white text-gray-400 border-gray-400"
         }`}
       ></button>

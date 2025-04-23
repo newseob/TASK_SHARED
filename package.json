@@ -14,9 +14,11 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@types/sweetalert": "^2.0.4",
+    "date-fns": "^4.1.0",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.2.0",
     "react": "^19.0.0",
+    "react-datepicker": "^8.3.0",
     "react-dom": "^19.0.0",
     "sweetalert2": "^11.19.1",
     "uuid": "11.1.0"
@@ -24,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^22.14.1",
     "@types/react": "^19.0.0",
+    "@types/react-datepicker": "^6.2.0",
     "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",

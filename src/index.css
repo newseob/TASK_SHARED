@@ -2,14 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 크롬/사파리/오페라 */
-*::-webkit-scrollbar {
+/* 기본: 스크롤바 숨김 처리 */
+*:not(.show-scrollbar)::-webkit-scrollbar {
   display: none;
 }
 
-/* IE, 엣지 */
-* {
-  -ms-overflow-style: none;
-  /* 파이어폭스 */
-  scrollbar-width: none;
+*:not(.show-scrollbar) {
+  -ms-overflow-style: none; /* IE, Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+/* 예외: show-scrollbar 클래스에는 스크롤바 표시 */
+.show-scrollbar::-webkit-scrollbar {
+  display: initial;
+}
+
+.show-scrollbar {
+  -ms-overflow-style: auto;
+  scrollbar-width: auto;
 }

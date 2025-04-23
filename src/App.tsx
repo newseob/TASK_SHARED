@@ -9,7 +9,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("할일");
 
   return (
-    <div className="min-h-screen bg-transparent pt-4 pb-16 font-sans">
+    <div className="min-h-screen bg-transparent pt-4 pb-16 font-sans ">
       {" "}
       {/* 아래 여백 확보 */}
       {/* 본문 영역 */}
