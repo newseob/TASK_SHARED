@@ -55,27 +55,31 @@ export default function SortableItem({
   };
 
   const baseBg =
-    item.status === "blue"
-      ? "bg-blue-50 text-blue-800"
-      : item.status === "red"
-        ? "bg-red-50 text-red-800"
-        : "bg-white text-black";
-
-  const textColorClass =
-    item.status === "blue"
-      ? "text-blue-600"
-      : item.status === "red"
-        ? "text-red-600"
-        : isLowCount
-          ? "text-red-600"
-          : "text-gray-500";
+    isLowCount
+      ? "bg-red-50 text-red-800"
+      : item.status === "blue"
+        ? "bg-blue-50 text-blue-800"
+        : item.status === "red"
+          ? "bg-red-50 text-red-800"
+          : "bg-white text-black";
 
   const borderColorClass =
-    item.status === "blue"
-      ? "border-blue-400"
-      : item.status === "red"
-        ? "border-red-400"
-        : "border-gray-300";
+    isLowCount
+      ? "border-red-300"
+      : item.status === "blue"
+        ? "border-blue-400"
+        : item.status === "red"
+          ? "border-red-400"
+          : "border-gray-300";
+
+  const textColorClass =
+    isLowCount
+      ? "text-red-600"
+      : item.status === "blue"
+        ? "text-blue-600"
+        : item.status === "red"
+          ? "text-red-600"
+          : "text-gray-500";
 
   const handleToggleStatus = () => {
     const nextStatus =
@@ -99,11 +103,13 @@ export default function SortableItem({
           onToggle(boxId, item.id); // ① 선택 토글
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
-        className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs shrink-0 transition-colors ${item.status === "blue"
-            ? "bg-blue-500 text-white border-blue-500"
-            : item.status === "red"
-              ? "bg-white text-white border-red-400"
-              : "bg-white text-gray-400 border-gray-400"
+        className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs shrink-0 transition-colors ${isLowCount
+            ? "bg-white text-red-400 border-red-400"
+            : item.status === "blue"
+              ? "bg-blue-500 text-white border-blue-500"
+              : item.status === "red"
+                ? "bg-white text-white border-red-400"
+                : "bg-white text-gray-400 border-gray-400"
           }`}
       ></button>
 
