@@ -83,7 +83,7 @@ export default function TodayRoutine() {
                 item.remaining > 0
                   ? "bg-red-50 text-red-600 border-red-400"
                   : item.remaining === 0
-                    ? "text-black border-gray-300"
+                    ? "bg-red-50 text-red-600 border-red-400"
                     : "text-gray-400 border-gray-300";
 
               const circleBorderClass =
