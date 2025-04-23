@@ -136,7 +136,7 @@ export default function TodayRoutine() {
                       {item.memo}
                     </span>
                     {item.lastReplaced && (
-                      <span className="flex items-center gap-1 self-end mt-1 whitespace-nowrap">
+                      <span className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap">
                         {item.lastReplaced}
                         <div className="relative w-5 h-5">
                           <input
