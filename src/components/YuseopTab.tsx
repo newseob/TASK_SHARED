@@ -29,7 +29,7 @@ export default function YuseopTab() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       saveMemo();
-    }, 1000);
+    }, 500);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };

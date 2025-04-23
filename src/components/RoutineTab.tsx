@@ -115,45 +115,66 @@ export default function RoutineTab() {
   return (
     <div className="p-6 space-y-6">
       {/* 입력 폼 */}
-      <div className="border rounded-lg p-4 bg-gray-50">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        {/* 구분 */}
+        <div className="flex items-center space-x-2">
+          <label className="w-20 text-right shrink-0">구분</label>
           <input
             value={newItem.category}
             onChange={(e) => handleChange("category", e.target.value)}
-            placeholder="구분"
             className="border p-2 rounded w-full"
           />
+        </div>
+
+        {/* 이름 */}
+        <div className="flex items-center space-x-2">
+          <label className="w-20 text-right shrink-0">이름</label>
           <input
             value={newItem.name}
             onChange={(e) => handleChange("name", e.target.value)}
-            placeholder="이름"
             className="border p-2 rounded w-full"
           />
+        </div>
+
+        {/* 최종확인 */}
+        <div className="flex items-center space-x-2">
+          <label className="w-20 text-right shrink-0">최종확인</label>
           <input
             type="date"
             value={newItem.lastChecked}
             onChange={(e) => handleChange("lastChecked", e.target.value)}
-            placeholder="최종확인"
             className="border p-2 rounded w-full"
           />
+        </div>
+
+        {/* 최종교체 */}
+        <div className="flex items-center space-x-2">
+          <label className="w-20 text-right shrink-0">최종교체</label>
           <input
             type="date"
             value={newItem.lastReplaced}
             onChange={(e) => handleChange("lastReplaced", e.target.value)}
-            placeholder="최종교체"
             className="border p-2 rounded w-full"
           />
+        </div>
+
+        {/* 주기 */}
+        <div className="flex items-center space-x-2">
+          <label className="w-20 text-right shrink-0">주기</label>
           <input
             type="number"
             value={newItem.cycle}
             onChange={(e) => handleChange("cycle", e.target.value)}
-            placeholder="주기"
             className="border p-2 rounded w-full"
           />
+        </div>
+
+        {/* 메모 */}
+        <div className="flex items-center space-x-2">
+          <label className="w-20 text-right shrink-0">메모</label>
           <input
             value={newItem.memo}
             onChange={(e) => handleChange("memo", e.target.value)}
-            placeholder="메모"
             className="border p-2 rounded w-full"
           />
         </div>

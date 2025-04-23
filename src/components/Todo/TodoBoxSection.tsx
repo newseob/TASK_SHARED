@@ -158,20 +158,20 @@ function SortableBox({
             e.stopPropagation();
             setCollapsed((prev) => !prev); // 클릭 시 토글
           }}
-          className="mx-1 text-gray-500 cursor-pointer text-sm transition"
+          className="mx-1 text-gray-300 cursor-pointer text-sm transition"
           title="길게 누르면 드래그 / 클릭하면 접기/펼치기"
         >
           {collapsed ? "▷" : "▽"}
         </button>
 
         <input
-          className="flex-1 min-w-0 font-semibold bg-transparent outline-none truncate"
+          className="flex-1 min-w-0 text-blue-400 bg-transparent outline-none truncate text-xs"
           value={box.title}
           onChange={(e) => onChangeTitle(box.id, e.target.value)}
         />
         <button
           onClick={() => onRemoveItem(box.id, "__box__")}
-          className="ml-2 px-2 mr-1 text-gray rounded hover:bg-gray-200 transition text-sm shrink-0"
+          className="ml-2 px-2 mr-1 text-gray-300 rounded hover:bg-gray-200 transition text-sm shrink-0"
           title="소주제 삭제"
         >
           X
