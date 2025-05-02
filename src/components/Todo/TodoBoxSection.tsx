@@ -315,7 +315,7 @@ export default function TodoBoxSection() {
   todoBoxes.forEach((box) => {
     if (box.mode !== "default") return;
     box.items.forEach((item) => {
-      if (item.status === "red") {
+      if (item.status === "red" || item.status === "blue") {
         importantItems.push({ boxId: box.id, item });
       }
     });
@@ -553,33 +553,33 @@ export default function TodoBoxSection() {
       style={{ touchAction: isDragging ? "none" : "auto" }}
     >
 
-          {/* 여기!! DndContext 전에 중요할 일 박스를 삽입 */}
-    {importantItems.length > 0 && (
-      <div className="mb-4 p-2 border rounded bg-red-50 shadow-inner">
-        <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요할 일</h2>
-        <ul className="space-y-1">
-          {importantItems.map(({ boxId, item }) => (
-            <SortableItem
-              key={`important-${item.id}`}
-              item={item}
-              boxId={boxId}
-              boxMode="default"
-              isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
-              isLowCount={false}
-              onToggle={toggleItemSelection}
-              onChangeItem={changeItem}
-              onRemoveItem={removeItem}
-              editingItemId={null}
-              setEditingItemId={() => {}}
-              editingCountId={null}
-              setEditingCountId={() => {}}
-              editingUnitId={null}
-              setEditingUnitId={() => {}}
-            />
-          ))}
-        </ul>
-      </div>
-    )}
+      {/* 여기!! DndContext 전에 중요할 일 박스를 삽입 */}
+      {importantItems.length > 0 && (
+        <div className="mb-4 p-2 border rounded bg-red-50 shadow-inner">
+          <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요할 일</h2>
+          <ul className="space-y-1">
+            {importantItems.map(({ boxId, item }) => (
+              <SortableItem
+                key={`important-${item.id}`}
+                item={item}
+                boxId={boxId}
+                boxMode="default"
+                isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                isLowCount={false}
+                onToggle={toggleItemSelection}
+                onChangeItem={changeItem}
+                onRemoveItem={removeItem}
+                editingItemId={null}
+                setEditingItemId={() => { }}
+                editingCountId={null}
+                setEditingCountId={() => { }}
+                editingUnitId={null}
+                setEditingUnitId={() => { }}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
