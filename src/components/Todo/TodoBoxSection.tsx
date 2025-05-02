@@ -308,17 +308,24 @@ export default function TodoBoxSection() {
   const [isUndoing, setIsUndoing] = useState(false);
   const historyRef = useRef<TodoBox[][]>([]);
   const historyIndexRef = useRef<number>(-1);
-
-
-  const importantItems: { boxId: string; item: TodoItem }[] = [];
+  const importantTodos: { boxId: string; item: TodoItem }[] = [];
+  const importantShopping: { boxId: string; item: TodoItem }[] = [];
 
   todoBoxes.forEach((box) => {
-    if (box.mode !== "default") return;
-    box.items.forEach((item) => {
-      if (item.status === "red" || item.status === "blue") {
-        importantItems.push({ boxId: box.id, item });
-      }
-    });
+    if (box.mode === "default") {
+      box.items.forEach((item) => {
+        if (item.status === "red" || item.status === "blue") {
+          importantTodos.push({ boxId: box.id, item });
+        }
+      });
+    } else if (box.mode === "shopping") {
+      box.items.forEach((item) => {
+        const count = Number(item.count || 0);
+        if (count <= 3) {
+          importantShopping.push({ boxId: box.id, item });
+        }
+      });
+    }
   });
 
   useEffect(() => {
@@ -554,30 +561,63 @@ export default function TodoBoxSection() {
     >
 
       {/* 여기!! DndContext 전에 중요할 일 박스를 삽입 */}
-      {importantItems.length > 0 && (
-        <div className="mb-4 p-2 border rounded bg-red-50 shadow-inner">
-          <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요할 일</h2>
-          <ul className="space-y-1">
-            {importantItems.map(({ boxId, item }) => (
-              <SortableItem
-                key={`important-${item.id}`}
-                item={item}
-                boxId={boxId}
-                boxMode="default"
-                isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
-                isLowCount={false}
-                onToggle={toggleItemSelection}
-                onChangeItem={changeItem}
-                onRemoveItem={removeItem}
-                editingItemId={null}
-                setEditingItemId={() => { }}
-                editingCountId={null}
-                setEditingCountId={() => { }}
-                editingUnitId={null}
-                setEditingUnitId={() => { }}
-              />
-            ))}
-          </ul>
+      {(importantTodos.length > 0 || importantShopping.length > 0) && (
+        <div className="mb-4 p-2 border rounded bg-gray-200 ">
+          <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요 항목</h2>
+
+          {importantTodos.length > 0 && (
+            <div className="mb-3">
+              <h3 className="text-xs font-semibold mb-1">할일</h3>
+              <ul className="space-y-1">
+                {importantTodos.map(({ boxId, item }) => (
+                  <SortableItem
+                    key={`todo-${item.id}`}
+                    item={item}
+                    boxId={boxId}
+                    boxMode="default"
+                    isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                    isLowCount={false}
+                    onToggle={toggleItemSelection}
+                    onChangeItem={changeItem}
+                    onRemoveItem={removeItem}
+                    editingItemId={null}
+                    setEditingItemId={() => { }}
+                    editingCountId={null}
+                    setEditingCountId={() => { }}
+                    editingUnitId={null}
+                    setEditingUnitId={() => { }}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {importantShopping.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold mb-1">장보기</h3>
+              <ul className="space-y-1">
+                {importantShopping.map(({ boxId, item }) => (
+                  <SortableItem
+                    key={`shopping-${item.id}`}
+                    item={item}
+                    boxId={boxId}
+                    boxMode="shopping"
+                    isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                    isLowCount={true}
+                    onToggle={toggleItemSelection}
+                    onChangeItem={changeItem}
+                    onRemoveItem={removeItem}
+                    editingItemId={null}
+                    setEditingItemId={() => { }}
+                    editingCountId={null}
+                    setEditingCountId={() => { }}
+                    editingUnitId={null}
+                    setEditingUnitId={() => { }}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
       <DndContext
