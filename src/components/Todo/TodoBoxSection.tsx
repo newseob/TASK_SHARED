@@ -359,7 +359,9 @@ export default function TodoBoxSection() {
   // Ctrl+Z 핸들링
   useEffect(() => {
     const handleUndo = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+      const key = e.key.toLowerCase(); // ← 소문자로 통일
+
+      if ((e.ctrlKey || e.metaKey) && key === "z" && !e.shiftKey) {
         if (historyIndexRef.current > 0) {
           const newIndex = historyIndexRef.current - 1;
           setIsUndoing(true);
@@ -382,7 +384,7 @@ export default function TodoBoxSection() {
     }
   }, [isUndoing]);
 
-   const addTodoBox = (mode: "default" | "shopping") => {
+  const addTodoBox = (mode: "default" | "shopping") => {
     const newBox: TodoBox = {
       id: uuidv4(),
       title: mode === "shopping" ? "장보기" : "제목 없음",
