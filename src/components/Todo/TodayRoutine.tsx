@@ -20,7 +20,7 @@ export default function TodayRoutine() {
   const calculateDays = (lastChecked: string, cycle: number): number => {
     if (!lastChecked) return 0;
     const last = new Date(lastChecked);
-    const now = new Date();
+    const now = getToday6AM();
     const diffMs = now.getTime() - last.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     return diffDays - cycle; // 바뀐 계산: 초과일수
@@ -31,6 +31,16 @@ export default function TodayRoutine() {
     const snap = await getDoc(docRef);
     const data = snap.data()?.items as RoutineItem[] | undefined;
     if (data) setItems(data);
+  };
+
+  const getToday6AM = () => {
+    const now = new Date();
+    if (now.getHours() < 6) {
+      // 아직 오전 9시 전이면 어제를 기준으로 봄
+      now.setDate(now.getDate() - 1);
+    }
+    now.setHours(9, 0, 0, 0);
+    return now;
   };
 
   useEffect(() => {
@@ -74,7 +84,7 @@ export default function TodayRoutine() {
 
       {/* 항목 리스트 */}
       {showList && (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
           {sortedItems
             .filter((item) => item.remaining >= -3) // ✅ 필터 추가
             .map((item) => {
@@ -84,9 +94,6 @@ export default function TodayRoutine() {
                   ? "bg-red-50 text-red-800 border-red-400"
                   : "text-gray-400 border-gray-300";
 
-              const circleBorderClass =
-                item.remaining >= 0 ? "border-red-400" : "border-gray-300";
-
               return (
                 <li
                   key={item.id}
@@ -94,22 +101,19 @@ export default function TodayRoutine() {
                 >
                   <div className="flex justify-between items-center font-medium">
 
-                    <div className="flex items-center space-x-2">
-                      <button
-                        className={`w-5 h-5 rounded-full bg-white border ${circleBorderClass}`}
-                      ></button>
+                    <div className="flex items-center space-x-2 font-bold">
                       <span>{item.name}</span>
                     </div>
                     <span
                       className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrapr"
                     >
                       <span
-                        className="cursor-pointer hover:underline"
+                        className="font-light"
                       >
                         {item.remaining > 0
-                          ? `${item.remaining}일 지남`
+                          ? `D+${item.remaining}`
                           : item.remaining < 0
-                            ? `${Math.abs(item.remaining)}일 남음`
+                            ? `D-${Math.abs(item.remaining)}`
                             : "오늘"}
                       </span>
                       <div className="relative w-5 h-5">
@@ -131,7 +135,7 @@ export default function TodayRoutine() {
                     </span>
 
                   </div>
-                  <div className="flex flex-col text-[11px] pl-7">
+                  <div className="flex flex-col text-[11px] font-light">
                     <span className="whitespace-pre-wrap break-words">
                       {item.memo}
                     </span>
