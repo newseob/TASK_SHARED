@@ -15,6 +15,8 @@ interface RoutineItem {
 export default function TodayRoutine() {
   const [items, setItems] = useState<RoutineItem[]>([]);
   const [showList, setShowList] = useState(true);
+  const [history, setHistory] = useState<RoutineItem[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // 날짜 계산 함수
   const calculateDays = (lastChecked: string, cycle: number): number => {
@@ -30,7 +32,11 @@ export default function TodayRoutine() {
     const docRef = doc(db, "routineItems", "config");
     const snap = await getDoc(docRef);
     const data = snap.data()?.items as RoutineItem[] | undefined;
-    if (data) setItems(data);
+    if (data) {
+      setItems(data);
+      setHistory([data]);
+      setHistoryIndex(0);
+    };
   };
 
   const getToday6AM = () => {
@@ -46,7 +52,22 @@ export default function TodayRoutine() {
   useEffect(() => {
     loadData();
   }, []);
-
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          setItems(history[newIndex]);
+          setHistoryIndex(newIndex);
+        }
+      }
+    };
+  
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [historyIndex, history]);
+  
   const handleInlineDateChange = async (
     id: string,
     field: "lastChecked" | "lastReplaced",
@@ -55,10 +76,19 @@ export default function TodayRoutine() {
     const updated = items.map((item) =>
       item.id === id ? { ...item, [field]: value } : item
     );
-    setItems(updated);
+    updateItemsWithHistory(updated);
 
     const docRef = doc(db, "routineItems", "config");
     await setDoc(docRef, { items: updated });
+  };
+
+  const updateItemsWithHistory = (newItems: RoutineItem[]) => {
+    setItems(newItems);
+    setHistory((prev) => {
+      const newHistory = [...prev.slice(0, historyIndex + 1), newItems];
+      setHistoryIndex(newHistory.length - 1);
+      return newHistory;
+    });
   };
 
   const sortedItems = items

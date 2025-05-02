@@ -301,15 +301,42 @@ export default function TodoBoxSection() {
   const [selectedItemIds, setSelectedItemIds] = useState<{
     [key: string]: string[];
   }>({});
+  const defaultBox = [{ id: uuidv4(), title: "기본 박스", items: [], mode: "default" }];
+  const [history, setHistory] = useState<TodoBox[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isUndoing, setIsUndoing] = useState(false);
+  const historyRef = useRef<TodoBox[][]>([]);
+  const historyIndexRef = useRef<number>(-1);
+
+  useEffect(() => {
+    historyRef.current = history;
+    historyIndexRef.current = historyIndex;
+  }, [history, historyIndex]);
+
+  const updateTodoBoxesWithHistory = (newBoxes: TodoBox[]) => {
+    setTodoBoxes(newBoxes);
+
+    if (isUndoing) return; // 🔥 undo 중일 땐 history 누락
+
+    setHistory((prev) => {
+      const sliced = prev.slice(0, historyIndexRef.current + 1);
+      const newHistory = [...sliced, newBoxes];
+      setHistoryIndex(newHistory.length - 1);
+      return newHistory;
+    });
+  };
 
   // 1) Firestore에서 “처음 한 번만” 불러오기
   useEffect(() => {
     const unsubscribe = listenTodoBoxes((data) => {
-      setTodoBoxes(
-        data.length > 0
-          ? data
-          : [{ id: uuidv4(), title: "기본 박스", items: [], mode: "default" }]
-      );
+      const boxes = data.length > 0 ? data : defaultBox;
+
+      setTodoBoxes(boxes);
+
+      // 🚨 isLoaded가 false일 때만 초기 history를 설정
+      setHistory((prev) => (prev.length === 0 ? [boxes] : prev));
+      setHistoryIndex((prev) => (prev === -1 ? 0 : prev));
+
       setIsLoaded(true);
     });
     return () => unsubscribe();
@@ -317,91 +344,127 @@ export default function TodoBoxSection() {
 
   // 2) todoBoxes 변경 시 디바운스 저장
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || isUndoing) return;
+
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
       saveTodoBoxes(todoBoxes).catch(console.error);
     }, 1000);
+
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
     };
-  }, [todoBoxes, isLoaded]);
+  }, [todoBoxes, isLoaded, isUndoing]);
 
-  // Handlers: 상태만 set, 저장은 위 useEffect에서 처리
-  const addTodoBox = (mode: "default" | "shopping") => {
-    setTodoBoxes((prev) => [
-      ...prev,
-      {
-        id: uuidv4(),
-        title: mode === "shopping" ? "장보기" : "제목 없음",
-        items: [],
-        mode,
-      },
-    ]);
+  // Ctrl+Z 핸들링
+  useEffect(() => {
+    const handleUndo = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        if (historyIndexRef.current > 0) {
+          const newIndex = historyIndexRef.current - 1;
+          setIsUndoing(true);
+          setTodoBoxes(historyRef.current[newIndex]);
+          setHistoryIndex(newIndex);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleUndo);
+    return () => window.removeEventListener("keydown", handleUndo);
+  }, []);
+
+  useEffect(() => {
+    if (isUndoing) {
+      const timer = setTimeout(() => {
+        setIsUndoing(false);
+      }, 100); // Firestore 저장 useEffect보다 나중에 해제
+
+      return () => clearTimeout(timer);
+    }
+  }, [isUndoing]);
+
+   const addTodoBox = (mode: "default" | "shopping") => {
+    const newBox: TodoBox = {
+      id: uuidv4(),
+      title: mode === "shopping" ? "장보기" : "제목 없음",
+      items: [],
+      mode,
+    };
+
+    const updated = [...todoBoxes, newBox];
+    updateTodoBoxesWithHistory(updated);
   };
 
   const moveBoxDown = (id: string) => {
-    setTodoBoxes((prev) => {
-      const idx = prev.findIndex((b) => b.id === id);
-      if (idx < 0 || idx === prev.length - 1) return prev;
-      return arrayMove(prev, idx, idx + 1);
-    });
+    const idx = todoBoxes.findIndex((b) => b.id === id);
+    if (idx < 0 || idx === todoBoxes.length - 1) return;
+    const updated = arrayMove(todoBoxes, idx, idx + 1);
+    updateTodoBoxesWithHistory(updated);
   };
 
   const addTodoItem = (boxId: string, item: TodoItem) => {
-    setTodoBoxes((prev) =>
-      prev.map((b) =>
-        b.id === boxId ? { ...b, items: [...b.items, item] } : b
-      )
+    const updated = todoBoxes.map(b =>
+      b.id === boxId ? { ...b, items: [...b.items, item] } : b
     );
+    updateTodoBoxesWithHistory(updated);
   };
+
   const removeItem = (boxId: string, itemId: string) => {
     if (itemId === "__box__") {
       const confirmDelete = confirm("정말 이 소주제를 삭제할까요?");
       if (!confirmDelete) return;
 
-      setTodoBoxes((prev) => prev.filter((b) => b.id !== boxId));
+      const updated = todoBoxes.filter((b) => b.id !== boxId);
+      updateTodoBoxesWithHistory(updated);
       return;
     }
 
-    setTodoBoxes((prev) =>
-      prev.map((b) =>
-        b.id === boxId
-          ? { ...b, items: b.items.filter((i) => i.id !== itemId) }
-          : b
-      )
+    const updated = todoBoxes.map((b) =>
+      b.id === boxId
+        ? { ...b, items: b.items.filter((i) => i.id !== itemId) }
+        : b
     );
+    updateTodoBoxesWithHistory(updated);
   };
 
   const updateItemOrder = (boxId: string, newItems: TodoItem[]) => {
-    setTodoBoxes((prev) =>
-      prev.map((b) => (b.id === boxId ? { ...b, items: newItems } : b))
+    const updated = todoBoxes.map((b) =>
+      b.id === boxId ? { ...b, items: newItems } : b
     );
+    updateTodoBoxesWithHistory(updated);
   };
+
   const changeTitle = (id: string, value: string) => {
-    setTodoBoxes((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, title: value } : b))
+    const updated = todoBoxes.map((b) =>
+      b.id === id ? { ...b, title: value } : b
     );
+    updateTodoBoxesWithHistory(updated);
   };
+
   const changeItem = (
     boxId: string,
     itemId: string,
     value: string,
     field: "text" | "count" | "unit" | "status" = "text"
   ) => {
-    setTodoBoxes((prev) =>
-      prev.map((b) =>
-        b.id === boxId
-          ? {
-              ...b,
-              items: b.items.map((i) =>
-                i.id === itemId ? { ...i, [field]: value } : i
-              ),
-            }
-          : b
-      )
+    const updated = todoBoxes.map((b) =>
+      b.id === boxId
+        ? {
+          ...b,
+          items: b.items.map((i) =>
+            i.id === itemId ? { ...i, [field]: value } : i
+          ),
+        }
+        : b
     );
+    updateTodoBoxesWithHistory(updated);
   };
+
+  useEffect(() => {
+    if (isUndoing) {
+      const timeout = setTimeout(() => setIsUndoing(false), 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isUndoing]);
 
   // 외부 클릭·Esc 처리
   useEffect(() => {
@@ -450,7 +513,8 @@ export default function TodoBoxSection() {
     const oldIdx = todoBoxes.findIndex((b) => b.id === active.id);
     const newIdx = todoBoxes.findIndex((b) => b.id === over.id);
     if (oldIdx >= 0 && newIdx >= 0) {
-      setTodoBoxes((items) => arrayMove(items, oldIdx, newIdx));
+      const updated = arrayMove(todoBoxes, oldIdx, newIdx);
+      updateTodoBoxesWithHistory(updated);
     }
     setIsDragging(false);
     setActiveBox(null);
@@ -522,15 +586,15 @@ export default function TodoBoxSection() {
               box={activeBox}
               activeBox={activeBox}
               isDragging={false}
-              setActiveBox={() => {}}
-              onChangeTitle={() => {}}
-              onChangeItem={() => {}}
-              onAddItem={() => {}}
-              onRemoveItem={() => {}}
-              toggleItemSelection={() => {}}
-              onChangeItemOrder={() => {}}
+              setActiveBox={() => { }}
+              onChangeTitle={() => { }}
+              onChangeItem={() => { }}
+              onAddItem={() => { }}
+              onRemoveItem={() => { }}
+              toggleItemSelection={() => { }}
+              onChangeItemOrder={() => { }}
               selectedItemIds={selectedItemIds}
-              moveBoxDown={() => {}}
+              moveBoxDown={() => { }}
               isLastBox={false}
             />
           )}
