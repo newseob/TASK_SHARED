@@ -84,8 +84,9 @@ export default function KyunginTab() {
   }, [editor, isLoaded]);
 
   return (
-    <div className="w-full h-full p-4 box-border">
-      <div className="sticky top-0 z-10 bg-white py-2 mb-2 border-b">
+    <div className="w-full h-full flex flex-col">
+      {/* 상단 메뉴 고정 */}
+      <div className="sticky top-0 z-10 bg-white py-2 border-b">
         <div className="flex gap-4 items-center px-1">
           <button
             onClick={setBold}
@@ -121,10 +122,14 @@ export default function KyunginTab() {
         </div>
       </div>
 
-      <EditorContent
-        editor={editor}
-        className="min-h-[300px] tiptap focus:outline-none focus:ring-0 focus:border-transparent"
-      />
+      {/* 에디터 영역만 스크롤 */}
+      <div className="flex-1 overflow-auto">
+        <EditorContent
+          editor={editor}
+          className="tiptap px-4 py-2 focus:outline-none focus:ring-0 focus:border-transparent"
+          />
+      </div>
     </div>
   );
+
 }

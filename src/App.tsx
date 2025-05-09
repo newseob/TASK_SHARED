@@ -10,26 +10,25 @@ function App() {
   const [activeTab, setActiveTab] = useState("할일");
 
   return (
-    <div className="min-h-screen bg-transparent pt-4 pb-16 font-sans ">
-      {" "}
-      {/* 아래 여백 확보 */}
-      {/* 본문 영역 */}
-      <div style={{ height: "calc(100dvh - 50px)" }} className="mx-2 pb-20 overflow-auto">
+    <div className="h-screen flex flex-col">
+      {/* 본문 + 탭 위 영역 전체를 스크롤 가능한 영역으로 */}
+      <div className="flex-1 overflow-auto">
+        {/* 본문 탭들 */}
         {activeTab === "할일" && <TodoTab />}
         {activeTab === "루틴" && <RoutineTab />}
         {activeTab === "경인" && <KyunginTab />}
         {activeTab === "유섭" && <YuseopTab />}
       </div>
-      {/* 하단 탭 메뉴 */}
-      <div className="fixed bottom-0 left-0 right-0 h-10 bg-white border-t shadow-md flex z-20">
+
+      {/* 하단 탭 메뉴 고정 */}
+      <div className="h-10 bg-white border-t shadow-md flex z-20">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-1 font-semibold transition-all duration-200 ${activeTab === tab
-              ? "bg-white text-gray-700"
-              : "bg-gray-100 text-gray-700"
-              }`}
+            className={`flex-1 py-1 font-semibold transition-all duration-200 ${
+              activeTab === tab ? "bg-white text-gray-700" : "bg-gray-100 text-gray-700"
+            }`}
           >
             {tab}
           </button>
