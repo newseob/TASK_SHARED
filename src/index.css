@@ -21,3 +21,20 @@
   -ms-overflow-style: auto;
   scrollbar-width: auto;
 }
+
+
+.tiptap [style*="font-size"] {
+  font-size: inherit;
+}
+
+.tiptap [style*="font-size:14px"] { font-size: 14px; }
+.tiptap [style*="font-size:18px"] { font-size: 18px; }
+.tiptap [style*="font-size:24px"] { font-size: 24px; }
+.tiptap [style*="font-size:32px"] { font-size: 32px; }
+
+/* ProseMirror 포커스 스타일 제거 */
+.tiptap .ProseMirror:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: inherit !important;
+}
