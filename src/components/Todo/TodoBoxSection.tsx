@@ -562,64 +562,67 @@ export default function TodoBoxSection() {
 
       {/* 여기!! DndContext 전에 중요할 일 박스를 삽입 */}
       {(importantTodos.length > 0 || importantShopping.length > 0) && (
-        <div className="mb-4 p-2 border rounded bg-gray-200 ">
-          <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요 항목</h2>
-
-          {importantTodos.length > 0 && (
-            <div className="mb-3">
-              <h3 className="text-xs font-semibold mb-1">할일</h3>
-              <ul className="space-y-1">
-                {importantTodos.map(({ boxId, item }) => (
-                  <SortableItem
-                    key={`todo-${item.id}`}
-                    item={item}
-                    boxId={boxId}
-                    boxMode="default"
-                    isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
-                    isLowCount={false}
-                    onToggle={toggleItemSelection}
-                    onChangeItem={changeItem}
-                    onRemoveItem={removeItem}
-                    editingItemId={null}
-                    setEditingItemId={() => { }}
-                    editingCountId={null}
-                    setEditingCountId={() => { }}
-                    editingUnitId={null}
-                    setEditingUnitId={() => { }}
-                  />
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {importantShopping.length > 0 && (
-            <div>
-              <h3 className="text-xs font-semibold mb-1">장보기</h3>
-              <ul className="space-y-1">
-                {importantShopping.map(({ boxId, item }) => (
-                  <SortableItem
-                    key={`shopping-${item.id}`}
-                    item={item}
-                    boxId={boxId}
-                    boxMode="shopping"
-                    isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
-                    isLowCount={true}
-                    onToggle={toggleItemSelection}
-                    onChangeItem={changeItem}
-                    onRemoveItem={removeItem}
-                    editingItemId={null}
-                    setEditingItemId={() => { }}
-                    editingCountId={null}
-                    setEditingCountId={() => { }}
-                    editingUnitId={null}
-                    setEditingUnitId={() => { }}
-                  />
-                ))}
-              </ul>
-            </div>
-          )}
+  <div className="mb-4 p-2 border rounded bg-gray-200">
+    <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요 항목</h2>
+    <div className="flex gap-4">
+      {/* 할일 */}
+      {importantTodos.length > 0 && (
+        <div className="flex-1">
+          <h3 className="text-xs font-semibold mb-1">할일</h3>
+          <ul className="space-y-1">
+            {importantTodos.map(({ boxId, item }) => (
+              <SortableItem
+                key={`todo-${item.id}`}
+                item={item}
+                boxId={boxId}
+                boxMode="default"
+                isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                isLowCount={false}
+                onToggle={toggleItemSelection}
+                onChangeItem={changeItem}
+                onRemoveItem={removeItem}
+                editingItemId={null}
+                setEditingItemId={() => { }}
+                editingCountId={null}
+                setEditingCountId={() => { }}
+                editingUnitId={null}
+                setEditingUnitId={() => { }}
+              />
+            ))}
+          </ul>
         </div>
       )}
+
+      {/* 장보기 */}
+      {importantShopping.length > 0 && (
+        <div className="flex-1">
+          <h3 className="text-xs font-semibold mb-1">장보기</h3>
+          <ul className="space-y-1">
+            {importantShopping.map(({ boxId, item }) => (
+              <SortableItem
+                key={`shopping-${item.id}`}
+                item={item}
+                boxId={boxId}
+                boxMode="shopping"
+                isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                isLowCount={true}
+                onToggle={toggleItemSelection}
+                onChangeItem={changeItem}
+                onRemoveItem={removeItem}
+                editingItemId={null}
+                setEditingItemId={() => { }}
+                editingCountId={null}
+                setEditingCountId={() => { }}
+                editingUnitId={null}
+                setEditingUnitId={() => { }}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </div>
+)}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
