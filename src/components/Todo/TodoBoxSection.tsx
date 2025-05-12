@@ -19,7 +19,8 @@ import {
 } from "@dnd-kit/sortable";
 
 import SortableItem from "./SortableItem";
-import { saveTodoBoxes, listenTodoBoxes } from "../../saveDataToFirestore";
+import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
+
 
 
 interface TodoItem {
@@ -293,21 +294,16 @@ function SortableBox({
   );
 }
 export default function TodoBoxSection() {
-  const [todoBoxes, setTodoBoxes] = useState<TodoBox[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    items: todoBoxes,
+    updateWithHistory: updateTodoBoxesWithHistory,
+    selectedItemIds,
+    toggleItemSelection,
+  } = useFirestoreHistory<TodoBox>("sharedData", "main", []);
+
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeBox, setActiveBox] = useState<TodoBox | null>(null);
-  const [selectedItemIds, setSelectedItemIds] = useState<{
-    [key: string]: string[];
-  }>({});
-  const defaultBox = [{ id: uuidv4(), title: "기본 박스", items: [], mode: "default" }];
-  const [history, setHistory] = useState<TodoBox[][]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [isUndoing, setIsUndoing] = useState(false);
-  const historyRef = useRef<TodoBox[][]>([]);
-  const historyIndexRef = useRef<number>(-1);
   const importantTodos: { boxId: string; item: TodoItem }[] = [];
   const importantShopping: { boxId: string; item: TodoItem }[] = [];
 
@@ -328,82 +324,6 @@ export default function TodoBoxSection() {
     }
   });
 
-  useEffect(() => {
-    historyRef.current = history;
-    historyIndexRef.current = historyIndex;
-  }, [history, historyIndex]);
-
-  const updateTodoBoxesWithHistory = (newBoxes: TodoBox[]) => {
-    setTodoBoxes(newBoxes);
-
-    if (isUndoing) return; // 🔥 undo 중일 땐 history 누락
-
-    setHistory((prev) => {
-      const sliced = prev.slice(0, historyIndexRef.current + 1);
-      const newHistory = [...sliced, newBoxes];
-      setHistoryIndex(newHistory.length - 1);
-      return newHistory;
-    });
-  };
-
-  // 1) Firestore에서 “처음 한 번만” 불러오기
-  useEffect(() => {
-    const unsubscribe = listenTodoBoxes((data) => {
-      const boxes = data.length > 0 ? data : defaultBox;
-
-      setTodoBoxes(boxes);
-
-      // 🚨 isLoaded가 false일 때만 초기 history를 설정
-      setHistory((prev) => (prev.length === 0 ? [boxes] : prev));
-      setHistoryIndex((prev) => (prev === -1 ? 0 : prev));
-
-      setIsLoaded(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // 2) todoBoxes 변경 시 디바운스 저장
-  useEffect(() => {
-    if (!isLoaded || isUndoing) return;
-
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => {
-      saveTodoBoxes(todoBoxes).catch(console.error);
-    }, 1000);
-
-    return () => {
-      if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    };
-  }, [todoBoxes, isLoaded, isUndoing]);
-
-  // Ctrl+Z 핸들링
-  useEffect(() => {
-    const handleUndo = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase(); // ← 소문자로 통일
-
-      if ((e.ctrlKey || e.metaKey) && key === "z" && !e.shiftKey) {
-        if (historyIndexRef.current > 0) {
-          const newIndex = historyIndexRef.current - 1;
-          setIsUndoing(true);
-          setTodoBoxes(historyRef.current[newIndex]);
-          setHistoryIndex(newIndex);
-        }
-      }
-    };
-    window.addEventListener("keydown", handleUndo);
-    return () => window.removeEventListener("keydown", handleUndo);
-  }, []);
-
-  useEffect(() => {
-    if (isUndoing) {
-      const timer = setTimeout(() => {
-        setIsUndoing(false);
-      }, 100); // Firestore 저장 useEffect보다 나중에 해제
-
-      return () => clearTimeout(timer);
-    }
-  }, [isUndoing]);
-
   const addTodoBox = (mode: "default" | "shopping") => {
     const newBox: TodoBox = {
       id: uuidv4(),
@@ -414,18 +334,6 @@ export default function TodoBoxSection() {
 
     const updated = [...todoBoxes, newBox];
     updateTodoBoxesWithHistory(updated);
-  };
-
-  const toggleItemSelection = (boxId: string, itemId: string) => {
-    setSelectedItemIds((prev) => {
-      const sel = prev[boxId] || [];
-      return {
-        ...prev,
-        [boxId]: sel.includes(itemId)
-          ? sel.filter((i) => i !== itemId)
-          : [...sel, itemId],
-      };
-    });
   };
 
   const moveBoxDown = (id: string) => {
@@ -493,13 +401,6 @@ export default function TodoBoxSection() {
     updateTodoBoxesWithHistory(updated);
   };
 
-  useEffect(() => {
-    if (isUndoing) {
-      const timeout = setTimeout(() => setIsUndoing(false), 100);
-      return () => clearTimeout(timeout);
-    }
-  }, [isUndoing]);
-
   // 외부 클릭·Esc 처리
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -562,67 +463,67 @@ export default function TodoBoxSection() {
 
       {/* 여기!! DndContext 전에 중요할 일 박스를 삽입 */}
       {(importantTodos.length > 0 || importantShopping.length > 0) && (
-  <div className="mb-4 p-2 border rounded bg-gray-200">
-    <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요 항목</h2>
-    <div className="flex gap-4">
-      {/* 할일 */}
-      {importantTodos.length > 0 && (
-        <div className="flex-1">
-          <h3 className="text-xs font-semibold mb-1">할일</h3>
-          <ul className="space-y-1">
-            {importantTodos.map(({ boxId, item }) => (
-              <SortableItem
-                key={`todo-${item.id}`}
-                item={item}
-                boxId={boxId}
-                boxMode="default"
-                isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
-                isLowCount={false}
-                onToggle={toggleItemSelection}
-                onChangeItem={changeItem}
-                onRemoveItem={removeItem}
-                editingItemId={null}
-                setEditingItemId={() => { }}
-                editingCountId={null}
-                setEditingCountId={() => { }}
-                editingUnitId={null}
-                setEditingUnitId={() => { }}
-              />
-            ))}
-          </ul>
-        </div>
-      )}
+        <div className="mb-4 p-2 border rounded bg-gray-200">
+          <h2 className="text-red-600 font-semibold text-sm mb-2">📌 중요 항목</h2>
+          <div className="flex gap-4">
+            {/* 할일 */}
+            {importantTodos.length > 0 && (
+              <div className="flex-1">
+                <h3 className="text-xs font-semibold mb-1">할일</h3>
+                <ul className="space-y-1">
+                  {importantTodos.map(({ boxId, item }) => (
+                    <SortableItem
+                      key={`todo-${item.id}`}
+                      item={item}
+                      boxId={boxId}
+                      boxMode="default"
+                      isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                      isLowCount={false}
+                      onToggle={toggleItemSelection}
+                      onChangeItem={changeItem}
+                      onRemoveItem={removeItem}
+                      editingItemId={null}
+                      setEditingItemId={() => { }}
+                      editingCountId={null}
+                      setEditingCountId={() => { }}
+                      editingUnitId={null}
+                      setEditingUnitId={() => { }}
+                    />
+                  ))}
+                </ul>
+              </div>
+            )}
 
-      {/* 장보기 */}
-      {importantShopping.length > 0 && (
-        <div className="flex-1">
-          <h3 className="text-xs font-semibold mb-1">장보기</h3>
-          <ul className="space-y-1">
-            {importantShopping.map(({ boxId, item }) => (
-              <SortableItem
-                key={`shopping-${item.id}`}
-                item={item}
-                boxId={boxId}
-                boxMode="shopping"
-                isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
-                isLowCount={true}
-                onToggle={toggleItemSelection}
-                onChangeItem={changeItem}
-                onRemoveItem={removeItem}
-                editingItemId={null}
-                setEditingItemId={() => { }}
-                editingCountId={null}
-                setEditingCountId={() => { }}
-                editingUnitId={null}
-                setEditingUnitId={() => { }}
-              />
-            ))}
-          </ul>
+            {/* 장보기 */}
+            {importantShopping.length > 0 && (
+              <div className="flex-1">
+                <h3 className="text-xs font-semibold mb-1">장보기</h3>
+                <ul className="space-y-1">
+                  {importantShopping.map(({ boxId, item }) => (
+                    <SortableItem
+                      key={`shopping-${item.id}`}
+                      item={item}
+                      boxId={boxId}
+                      boxMode="shopping"
+                      isSelected={selectedItemIds[boxId]?.includes(item.id) || false}
+                      isLowCount={true}
+                      onToggle={toggleItemSelection}
+                      onChangeItem={changeItem}
+                      onRemoveItem={removeItem}
+                      editingItemId={null}
+                      setEditingItemId={() => { }}
+                      editingCountId={null}
+                      setEditingCountId={() => { }}
+                      editingUnitId={null}
+                      setEditingUnitId={() => { }}
+                    />
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -645,17 +546,7 @@ export default function TodoBoxSection() {
                 onChangeItem={changeItem}
                 onAddItem={addTodoItem}
                 onRemoveItem={removeItem}
-                toggleItemSelection={(boxId, itemId) => {
-                  setSelectedItemIds((prev) => {
-                    const sel = prev[boxId] || [];
-                    return {
-                      ...prev,
-                      [boxId]: sel.includes(itemId)
-                        ? sel.filter((i) => i !== itemId)
-                        : [...sel, itemId],
-                    };
-                  });
-                }}
+                toggleItemSelection={toggleItemSelection}
                 onChangeItemOrder={updateItemOrder}
                 selectedItemIds={selectedItemIds}
                 moveBoxDown={moveBoxDown}

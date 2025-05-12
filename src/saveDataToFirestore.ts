@@ -1,18 +1,23 @@
 // saveDataToFirestore.ts
-import { db } from "./firebase"; // Firebase 설정 파일
+import { db } from "./firebase";
 import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
 
-export const saveTodoBoxes = async (data: any[]) => {
-  const docRef = doc(collection(db, "sharedData"), "main");
-  await setDoc(docRef, { todoBoxes: data });
+const docRef = doc(collection(db, "sharedData"), "main");
+
+// 1. todoBoxes와 lastCheckedDate를 함께 저장
+export const saveTodoBoxes = async (todoBoxes: any[], lastCheckedDate: string) => {
+  await setDoc(docRef, { todoBoxes, lastCheckedDate });
 };
 
-export const listenTodoBoxes = (callback: (data: any[]) => void) => {
-  const docRef = doc(collection(db, "sharedData"), "main");
+// 2. todoBoxes와 lastCheckedDate를 함께 불러오기
+export const listenTodoBoxes = (callback: (data: { todoBoxes: any[]; lastCheckedDate: string }) => void) => {
   return onSnapshot(docRef, (snapshot) => {
     const data = snapshot.data();
     if (data && data.todoBoxes) {
-      callback(data.todoBoxes);
+      callback({
+        todoBoxes: data.todoBoxes,
+        lastCheckedDate: data.lastCheckedDate || "",
+      });
     }
   });
 };

@@ -120,111 +120,141 @@ export default function RoutineTab() {
     <div className="p-2 space-y-6 show-scrollbar">
       {/* 테이블 */}
       <div className="overflow-x-auto">
-        {sortedItems.length === 0 ? (
-          <p className="text-gray-500">아직 추가된 항목이 없습니다.</p>
-        ) : (
-          <table className="w-full min-w-[700px] table-fixed border text-xs">
-              <thead>
-                <tr className="bg-gray-100 text-center text-xs">
-                  <th
-                    className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
-                    onClick={() => handleSort("name")}
-                  >
-                    이름
-                  </th>
-                  <th
-                    className="border px-2 py-1 w-64 cursor-pointer hover:bg-gray-200"
-                    onClick={() => handleSort("memo")}
-                  >
-                    메모
-                  </th>
-                  <th
-                    className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
-                    onClick={() => handleSort("lastChecked")}
-                  >
-                    최종확인
-                  </th>
-                  <th
-                    className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
-                    onClick={() => handleSort("lastReplaced")}
-                  >
-                    최종교체
-                  </th>
-                  <th
-                    className="border px-2 py-1 w-16 cursor-pointer hover:bg-gray-200"
-                    onClick={() => handleSort("cycle")}
-                  >
-                    주기
-                  </th>
-                  <th className="border px-2 py-1 w-16 whitespace-nowrap">관리</th>
-                </tr>
-              </thead>
-            <tbody>
-                {/* 맨 위에 입력 행 */}
-                  <tr className="text-center bg-gray-50">
-                    <td className="border px-2 py-1">
-                      <input
-                        className="w-full p-1"
-                        value={newItem.name}
-                        onChange={(e) => setNewItem((prev) => ({ ...prev, name: e.target.value }))}
-                      />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input
-                        className="w-full p-1"
-                        value={newItem.memo}
-                        onChange={(e) => setNewItem((prev) => ({ ...prev, memo: e.target.value }))}
-                      />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input
-                        type="date"
-                        className="w-full p-1"
-                        value={newItem.lastChecked}
-                        onChange={(e) => setNewItem((prev) => ({ ...prev, lastChecked: e.target.value }))}
-                      />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input
-                        type="date"
-                        className="w-full p-1"
-                        value={newItem.lastReplaced}
-                        onChange={(e) => setNewItem((prev) => ({ ...prev, lastReplaced: e.target.value }))}
-                      />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input
-                        type="number"
-                        className="w-full p-1"
-                        value={newItem.cycle}
-                        onChange={(e) =>
-                          setNewItem((prev) => ({ ...prev, cycle: Number(e.target.value) }))
-                        }
-                      />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <button
-                        onClick={handleAdd}
-                        className="text-blue-500 hover:underline"
-                      >
-                        추가
-                      </button>
-                    </td>
-                  </tr>
-              {sortedItems.map((item) => (
+        <table className="w-full min-w-[700px] table-fixed border text-xs">
+          <thead>
+            <tr className="bg-gray-100 text-center text-xs">
+              <th
+                className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("name")}
+              >
+                이름
+              </th>
+              <th
+                className="border px-2 py-1 w-64 cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("memo")}
+              >
+                메모
+              </th>
+              <th
+                className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("lastChecked")}
+              >
+                최종확인
+              </th>
+              <th
+                className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("lastReplaced")}
+              >
+                최종교체
+              </th>
+              <th
+                className="border px-2 py-1 w-16 cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("cycle")}
+              >
+                주기
+              </th>
+              <th className="border px-2 py-1 w-16 whitespace-nowrap">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* 입력 행: 항상 보이도록 위쪽에 배치 */}
+            <tr className="text-center bg-gray-50">
+              <td className="border px-2 py-1">
+                <input
+                  className="w-full p-1"
+                  value={newItem.name}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                />
+              </td>
+              <td className="border px-2 py-1">
+                <input
+                  className="w-full p-1"
+                  value={newItem.memo}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({ ...prev, memo: e.target.value }))
+                  }
+                />
+              </td>
+              <td className="border px-2 py-1">
+                <input
+                  type="date"
+                  className="w-full p-1"
+                  value={newItem.lastChecked}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({
+                      ...prev,
+                      lastChecked: e.target.value,
+                    }))
+                  }
+                />
+              </td>
+              <td className="border px-2 py-1">
+                <input
+                  type="date"
+                  className="w-full p-1"
+                  value={newItem.lastReplaced}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({
+                      ...prev,
+                      lastReplaced: e.target.value,
+                    }))
+                  }
+                />
+              </td>
+              <td className="border px-2 py-1">
+                <input
+                  type="number"
+                  className="w-full p-1"
+                  value={newItem.cycle}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({
+                      ...prev,
+                      cycle: Number(e.target.value),
+                    }))
+                  }
+                />
+              </td>
+              <td className="border px-2 py-1">
+                <button
+                  onClick={handleAdd}
+                  className="text-blue-500 hover:underline"
+                >
+                  추가
+                </button>
+              </td>
+            </tr>
+  
+            {/* 안내 메시지 (항목이 없을 때) */}
+            {sortedItems.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="text-center text-gray-500 py-4 bg-white"
+                >
+                  아직 추가된 항목이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              sortedItems.map((item) => (
                 <tr key={item.id} className="text-center">
                   <td className="border px-2 py-1">
                     <input
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.name}
-                      onChange={(e) => handleInlineChange(item.id, "name", e.target.value)}
+                      onChange={(e) =>
+                        handleInlineChange(item.id, "name", e.target.value)
+                      }
                     />
                   </td>
                   <td className="border px-2 py-1">
                     <input
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.memo}
-                      onChange={(e) => handleInlineChange(item.id, "memo", e.target.value)}
+                      onChange={(e) =>
+                        handleInlineChange(item.id, "memo", e.target.value)
+                      }
                     />
                   </td>
                   <td className="border px-2 py-1">
@@ -232,7 +262,9 @@ export default function RoutineTab() {
                       type="date"
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.lastChecked}
-                      onChange={(e) => handleInlineChange(item.id, "lastChecked", e.target.value)}
+                      onChange={(e) =>
+                        handleInlineChange(item.id, "lastChecked", e.target.value)
+                      }
                     />
                   </td>
                   <td className="border px-2 py-1">
@@ -240,7 +272,9 @@ export default function RoutineTab() {
                       type="date"
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.lastReplaced}
-                      onChange={(e) => handleInlineChange(item.id, "lastReplaced", e.target.value)}
+                      onChange={(e) =>
+                        handleInlineChange(item.id, "lastReplaced", e.target.value)
+                      }
                     />
                   </td>
                   <td className="border px-2 py-1">
@@ -248,7 +282,9 @@ export default function RoutineTab() {
                       type="number"
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.cycle}
-                      onChange={(e) => handleInlineChange(item.id, "cycle", e.target.value)}
+                      onChange={(e) =>
+                        handleInlineChange(item.id, "cycle", e.target.value)
+                      }
                     />
                   </td>
                   <td className="border px-2 py-1">
@@ -260,11 +296,12 @@ export default function RoutineTab() {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
+  
 }

@@ -10,7 +10,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("할일");
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col relative">
       {/* 본문 + 탭 위 영역 전체를 스크롤 가능한 영역으로 */}
       <div className="flex-1 overflow-auto">
         {/* 본문 탭들 */}
@@ -26,9 +26,8 @@ function App() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-1 font-semibold transition-all duration-200 ${
-              activeTab === tab ? "bg-white text-gray-700" : "bg-gray-100 text-gray-700"
-            }`}
+            className={`flex-1 py-1 font-semibold transition-all duration-200 ${activeTab === tab ? "bg-white text-gray-700" : "bg-gray-100 text-gray-700"
+              }`}
           >
             {tab}
           </button>
