@@ -27,18 +27,8 @@ export default function RoutineTab() {
     memo: "",
     cycle: 0,
   });
-  const [editId, setEditId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
-
-  // 컬럼 정의 with SortKey for type safety
-  const columns: { key: SortKey; label: string }[] = [
-    { key: "name", label: "이름" },
-    { key: "memo", label: "메모" },
-    { key: "lastChecked", label: "최종확인" },
-    { key: "lastReplaced", label: "최종교체" },
-    { key: "cycle", label: "주기" },
-  ];
 
   useEffect(() => {
     const unsubscribe = onSnapshot(ref, (snap) => {
@@ -55,7 +45,7 @@ export default function RoutineTab() {
   const handleDelete = async (id: string) => {
     const confirm = window.confirm("정말 삭제하시겠습니까?");
     if (!confirm) return;
-  
+
     const updated = items.filter((it) => it.id !== id);
     await saveItems(updated);
   };
@@ -64,9 +54,9 @@ export default function RoutineTab() {
     const updated = items.map((item) =>
       item.id === id
         ? {
-            ...item,
-            [field]: field === "cycle" ? Number(value) : value,
-          }
+          ...item,
+          [field]: field === "cycle" ? Number(value) : value,
+        }
         : item
     );
     setItems(updated);
@@ -83,7 +73,7 @@ export default function RoutineTab() {
 
   const handleAdd = async () => {
     if (!newItem.name?.trim()) return;
-  
+
     const id = crypto.randomUUID();
     const newEntry: RoutineItem = {
       id,
@@ -97,7 +87,7 @@ export default function RoutineTab() {
     const updated = [newEntry, ...items];
     setItems(updated);
     await saveItems(updated);
-  
+
     setNewItem({
       id: "",
       category: "",
@@ -107,6 +97,25 @@ export default function RoutineTab() {
       lastReplaced: "",
       cycle: 0,
     });
+  };
+
+  const calculateRemainingDays = (lastChecked: string, cycle: number): number => {
+    if (!lastChecked || !cycle) return 999;
+    const last = new Date(lastChecked);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // 날짜만 비교
+    const diffTime = now.getTime() - last.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return cycle - diffDays;
+  };
+
+  const getRowClass = (item: RoutineItem) => {
+    const remaining = calculateRemainingDays(item.lastChecked, item.cycle);
+
+    if (remaining <= 0) return "bg-red-100";       // 초과
+    if (remaining <= 3) return "bg-orange-100";    // 임박
+    if (remaining <= 7) return "bg-yellow-50";     // 곧
+    return "";                                     // 기본
   };
 
   const sortedItems = [...items].sort((a, b) => {
@@ -225,7 +234,7 @@ export default function RoutineTab() {
                 </button>
               </td>
             </tr>
-  
+
             {/* 안내 메시지 (항목이 없을 때) */}
             {sortedItems.length === 0 ? (
               <tr>
@@ -238,7 +247,7 @@ export default function RoutineTab() {
               </tr>
             ) : (
               sortedItems.map((item) => (
-                <tr key={item.id} className="text-center">
+                <tr key={item.id} className={`text-center ${getRowClass(item)}`}>
                   <td className="border px-2 py-1">
                     <input
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
@@ -303,5 +312,4 @@ export default function RoutineTab() {
       </div>
     </div>
   );
-  
 }
