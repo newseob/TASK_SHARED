@@ -524,6 +524,7 @@ export default function TodoBoxSection() {
           </div>
         </div>
       )}
+      <div className="h-32" />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
