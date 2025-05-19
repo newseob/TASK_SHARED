@@ -67,7 +67,7 @@ export default function SortableItem({
     isLowCount
       ? "border-red-500"
       : item.status === "blue"
-        ? "border-blue-500"
+        ? "border-blue-400"
         : item.status === "red"
           ? "border-red-500"
           : "border-zinc-600";
