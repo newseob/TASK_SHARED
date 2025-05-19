@@ -86,7 +86,7 @@ export default function TodayRoutine() {
           {sortedItems.map((item) => {
             const liClass =
               item.remaining >= 0
-                ? "bg-zinc-800 text-zinc-100 border-red-500"
+                ? "bg-red-900 text-zinc-100 border-red-500"
                 : "text-zinc-400 border-zinc-900 bg-zinc-900";
 
             return (
