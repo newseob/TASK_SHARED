@@ -126,70 +126,70 @@ export default function RoutineTab() {
   });
 
   return (
-    <div className="p-2 space-y-6 bg-gray-900 text-white show-scrollbar">
+    <div className="p-2 space-y-6 bg-zinc-900 text-white show-scrollbar">
       {/* 테이블 */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] table-fixed border text-xs">
           <thead>
-            <tr className="bg-gray-800 text-center text-xs text-gray-200">
+            <tr className="bg-zinc-800 text-center text-xs text-zind-200">
               <th
-                className="border border-white px-2 py-1 w-32 cursor-pointer hover:bg-gray-700"
+                className="border border-zinc-600 px-2 py-1 w-32 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("name")}
               >
                 이름
               </th>
               <th
-                className="border border-white px-2 py-1 w-64 cursor-pointer hover:bg-gray-700"
+                className="border border-zinc-600 px-2 py-1 w-64 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("memo")}
               >
                 메모
               </th>
               <th
-                className="border border-white x-2 py-1 w-32 cursor-pointer hover:bg-gray-700"
+                className="border border-zinc-600 x-2 py-1 w-32 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("lastChecked")}
               >
                 최종확인
               </th>
               <th
-                className="border border-white px-2 py-1 w-32 cursor-pointer hover:bg-gray-700"
+                className="border border-zinc-600 px-2 py-1 w-32 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("lastReplaced")}
               >
                 최종교체
               </th>
               <th
-                className="border border-white px-2 py-1 w-16 cursor-pointer hover:bg-gray-700"
+                className="border border-zinc-600 px-2 py-1 w-16 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("cycle")}
               >
                 주기
               </th>
-              <th className="border border-white px-2 py-1 w-16 whitespace-nowrap">관리</th>
+              <th className="border border-zinc-600 px-2 py-1 w-16 whitespace-nowrap">관리</th>
             </tr>
           </thead>
           <tbody>
             {/* 입력 행: 항상 보이도록 위쪽에 배치 */}
-            <tr className="text-center bg-gray-800 text-white">
-              <td className="border px-2 py-1">
+            <tr className="text-center bg-zinc-800 text-white">
+              <td className="border border-zinc-600 px-2 py-4">
                 <input
-                  className="w-full p-1 bg-gray-700 text-white rounded"
+                  className="w-full p-1 bg-zinc-700 text-white rounded"
                   value={newItem.name}
                   onChange={(e) =>
                     setNewItem((prev) => ({ ...prev, name: e.target.value }))
                   }
                 />
               </td>
-              <td className="border px-2 py-1">
+              <td className="border border-zinc-600 px-2 py-4">
                 <input
-                  className="w-full p-1 bg-gray-700 text-white rounded"
+                  className="w-full p-1 bg-zinc-700 text-white rounded"
                   value={newItem.memo}
                   onChange={(e) =>
                     setNewItem((prev) => ({ ...prev, memo: e.target.value }))
                   }
                 />
               </td>
-              <td className="border px-2 py-1">
+              <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="date"
-                  className="w-full p-1 bg-gray-700 text-white rounded"
+                  className="w-full p-1 bg-zinc-700 text-white rounded"
                   value={newItem.lastChecked}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -199,10 +199,10 @@ export default function RoutineTab() {
                   }
                 />
               </td>
-              <td className="border px-2 py-1">
+              <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="date"
-                  className="w-full p-1 bg-gray-700 text-white rounded"
+                  className="w-full p-1 bg-zinc-700 text-white rounded"
                   value={newItem.lastReplaced}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -212,10 +212,10 @@ export default function RoutineTab() {
                   }
                 />
               </td>
-              <td className="border px-2 py-1">
+              <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="number"
-                  className="w-full p-1 bg-gray-700 text-white rounded"
+                  className="w-full p-1 bg-zinc-700 text-white rounded"
                   value={newItem.cycle}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -225,7 +225,7 @@ export default function RoutineTab() {
                   }
                 />
               </td>
-              <td className="border px-2 py-1">
+              <td className="border border-zinc-600 px-2 py-1">
                 <button
                   onClick={handleAdd}
                   className="text-blue-500 hover:underline"
@@ -240,7 +240,7 @@ export default function RoutineTab() {
               <tr>
                 <td
                   colSpan={6}
-                  className="text-center bg-gray-700 text-white py-4 bg-white"
+                  className="text-center bg-zinc-700 text-white py-4 bg-white"
                 >
                   아직 추가된 항목이 없습니다.
                 </td>
@@ -248,7 +248,7 @@ export default function RoutineTab() {
             ) : (
               sortedItems.map((item) => (
                 <tr key={item.id} className={`text-center ${getRowClass(item)}`}>
-                  <td className="border px-2 py-1">
+                  <td className="border border-zinc-600 px-2 py-1">
                     <input
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.name}
@@ -257,7 +257,7 @@ export default function RoutineTab() {
                       }
                     />
                   </td>
-                  <td className="border px-2 py-1">
+                  <td className="border border-zinc-600 px-2 py-1">
                     <input
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
                       value={item.memo}
@@ -266,7 +266,7 @@ export default function RoutineTab() {
                       }
                     />
                   </td>
-                  <td className="border px-2 py-1">
+                  <td className="border border-zinc-600 px-2 py-1">
                     <input
                       type="date"
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
@@ -276,7 +276,7 @@ export default function RoutineTab() {
                       }
                     />
                   </td>
-                  <td className="border px-2 py-1">
+                  <td className="border border-zinc-600 px-2 py-1">
                     <input
                       type="date"
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
@@ -286,7 +286,7 @@ export default function RoutineTab() {
                       }
                     />
                   </td>
-                  <td className="border px-2 py-1">
+                  <td className="border border-zinc-600 px-2 py-1">
                     <input
                       type="number"
                       className="w-full border-none bg-transparent p-1 focus:outline-none"
@@ -296,7 +296,7 @@ export default function RoutineTab() {
                       }
                     />
                   </td>
-                  <td className="border px-2 py-1">
+                  <td className="border border-zinc-600 px-2 py-1">
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="text-red-500 hover:underline"

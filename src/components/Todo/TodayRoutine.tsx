@@ -68,10 +68,10 @@ export default function TodayRoutine() {
     .sort((a, b) => b.remaining - a.remaining);
 
   return (
-    <div className="border border-gray-700 p-2 rounded shadow bg-gray-800 w-full transition-opacity">
+    <div className="border border-zinc-900 p-2 rounded shadow bg-zinc-900 w-full transition-opacity">
       <div className="flex items-center justify-between">
         <button
-          className="mx-1 text-gray-400 hover:text-white cursor-pointer text-sm transition"
+          className="mx-1 text-zinc-400 hover:text-white cursor-pointer text-sm transition"
           onClick={() => setShowList(!showList)}
         >
           {showList ? "▷" : "▽"}
@@ -86,8 +86,8 @@ export default function TodayRoutine() {
           {sortedItems.map((item) => {
             const liClass =
               item.remaining >= 0
-                ? "bg-red-900 text-red-300 border-red-500"
-                : "text-gray-400 border-gray-600 bg-gray-700";
+                ? "bg-zinc-800 text-zinc-100 border-red-500"
+                : "text-zinc-400 border-zinc-900 bg-zinc-900";
 
             return (
               <li
@@ -120,7 +120,7 @@ export default function TodayRoutine() {
                       />
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-5 h-5 text-gray-400 pointer-events-none"
+                        className="w-5 h-5 text-zinc-400 pointer-events-none"
                         fill="none"
                         viewBox="0 -6 36 36"
                         stroke="currentColor"
@@ -137,11 +137,11 @@ export default function TodayRoutine() {
                 </div>
 
                 <div className="flex flex-col text-[11px] font-light">
-                  <span className="whitespace-pre-wrap break-words text-gray-300">
+                  <span className="whitespace-pre-wrap break-words text-zinc-400">
                     {item.memo}
                   </span>
                   {item.lastReplaced && (
-                    <span className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap text-gray-400">
+                    <span className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap text-zinc-400">
                       {item.lastReplaced}
                       <div className="relative w-5 h-5">
                         <input
@@ -157,7 +157,7 @@ export default function TodayRoutine() {
                         />
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-5 text-gray-400 pointer-events-none"
+                          className="w-5 h-5 text-zinc-400 pointer-events-none"
                           fill="none"
                           viewBox="0 -6 36 36"
                           stroke="currentColor"

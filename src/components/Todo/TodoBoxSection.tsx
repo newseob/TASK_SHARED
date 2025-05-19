@@ -137,7 +137,7 @@ function SortableBox({
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
-      className="border border-gray-700 p-2 rounded shadow bg-gray-800 w-full transition-opacity"
+      className="border border-zinc-900 p-2 rounded shadow bg-zinc-900 w-full transition-opacity"
     >
       {/* 제목 + 핸들러 */}
       <div className="flex items-center gap-1 mb-2">
@@ -160,7 +160,7 @@ function SortableBox({
             e.stopPropagation();
             setCollapsed((prev) => !prev); // 클릭 시 토글
           }}
-          className="mx-1 text-gray-300 cursor-pointer text-sm transition"
+          className="mx-1 text-zinc-300 cursor-pointer text-sm transition"
           title="길게 누르면 드래그 / 클릭하면 접기/펼치기"
         >
           {collapsed ? "▷" : "▽"}
@@ -173,7 +173,7 @@ function SortableBox({
         />
         <button
           onClick={() => onRemoveItem(box.id, "__box__")}
-          className="ml-2 px-2 mr-1 text-gray-400 rounded hover:bg-gray-700 transition text-sm shrink-0"
+          className="ml-2 px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0"
           title="소주제 삭제"
         >
           X
@@ -234,13 +234,13 @@ function SortableBox({
           </DndContext>
 
           {/* 새 항목 입력 */}
-          <div className="flex items-center border p-1 rounded">
+          <div className="flex items-center border border-zinc-700 p-1 rounded">
             {/* 체크박스 공간 확보용 여백 */}
             <div className="w-5 h-5 mr-2" />
 
             <input
               ref={nameRef}
-              className="flex-[6] min-w-0 outline-none text-sm mr-1 bg-gray-700 text-white px-2 py-1 rounded"
+              className="flex-[6] min-w-0 outline-none text-sm mr-1 bg-zinc-800 text-white px-2 py-1 rounded"
               placeholder="새 항목"
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
@@ -255,7 +255,7 @@ function SortableBox({
               <>
                 <input
                   ref={countRef}
-                  className="flex-[2] min-w-0 outline-none bg-gray-700 text-white text-sm text-right px-2 py-1 mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-zinc-800 text-white text-sm text-right px-2 py-1 mr-1"
                   placeholder="수량"
                   value={newCount}
                   onChange={(e) => setNewCount(e.target.value)}
@@ -268,7 +268,7 @@ function SortableBox({
                 />
                 <input
                   ref={unitRef}
-                  className="flex-[2] min-w-0 outline-none bg-gray-700 text-white text-sm text-right px-2 py-1 mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-zinc-800 text-white text-sm text-right px-2 py-1 mr-1"
                   placeholder="단위"
                   value={newUnit}
                   onChange={(e) => setNewUnit(e.target.value)}
@@ -283,7 +283,7 @@ function SortableBox({
             )}
             <button
               onClick={handleAddItem}
-              className="px-2 text-white rounded bg-gray-700 hover:bg-gray-600 transition text-sm shrink-0"
+              className="px-2 text-white rounded bg-zinc-700 hover:bg-zinc-600 transition py-1 text-sm shrink-0"
               >
               +
             </button>
@@ -492,13 +492,13 @@ export default function TodoBoxSection() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={() => addTodoBox("default")}
-                className="border-dashed border-2 rounded flex-1 h-12"
+                className="border-dashed border-2 border-zinc-500 rounded flex-1 h-12"
               >
                 + 할일
               </button>
               <button
                 onClick={() => addTodoBox("shopping")}
-                className="border-dashed border-2 rounded flex-1 h-12"
+                className="border-dashed border-2 border-zinc-500 rounded flex-1 h-12"
               >
                 + 장보기
               </button>

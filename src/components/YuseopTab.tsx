@@ -84,13 +84,13 @@ export default function YuseopTab() {
   }, [editor, isLoaded]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-gray-900 text-white">
+    <div className="w-full h-full flex flex-col bg-zinc-900 text-white">
       {/* 상단 메뉴 고정 */}
-      <div className="sticky top-0 z-10 bg-gray-800 py-2 border-b border-gray-700">
+      <div className="sticky top-0 z-10 bg-zinc-800 py-2 border-b border-zinc-700">
         <div className="flex gap-4 items-center px-1">
           <button
             onClick={setBold}
-            className="px-3 py-1 text-sm bg-gray-700 text-white border border-gray-600 rounded font-semibold hover:bg-gray-600"
+            className="px-3 py-1 text-sm bg-zinc-700 text-white border border-zinc-600 rounded font-semibold hover:bg-zinc-600"
             title="굵게"
           >
             굵게
@@ -99,7 +99,7 @@ export default function YuseopTab() {
           <select
             onChange={(e) => setColor(e.target.value)}
             defaultValue=""
-            className="px-2 py-1 bg-gray-700 text-white border border-gray-600 rounded text-sm"
+            className="px-2 py-1 bg-zinc-700 text-white border border-zinc-600 rounded text-sm"
           >
             <option value="" disabled>색상 선택</option>
             <option value="white">흰색</option>
@@ -111,7 +111,7 @@ export default function YuseopTab() {
           <select
             onChange={(e) => setFontSize(e.target.value)}
             defaultValue=""
-            className="px-2 py-1 bg-gray-700 text-white border border-gray-600 rounded text-sm"
+            className="px-2 py-1 bg-zinc-700 text-white border border-zinc-600 rounded text-sm"
           >
             <option value="" disabled>글자 크기</option>
             <option value="14px">작게</option>

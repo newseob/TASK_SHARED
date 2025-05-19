@@ -56,12 +56,12 @@ export default function SortableItem({
 
   const baseBg =
     isLowCount
-      ? "bg-red-900 text-red-300"
+      ? "bg-red-900 text-red-100"
       : item.status === "blue"
-        ? "bg-blue-900 text-blue-300"
+        ? "bg-blue-900 text-blue-100"
         : item.status === "red"
-          ? "bg-red-900 text-red-300"
-          : "bg-gray-800 text-white";
+          ? "bg-red-900 text-red-100"
+          : "bg-zinc-800 text-white";
 
   const borderColorClass =
     isLowCount
@@ -70,16 +70,16 @@ export default function SortableItem({
         ? "border-blue-500"
         : item.status === "red"
           ? "border-red-500"
-          : "border-gray-600";
+          : "border-zinc-600";
 
   const textColorClass =
     isLowCount
-      ? "text-red-600"
+      ? "text-red-300"
       : item.status === "blue"
-        ? "text-blue-600"
+        ? "text-blue-300"
         : item.status === "red"
-          ? "text-red-600"
-          : "text-gray-500";
+          ? "text-red-300"
+          : "text-zind-500";
 
   const handleToggleStatus = () => {
     const nextStatus =
