@@ -137,7 +137,7 @@ function SortableBox({
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
-      className="border p-2 rounded shadow bg-white w-full transition-opacity"
+      className="border border-gray-700 p-2 rounded shadow bg-gray-800 w-full transition-opacity"
     >
       {/* 제목 + 핸들러 */}
       <div className="flex items-center gap-1 mb-2">
@@ -167,13 +167,13 @@ function SortableBox({
         </button>
 
         <input
-          className="flex-1 min-w-0 text-blue-400 bg-transparent outline-none truncate text-xs"
+          className="flex-1 min-w-0 text-blue-300 bg-transparent outline-none truncate text-xs"
           value={box.title}
           onChange={(e) => onChangeTitle(box.id, e.target.value)}
         />
         <button
           onClick={() => onRemoveItem(box.id, "__box__")}
-          className="ml-2 px-2 mr-1 text-gray-300 rounded hover:bg-gray-200 transition text-sm shrink-0"
+          className="ml-2 px-2 mr-1 text-gray-400 rounded hover:bg-gray-700 transition text-sm shrink-0"
           title="소주제 삭제"
         >
           X
@@ -240,7 +240,7 @@ function SortableBox({
 
             <input
               ref={nameRef}
-              className="flex-[6] min-w-0 outline-none text-sm mr-1"
+              className="flex-[6] min-w-0 outline-none text-sm mr-1 bg-gray-700 text-white px-2 py-1 rounded"
               placeholder="새 항목"
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
@@ -255,7 +255,7 @@ function SortableBox({
               <>
                 <input
                   ref={countRef}
-                  className="flex-[2] min-w-0 outline-none text-sm text-right mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-gray-700 text-white text-sm text-right px-2 py-1 mr-1"
                   placeholder="수량"
                   value={newCount}
                   onChange={(e) => setNewCount(e.target.value)}
@@ -268,7 +268,7 @@ function SortableBox({
                 />
                 <input
                   ref={unitRef}
-                  className="flex-[2] min-w-0 outline-none text-sm text-left mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-gray-700 text-white text-sm text-right px-2 py-1 mr-1"
                   placeholder="단위"
                   value={newUnit}
                   onChange={(e) => setNewUnit(e.target.value)}
@@ -283,8 +283,8 @@ function SortableBox({
             )}
             <button
               onClick={handleAddItem}
-              className="px-2 text-gray rounded hover:bg-gray-200 transition text-sm shrink-0"
-            >
+              className="px-2 text-white rounded bg-gray-700 hover:bg-gray-600 transition text-sm shrink-0"
+              >
               +
             </button>
           </div>

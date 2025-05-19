@@ -20,7 +20,7 @@ export default function TodayRoutine() {
     "items"
   );
 
-  if (!Array.isArray(items)) return null; // 배열이 아닐 경우 렌더링 중단
+  if (!Array.isArray(items)) return null;
 
   const calculateDays = (lastChecked: string, cycle: number): number => {
     if (!lastChecked) return 0;
@@ -68,26 +68,26 @@ export default function TodayRoutine() {
     .sort((a, b) => b.remaining - a.remaining);
 
   return (
-    <div className="border p-2 rounded shadow bg-white w-full transition-opacity">
+    <div className="border border-gray-700 p-2 rounded shadow bg-gray-800 w-full transition-opacity">
       <div className="flex items-center justify-between">
         <button
-          className="mx-1 text-gray-300 cursor-pointer text-sm transition"
+          className="mx-1 text-gray-400 hover:text-white cursor-pointer text-sm transition"
           onClick={() => setShowList(!showList)}
         >
           {showList ? "▷" : "▽"}
         </button>
-        <h2 className="flex-1 min-w-0 text-blue-400 bg-transparent outline-none truncate text-xs">
+        <h2 className="flex-1 min-w-0 text-blue-300 bg-transparent outline-none truncate text-xs">
           집안일루틴
         </h2>
       </div>
 
       {showList && (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
           {sortedItems.map((item) => {
             const liClass =
               item.remaining >= 0
-                ? "bg-red-50 text-red-800 border-red-400"
-                : "text-gray-400 border-gray-300";
+                ? "bg-red-900 text-red-300 border-red-500"
+                : "text-gray-400 border-gray-600 bg-gray-700";
 
             return (
               <li
@@ -98,7 +98,7 @@ export default function TodayRoutine() {
                   <div className="flex items-center space-x-2 font-bold">
                     <span>{item.name}</span>
                   </div>
-                  <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrapr">
+                  <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrap">
                     <span className="font-light">
                       {item.remaining > 0
                         ? `D+${item.remaining}`
@@ -120,7 +120,7 @@ export default function TodayRoutine() {
                       />
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-5 h-5 text-gray-500 pointer-events-none"
+                        className="w-5 h-5 text-gray-400 pointer-events-none"
                         fill="none"
                         viewBox="0 -6 36 36"
                         stroke="currentColor"
@@ -137,11 +137,11 @@ export default function TodayRoutine() {
                 </div>
 
                 <div className="flex flex-col text-[11px] font-light">
-                  <span className="whitespace-pre-wrap break-words">
+                  <span className="whitespace-pre-wrap break-words text-gray-300">
                     {item.memo}
                   </span>
                   {item.lastReplaced && (
-                    <span className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap">
+                    <span className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap text-gray-400">
                       {item.lastReplaced}
                       <div className="relative w-5 h-5">
                         <input
@@ -157,7 +157,7 @@ export default function TodayRoutine() {
                         />
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-5 text-gray-500 pointer-events-none"
+                          className="w-5 h-5 text-gray-400 pointer-events-none"
                           fill="none"
                           viewBox="0 -6 36 36"
                           stroke="currentColor"
@@ -181,3 +181,4 @@ export default function TodayRoutine() {
     </div>
   );
 }
+

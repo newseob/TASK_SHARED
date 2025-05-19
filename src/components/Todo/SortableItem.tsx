@@ -56,21 +56,21 @@ export default function SortableItem({
 
   const baseBg =
     isLowCount
-      ? "bg-red-50 text-red-800"
+      ? "bg-red-900 text-red-300"
       : item.status === "blue"
-        ? "bg-blue-50 text-blue-800"
+        ? "bg-blue-900 text-blue-300"
         : item.status === "red"
-          ? "bg-red-50 text-red-800"
-          : "bg-white text-black";
+          ? "bg-red-900 text-red-300"
+          : "bg-gray-800 text-white";
 
   const borderColorClass =
     isLowCount
-      ? "border-red-300"
+      ? "border-red-500"
       : item.status === "blue"
-        ? "border-blue-400"
+        ? "border-blue-500"
         : item.status === "red"
-          ? "border-red-400"
-          : "border-gray-300";
+          ? "border-red-500"
+          : "border-gray-600";
 
   const textColorClass =
     isLowCount
@@ -104,12 +104,12 @@ export default function SortableItem({
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
         className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs shrink-0 transition-colors ${isLowCount
-            ? "bg-white text-red-400 border-red-400"
+            ? "bg-gray-900 text-red-400 border-red-400"
             : item.status === "blue"
               ? "bg-blue-500 text-white border-blue-500"
               : item.status === "red"
-                ? "bg-white text-white border-red-400"
-                : "bg-white text-gray-400 border-gray-400"
+                ? "bg-red-500 text-white border-red-500"
+                : "bg-gray-700 text-gray-400 border-gray-500"
           }`}
       ></button>
 

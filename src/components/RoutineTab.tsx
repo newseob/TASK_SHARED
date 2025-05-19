@@ -112,9 +112,9 @@ export default function RoutineTab() {
   const getRowClass = (item: RoutineItem) => {
     const remaining = calculateRemainingDays(item.lastChecked, item.cycle);
 
-    if (remaining <= 0) return "bg-red-100";       // 초과
-    if (remaining <= 3) return "bg-orange-100";    // 임박
-    if (remaining <= 7) return "bg-yellow-50";     // 곧
+    if (remaining <= 0) return "bg-red-900";       // 초과
+    if (remaining <= 3) return "bg-orange-900";    // 임박
+    if (remaining <= 7) return "bg-yellow-900";     // 곧
     return "";                                     // 기본
   };
 
@@ -126,51 +126,51 @@ export default function RoutineTab() {
   });
 
   return (
-    <div className="p-2 space-y-6 show-scrollbar">
+    <div className="p-2 space-y-6 bg-gray-900 text-white show-scrollbar">
       {/* 테이블 */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] table-fixed border text-xs">
           <thead>
-            <tr className="bg-gray-100 text-center text-xs">
+            <tr className="bg-gray-800 text-center text-xs text-gray-200">
               <th
-                className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                className="border border-white px-2 py-1 w-32 cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("name")}
               >
                 이름
               </th>
               <th
-                className="border px-2 py-1 w-64 cursor-pointer hover:bg-gray-200"
+                className="border border-white px-2 py-1 w-64 cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("memo")}
               >
                 메모
               </th>
               <th
-                className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                className="border border-white x-2 py-1 w-32 cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("lastChecked")}
               >
                 최종확인
               </th>
               <th
-                className="border px-2 py-1 w-32 cursor-pointer hover:bg-gray-200"
+                className="border border-white px-2 py-1 w-32 cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("lastReplaced")}
               >
                 최종교체
               </th>
               <th
-                className="border px-2 py-1 w-16 cursor-pointer hover:bg-gray-200"
+                className="border border-white px-2 py-1 w-16 cursor-pointer hover:bg-gray-700"
                 onClick={() => handleSort("cycle")}
               >
                 주기
               </th>
-              <th className="border px-2 py-1 w-16 whitespace-nowrap">관리</th>
+              <th className="border border-white px-2 py-1 w-16 whitespace-nowrap">관리</th>
             </tr>
           </thead>
           <tbody>
             {/* 입력 행: 항상 보이도록 위쪽에 배치 */}
-            <tr className="text-center bg-gray-50">
+            <tr className="text-center bg-gray-800 text-white">
               <td className="border px-2 py-1">
                 <input
-                  className="w-full p-1"
+                  className="w-full p-1 bg-gray-700 text-white rounded"
                   value={newItem.name}
                   onChange={(e) =>
                     setNewItem((prev) => ({ ...prev, name: e.target.value }))
@@ -179,7 +179,7 @@ export default function RoutineTab() {
               </td>
               <td className="border px-2 py-1">
                 <input
-                  className="w-full p-1"
+                  className="w-full p-1 bg-gray-700 text-white rounded"
                   value={newItem.memo}
                   onChange={(e) =>
                     setNewItem((prev) => ({ ...prev, memo: e.target.value }))
@@ -189,7 +189,7 @@ export default function RoutineTab() {
               <td className="border px-2 py-1">
                 <input
                   type="date"
-                  className="w-full p-1"
+                  className="w-full p-1 bg-gray-700 text-white rounded"
                   value={newItem.lastChecked}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -202,7 +202,7 @@ export default function RoutineTab() {
               <td className="border px-2 py-1">
                 <input
                   type="date"
-                  className="w-full p-1"
+                  className="w-full p-1 bg-gray-700 text-white rounded"
                   value={newItem.lastReplaced}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -215,7 +215,7 @@ export default function RoutineTab() {
               <td className="border px-2 py-1">
                 <input
                   type="number"
-                  className="w-full p-1"
+                  className="w-full p-1 bg-gray-700 text-white rounded"
                   value={newItem.cycle}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -240,7 +240,7 @@ export default function RoutineTab() {
               <tr>
                 <td
                   colSpan={6}
-                  className="text-center text-gray-500 py-4 bg-white"
+                  className="text-center bg-gray-700 text-white py-4 bg-white"
                 >
                   아직 추가된 항목이 없습니다.
                 </td>

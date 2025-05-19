@@ -21,12 +21,14 @@ function App() {
       </div>
 
       {/* 하단 탭 메뉴 고정 */}
-      <div className="h-10 bg-white border-t shadow-md flex z-20">
+      <div className="h-10 bg-gray-800 border-t border-gray-700 shadow-md flex z-20">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-1 font-semibold transition-all duration-200 ${activeTab === tab ? "bg-white text-gray-700" : "bg-gray-100 text-gray-700"
+            className={`flex-1 py-1 font-semibold transition-all duration-200 ${activeTab === tab
+                ? "bg-gray-900 text-white"
+                : "bg-gray-800 text-gray-400"
               }`}
           >
             {tab}

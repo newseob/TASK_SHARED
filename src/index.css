@@ -27,6 +27,19 @@
   font-size: inherit;
 }
 
+.tiptap {
+  background-color: #222222; /* gray-800 */
+  color: #f9fafb; /* text-white */
+}
+
+.tiptap p {
+  margin-bottom: 0.5rem;
+}
+
+.tiptap strong {
+  font-weight: 700;
+}
+
 .tiptap [style*="font-size:14px"] { font-size: 14px; }
 .tiptap [style*="font-size:18px"] { font-size: 18px; }
 .tiptap [style*="font-size:24px"] { font-size: 24px; }
