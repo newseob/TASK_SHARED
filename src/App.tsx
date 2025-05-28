@@ -8,12 +8,9 @@ function App() {
   const tabs = ["할일", "루틴", "경인", "유섭"];
   const [activeTab, setActiveTab] = useState("할일");
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") return true;
-    if (savedTheme === "light") return false;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    localStorage.getItem("theme") === "dark"
+  );
 
   useEffect(() => {
     const root = document.documentElement;
