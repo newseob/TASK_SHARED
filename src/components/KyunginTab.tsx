@@ -64,14 +64,6 @@ export default function KyunginTab() {
     console.log("✅ 저장됨");
   };
 
-  const handleManualLoad = () => {
-    if (editor) loadMemo();
-  };
-
-  const handleManualSave = () => {
-    if (editor) saveMemo(editor.getJSON());
-  };
-
   useEffect(() => {
     if (editor) {
       loadMemo();
@@ -128,20 +120,6 @@ export default function KyunginTab() {
             <option value="24px">크게</option>
             <option value="32px">매우 크게</option>
           </select>
-
-          <button
-            onClick={handleManualSave}
-            className="px-3 py-1 text-sm bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
-          >
-            저장
-          </button>
-
-          <button
-            onClick={handleManualLoad}
-            className="px-3 py-1 text-sm bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
-          >
-            불러오기
-          </button>
 
         </div>
       </div>
