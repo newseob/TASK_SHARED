@@ -42,7 +42,7 @@ export function useFirestoreHistory<T>(
     [boxId: string]: string[];
   }>({});
 
-  
+
 
   // ✅ onSnapshot으로 대체
   useEffect(() => {
@@ -50,35 +50,35 @@ export function useFirestoreHistory<T>(
     const unsubscribe = onSnapshot(docRef, (snap) => {
       const docData = snap.data() as Record<string, unknown> | undefined;
       const data = (docData?.[field] as T[]) || defaultData;
-  
+
       isRemoteUpdate.current = true; // 🔒 저장 방지용 플래그 설정
       setItems(data);
-  
+
       if (historyIndex === -1) {
         setHistory([data]);
         setHistoryIndex(0);
       }
     });
-  
+
     return () => unsubscribe(); // 🔁 cleanup
   }, []);
 
   const isRemoteUpdate = useRef(false);
 
-useEffect(() => {
-  if (historyIndex < 0 || isUndoing.current || isRemoteUpdate.current) {
-    isRemoteUpdate.current = false; // 🔓 한 번만 건너뜀
-    return;
-  }
+  useEffect(() => {
+    if (historyIndex < 0 || isUndoing.current || isRemoteUpdate.current) {
+      isRemoteUpdate.current = false; // 🔓 한 번만 건너뜀
+      return;
+    }
 
-  setDoc(doc(db, collection, docId), { [field]: items });
+    setDoc(doc(db, collection, docId), { [field]: items });
 
-  setHistory((prev) => {
-    const cut = prev.slice(0, historyIndex + 1);
-    return [...cut, items];
-  });
-  setHistoryIndex((i) => i + 1);
-}, [items]);
+    setHistory((prev) => {
+      const cut = prev.slice(0, historyIndex + 1);
+      return [...cut, items];
+    });
+    setHistoryIndex((i) => i + 1);
+  }, [items]);
 
   // 저장 및 히스토리 쌓기
   useEffect(() => {
@@ -128,7 +128,7 @@ useEffect(() => {
   };
 
 
-  
+
   return {
     items,
     updateWithHistory,

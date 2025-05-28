@@ -1,23 +1,26 @@
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import TodoTab from "./components/TodoTab.tsx";
 import RoutineTab from "./components/RoutineTab.tsx";
 import KyunginTab from "./components/KyunginTab.tsx";
 import YuseopTab from "./components/YuseopTab.tsx";
 
-
 function App() {
   const tabs = ["할일", "루틴", "경인", "유섭"];
   const [activeTab, setActiveTab] = useState("할일");
-  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // 테마 반영
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  });
+
   useEffect(() => {
     const root = document.documentElement;
     if (isDarkMode) {
       root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
       root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
 
@@ -36,7 +39,6 @@ function App() {
         bg-zinc-100 border-zinc-300 text-gray-800 
         dark:bg-zinc-800 dark:border-zinc-700 dark:text-gray-200">
 
-        {/* 탭들 */}
         <div className="flex flex-1">
           {tabs.map((tab) => (
             <button
@@ -52,7 +54,6 @@ function App() {
           ))}
         </div>
 
-        {/* 다크모드 토글 */}
         <button
           onClick={() => setIsDarkMode((prev) => !prev)}
           className="ml-2 px-2 py-0.5 text-xs rounded border 
