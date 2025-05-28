@@ -137,7 +137,7 @@ function SortableBox({
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
-      className="border border-zinc-900 p-2 rounded shadow bg-zinc-900 w-full transition-opacity"
+      className="border border-gray-300 dark:border-zinc-700 p-2 rounded shadow bg-white dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity"
     >
       {/* 제목 + 핸들러 */}
       <div className="flex items-center gap-1 mb-2">
@@ -167,7 +167,7 @@ function SortableBox({
         </button>
 
         <input
-          className="flex-1 min-w-0 text-blue-300 bg-transparent outline-none truncate text-xs"
+          className="flex-1 min-w-0 text-blue-700 dark:text-blue-300 bg-transparent outline-none truncate text-xs"
           value={box.title}
           onChange={(e) => onChangeTitle(box.id, e.target.value)}
         />
@@ -234,13 +234,13 @@ function SortableBox({
           </DndContext>
 
           {/* 새 항목 입력 */}
-          <div className="flex items-center border border-zinc-700 p-1 rounded">
+          <div className="flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded">
             {/* 체크박스 공간 확보용 여백 */}
             <div className="w-5 h-5 mr-2" />
 
             <input
               ref={nameRef}
-              className="flex-[6] min-w-0 outline-none text-sm mr-1 bg-zinc-800 text-white px-2 py-1 rounded"
+              className="flex-[6] min-w-0 outline-none text-sm mr-1 bg-white dark:bg-zinc-900 text-black dark:text-white px-2 py-1 rounded"
               placeholder="새 항목"
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
@@ -255,7 +255,7 @@ function SortableBox({
               <>
                 <input
                   ref={countRef}
-                  className="flex-[2] min-w-0 outline-none bg-zinc-800 text-white text-sm text-right px-2 py-1 mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-2 py-1 mr-1"
                   placeholder="수량"
                   value={newCount}
                   onChange={(e) => setNewCount(e.target.value)}
@@ -268,7 +268,7 @@ function SortableBox({
                 />
                 <input
                   ref={unitRef}
-                  className="flex-[2] min-w-0 outline-none bg-zinc-800 text-white text-sm text-right px-2 py-1 mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-2 py-1 mr-1"
                   placeholder="단위"
                   value={newUnit}
                   onChange={(e) => setNewUnit(e.target.value)}
@@ -282,9 +282,10 @@ function SortableBox({
               </>
             )}
             <button
-              onClick={handleAddItem}
-              className="px-2 text-white rounded bg-zinc-700 hover:bg-zinc-600 transition py-1 text-sm shrink-0"
-              >
+              className="px-2 py-1 text-sm shrink-0 rounded transition
+             bg-gray-200 text-black hover:bg-gray-300
+             dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
+            >
               +
             </button>
           </div>

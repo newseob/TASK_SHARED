@@ -68,7 +68,7 @@ export default function TodayRoutine() {
     .sort((a, b) => b.remaining - a.remaining);
 
   return (
-    <div className="border border-zinc-900 p-2 rounded shadow bg-zinc-900 w-full transition-opacity">
+    <div className="border border-gray-300 dark:border-zinc-700 p-2 rounded shadow bg-white dark:bg-zinc-900 w-full transition-opacity">
       <div className="flex items-center justify-between">
         <button
           className="mx-1 text-zinc-400 hover:text-white cursor-pointer text-sm transition"
@@ -86,8 +86,13 @@ export default function TodayRoutine() {
           {sortedItems.map((item) => {
             const liClass =
               item.remaining >= 0
-                ? "bg-red-900 text-zinc-100 border-red-500"
-                : "text-zinc-400 border-zinc-900 bg-zinc-900";
+                ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-zinc-100 border-red-300 dark:border-zinc-700"
+                : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
+
+            const memoClass =
+              item.remaining >= 0
+                ? "text-zinc-500 dark:text-zinc-400"
+                : "text-gray-400 dark:text-zinc-700";
 
             return (
               <li
@@ -103,8 +108,8 @@ export default function TodayRoutine() {
                       {item.remaining > 0
                         ? `D+${item.remaining}`
                         : item.remaining < 0
-                        ? `D-${Math.abs(item.remaining)}`
-                        : "오늘"}
+                          ? `D-${Math.abs(item.remaining)}`
+                          : "오늘"}
                     </span>
                     <div className="relative w-5 h-5">
                       <input
@@ -137,7 +142,7 @@ export default function TodayRoutine() {
                 </div>
 
                 <div className="flex flex-col text-[11px] font-light">
-                  <span className="whitespace-pre-wrap break-words text-zinc-400">
+                  <span className={`whitespace-pre-wrap break-words ${memoClass}`}>
                     {item.memo}
                   </span>
                   {item.lastReplaced && (

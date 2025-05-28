@@ -112,12 +112,12 @@ export default function RoutineTab() {
   const getRowClass = (item: RoutineItem) => {
     const remaining = calculateRemainingDays(item.lastChecked, item.cycle);
 
-    if (remaining <= 0) return "bg-red-900";       // 초과
-    if (remaining <= 3) return "bg-orange-900";    // 임박
-    if (remaining <= 7) return "bg-yellow-900";     // 곧
-    return "";                                     // 기본
+    if (remaining <= 0) return "bg-red-200 dark:bg-red-900";
+    if (remaining <= 3) return "bg-orange-200 dark:bg-orange-900";
+    if (remaining <= 7) return "bg-yellow-100 dark:bg-yellow-900";
+    return "bg-white dark:bg-zinc-800";
   };
-
+  
   const sortedItems = [...items].sort((a, b) => {
     if (!sortKey) return 0;
     const valA = a[sortKey]?.toString() || "";
@@ -126,12 +126,12 @@ export default function RoutineTab() {
   });
 
   return (
-    <div className="p-2 space-y-6 bg-zinc-900 text-white show-scrollbar">
+    <div className="p-2 space-y-6 bg-white text-black dark:bg-zinc-900 dark:text-white show-scrollbar">
       {/* 테이블 */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] table-fixed border text-xs">
           <thead>
-            <tr className="bg-zinc-800 text-center text-xs text-zind-200">
+            <tr className="bg-zinc-100 dark:bg-zinc-800 text-center text-xs text-gray-800 dark:text-zinc-200">
               <th
                 className="border border-zinc-600 px-2 py-1 w-32 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("name")}
@@ -167,10 +167,10 @@ export default function RoutineTab() {
           </thead>
           <tbody>
             {/* 입력 행: 항상 보이도록 위쪽에 배치 */}
-            <tr className="text-center bg-zinc-800 text-white">
+            <tr className="text-center bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white">
               <td className="border border-zinc-600 px-2 py-4">
                 <input
-                  className="w-full p-1 bg-zinc-700 text-white rounded"
+                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
                   value={newItem.name}
                   onChange={(e) =>
                     setNewItem((prev) => ({ ...prev, name: e.target.value }))
@@ -179,7 +179,7 @@ export default function RoutineTab() {
               </td>
               <td className="border border-zinc-600 px-2 py-4">
                 <input
-                  className="w-full p-1 bg-zinc-700 text-white rounded"
+                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
                   value={newItem.memo}
                   onChange={(e) =>
                     setNewItem((prev) => ({ ...prev, memo: e.target.value }))
@@ -189,7 +189,7 @@ export default function RoutineTab() {
               <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="date"
-                  className="w-full p-1 bg-zinc-700 text-white rounded"
+                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
                   value={newItem.lastChecked}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -202,7 +202,7 @@ export default function RoutineTab() {
               <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="date"
-                  className="w-full p-1 bg-zinc-700 text-white rounded"
+                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
                   value={newItem.lastReplaced}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -215,7 +215,7 @@ export default function RoutineTab() {
               <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="number"
-                  className="w-full p-1 bg-zinc-700 text-white rounded"
+                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
                   value={newItem.cycle}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -238,10 +238,7 @@ export default function RoutineTab() {
             {/* 안내 메시지 (항목이 없을 때) */}
             {sortedItems.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="text-center bg-zinc-700 text-white py-4 bg-white"
-                >
+                <td colSpan={6} className="text-center bg-zinc-100 dark:bg-zinc-700 text-gray-600 dark:text-white py-4">
                   아직 추가된 항목이 없습니다.
                 </td>
               </tr>

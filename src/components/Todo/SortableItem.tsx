@@ -56,29 +56,29 @@ export default function SortableItem({
 
   const baseBg =
     isLowCount
-      ? "bg-red-900 text-red-100"
+      ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-100"
       : item.status === "blue"
-        ? "bg-blue-900 text-blue-100"
+        ? "bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-100"
         : item.status === "red"
-          ? "bg-red-900 text-red-100"
-          : "bg-zinc-800 text-white";
+          ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-100"
+          : "bg-white dark:bg-zinc-800 text-gray-800 dark:text-white";
 
   const borderColorClass =
     isLowCount
-      ? "border-red-500"
+      ? "border-red-300 dark:border-red-500"
       : item.status === "blue"
-        ? "border-blue-400"
+        ? "border-blue-300 dark:border-blue-500"
         : item.status === "red"
-          ? "border-red-500"
-          : "border-zinc-600";
+          ? "border-red-300 dark:border-red-500"
+          : "border-gray-300 dark:border-zinc-600";
 
   const textColorClass =
     isLowCount
-      ? "text-red-300"
+      ? "text-red-400"
       : item.status === "blue"
         ? "text-blue-300"
         : item.status === "red"
-          ? "text-red-300"
+          ? "text-red-400"
           : "text-zind-500";
 
   const handleToggleStatus = () => {
@@ -104,12 +104,12 @@ export default function SortableItem({
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
         className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs shrink-0 transition-colors ${isLowCount
-            ? "bg-gray-900 text-red-400 border-red-400"
+            ? "bg-gray-100 dark:bg-gray-900 text-red-600 dark:text-red-400 border-red-400"
             : item.status === "blue"
               ? "bg-blue-500 text-white border-blue-500"
               : item.status === "red"
                 ? "bg-red-500 text-white border-red-500"
-                : "bg-gray-700 text-gray-400 border-gray-500"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-400 border-gray-400 dark:border-gray-500"
           }`}
       ></button>
 
