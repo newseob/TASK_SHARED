@@ -33,8 +33,13 @@ html, body {
 }
 
 .tiptap {
-  background-color: #222222; /* gray-800 */
-  color: #f9fafb; /* text-white */
+  background-color: white;
+  color: black;
+}
+
+.dark .tiptap {
+  background-color: #18181b; /* = bg-zinc-900 */
+  color: white;
 }
 
 .tiptap p {

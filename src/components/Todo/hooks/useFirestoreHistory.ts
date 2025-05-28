@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { onSnapshot } from "firebase/firestore";
 import { db } from '../../../firebase';
 
 export interface TodoItem {
@@ -41,17 +42,43 @@ export function useFirestoreHistory<T>(
     [boxId: string]: string[];
   }>({});
 
-  // 초기 로딩
+  
+
+  // ✅ onSnapshot으로 대체
   useEffect(() => {
-    (async () => {
-      const snap = await getDoc(doc(db, collection, docId));
+    const docRef = doc(db, collection, docId);
+    const unsubscribe = onSnapshot(docRef, (snap) => {
       const docData = snap.data() as Record<string, unknown> | undefined;
       const data = (docData?.[field] as T[]) || defaultData;
+  
+      isRemoteUpdate.current = true; // 🔒 저장 방지용 플래그 설정
       setItems(data);
-      setHistory([data]);
-      setHistoryIndex(0);
-    })();
+  
+      if (historyIndex === -1) {
+        setHistory([data]);
+        setHistoryIndex(0);
+      }
+    });
+  
+    return () => unsubscribe(); // 🔁 cleanup
   }, []);
+
+  const isRemoteUpdate = useRef(false);
+
+useEffect(() => {
+  if (historyIndex < 0 || isUndoing.current || isRemoteUpdate.current) {
+    isRemoteUpdate.current = false; // 🔓 한 번만 건너뜀
+    return;
+  }
+
+  setDoc(doc(db, collection, docId), { [field]: items });
+
+  setHistory((prev) => {
+    const cut = prev.slice(0, historyIndex + 1);
+    return [...cut, items];
+  });
+  setHistoryIndex((i) => i + 1);
+}, [items]);
 
   // 저장 및 히스토리 쌓기
   useEffect(() => {
