@@ -86,7 +86,7 @@ export default function TodayRoutine() {
           {sortedItems.map((item) => {
             const liClass =
               item.remaining >= 0
-                ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-zinc-100 border-red-300 dark:border-zinc-700"
+                ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-zinc-100 border-red-300 dark:border-red-500"
                 : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
 
             const memoClass =
