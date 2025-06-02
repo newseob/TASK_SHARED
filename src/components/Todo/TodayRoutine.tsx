@@ -22,6 +22,10 @@ export default function TodayRoutine() {
 
   if (!Array.isArray(items)) return null;
 
+  const [tempDates, setTempDates] = useState<{
+    [id: string]: { lastChecked?: string; lastReplaced?: string };
+  }>({});
+
   const calculateDays = (lastChecked: string, cycle: number): number => {
     if (!lastChecked) return 0;
     const last = new Date(lastChecked);
@@ -115,13 +119,28 @@ export default function TodayRoutine() {
                       <input
                         type="date"
                         className="absolute inset-0 opacity-0 cursor-pointer"
-                        onChange={(e) =>
-                          handleInlineDateChange(
-                            item.id,
-                            "lastChecked",
-                            e.target.value
-                          )
-                        }
+                        value={tempDates[item.id]?.lastChecked ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setTempDates((prev) => ({
+                            ...prev,
+                            [item.id]: {
+                              ...prev[item.id],
+                              lastChecked: value,
+                            },
+                          }));
+                        }}
+                        onBlur={() => {
+                          const temp = tempDates[item.id]?.lastChecked;
+                          if (temp && temp !== item.lastChecked) {
+                            handleInlineDateChange(item.id, "lastChecked", temp);
+                          }
+                          // 정리
+                          setTempDates((prev) => {
+                            const { [item.id]: removed, ...rest } = prev;
+                            return rest;
+                          });
+                        }}
                       />
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -152,13 +171,27 @@ export default function TodayRoutine() {
                         <input
                           type="date"
                           className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) =>
-                            handleInlineDateChange(
-                              item.id,
-                              "lastReplaced",
-                              e.target.value
-                            )
-                          }
+                          value={tempDates[item.id]?.lastReplaced ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setTempDates((prev) => ({
+                              ...prev,
+                              [item.id]: {
+                                ...prev[item.id],
+                                lastReplaced: value,
+                              },
+                            }));
+                          }}
+                          onBlur={() => {
+                            const temp = tempDates[item.id]?.lastReplaced;
+                            if (temp && temp !== item.lastReplaced) {
+                              handleInlineDateChange(item.id, "lastReplaced", temp);
+                            }
+                            setTempDates((prev) => {
+                              const { [item.id]: removed, ...rest } = prev;
+                              return rest;
+                            });
+                          }}
                         />
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
