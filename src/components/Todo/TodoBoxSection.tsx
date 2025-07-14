@@ -282,6 +282,7 @@ function SortableBox({
               </>
             )}
             <button
+              onClick={handleAddItem}
               className="px-2 py-1 text-sm shrink-0 rounded transition
              bg-gray-200 text-black hover:bg-gray-300
              dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
