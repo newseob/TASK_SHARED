@@ -103,7 +103,7 @@ export default function SortableItem({
           onToggle(boxId, item.id); // ① 선택 토글
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
-        className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs shrink-0 transition-colors ${isLowCount
+        className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors ${isLowCount
             ? "bg-gray-100 dark:bg-gray-900 text-red-600 dark:text-red-400 border-red-400"
             : item.status === "blue"
               ? "bg-blue-500 text-white border-blue-500"
@@ -217,7 +217,7 @@ export default function SortableItem({
       {/* ✅ 삭제 버튼 */}
       <button
         onClick={() => onRemoveItem(boxId, item.id)}
-        className="ml-2 px-2 text-gray rounded hover:bg-gray-200 transition text-sm shrink-0"
+        className="ml-2 px-2 text-gray rounded hover:bg-gray-200 transition text-sm"
         title="삭제"
       >
         X

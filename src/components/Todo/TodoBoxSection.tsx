@@ -240,7 +240,7 @@ function SortableBox({
 
             <input
               ref={nameRef}
-              className="flex-[6] min-w-0 outline-none text-sm mr-1 bg-white dark:bg-zinc-900 text-black dark:text-white px-2 py-1 rounded"
+              className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded"
               placeholder="새 항목"
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
@@ -255,7 +255,7 @@ function SortableBox({
               <>
                 <input
                   ref={countRef}
-                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-2 py-1 mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 "
                   placeholder="수량"
                   value={newCount}
                   onChange={(e) => setNewCount(e.target.value)}
@@ -268,7 +268,7 @@ function SortableBox({
                 />
                 <input
                   ref={unitRef}
-                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-2 py-1 mr-1"
+                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 "
                   placeholder="단위"
                   value={newUnit}
                   onChange={(e) => setNewUnit(e.target.value)}
@@ -283,7 +283,7 @@ function SortableBox({
             )}
             <button
               onClick={handleAddItem}
-              className="px-2 py-1 text-sm shrink-0 rounded transition
+              className="px-1 py-0.5 text-sm shrink-0 rounded transition
              bg-gray-200 text-black hover:bg-gray-300
              dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
             >
