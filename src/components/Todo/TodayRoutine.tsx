@@ -86,7 +86,7 @@ export default function TodayRoutine() {
       </div>
 
       {showList && (
-        <ul className="inline-grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
+        <ul className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
           {sortedItems.map((item) => {
             const liClass =
               item.remaining >= 0
