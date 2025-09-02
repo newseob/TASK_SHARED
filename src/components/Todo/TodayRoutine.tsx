@@ -1,3 +1,5 @@
+// TodayRoutine.tsx
+
 import { useState } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
@@ -13,6 +15,7 @@ interface RoutineItem {
 
 export default function TodayRoutine() {
   const [showList, setShowList] = useState(true);
+
   const { items, updateWithHistory } = useFirestoreHistory<RoutineItem>(
     "routineItems",
     "config",
@@ -26,24 +29,49 @@ export default function TodayRoutine() {
     [id: string]: { lastChecked?: string; lastReplaced?: string };
   }>({});
 
+  // ───────────────────────────────
+  // 시간/주기 계산 유틸
+  // ───────────────────────────────
+
+  // 오늘 06:00 (로컬)
+  const getToday6AM = () => {
+    const now = new Date();
+    if (now.getHours() < 6) {
+      now.setDate(now.getDate() - 1);
+    }
+    now.setHours(6, 0, 0, 0);
+    return now;
+  };
+
+  // "YYYY-MM-DD" → 로컬 기준 해당 날짜의 06:00으로 파싱
+  // 타임스탬프가 포함된 문자열은 기본 Date 파서를 사용
+  const parseLocalDateAtSix = (s: string) => {
+    if (!s) return null;
+    // 순수 날짜 형태면 로컬 06:00으로 생성
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, d] = s.split("-").map(Number);
+      return new Date(y, m - 1, d, 6, 0, 0, 0); // ← 로컬 06:00
+    }
+    // 그 외(ISO 문자열 등)는 기본 파서 (로컬/UTC 혼합 허용)
+    const dt = new Date(s);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+
+  // 남은일 계산: (오늘06:00 - 마지막체크(해당날짜06:00 기준)) 일수 - 주기
+  // 예) 어제 체크 & 주기 1 → diffDays=1 → remaining=0 → "오늘"
   const calculateDays = (lastChecked: string, cycle: number): number => {
-    if (!lastChecked) return 0;
-    const last = new Date(lastChecked);
+    if (!lastChecked) return -9999; // 없으면 리스트에서 여유로 보이도록 멀리 보내기(원하면 0으로 변경 가능)
+    const last = parseLocalDateAtSix(lastChecked);
+    if (!last) return -9999;
     const now = getToday6AM();
     const diffMs = now.getTime() - last.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     return diffDays - cycle;
   };
 
-  const getToday6AM = () => {
-    const now = new Date();
-    if (now.getHours() < 6) {
-      now.setDate(now.getDate() - 1);
-    }
-    now.setHours(9, 0, 0, 0);
-    return now;
-  };
-
+  // ───────────────────────────────
+  // 인라인 날짜 수정
+  // ───────────────────────────────
   const handleInlineDateChange = async (
     id: string,
     field: "lastChecked" | "lastReplaced",
@@ -63,20 +91,189 @@ export default function TodayRoutine() {
     }
   };
 
-  const sortedItems = items
+  // ───────────────────────────────
+  // 전처리: remaining 계산 → -3일 이상만 남기기
+  // ───────────────────────────────
+  const prepared = items
     .map((item) => ({
       ...item,
-      remaining: calculateDays(item.lastChecked, item.cycle),
+      remaining: calculateDays(item.lastChecked, Number(item.cycle)),
     }))
-    .filter((item) => item.remaining >= -3)
+    .filter((item) => item.remaining >= -3);
+
+  // 섹션 분리 및 정렬(remaining 내림차순)
+  const dailyItems = prepared
+    .filter((i) => Number(i.cycle) === 1)
     .sort((a, b) => b.remaining - a.remaining);
+
+  const nonDailyItems = prepared
+    .filter((i) => Number(i.cycle) !== 1)
+    .sort((a, b) => b.remaining - a.remaining);
+
+  // ───────────────────────────────
+  // 공통 아이템 렌더러
+  // ───────────────────────────────
+  const renderItem = (item: RoutineItem & { remaining: number }) => {
+    const liClass =
+      item.remaining >= 0
+        ? "bg-zinc-600 text-white border-zinc-700"
+        : "bg-white dark:bg-zinc-900 text-zinc-400 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
+
+    const memoClass =
+      item.remaining >= 0
+        ? "text-zinc-400"
+        : "text-gray-400 dark:text-zinc-700";
+
+    const isDaily = Number(item.cycle) === 1;
+
+    return (
+      <li
+        key={item.id}
+        className={`border rounded px-2 py-1 space-y-1 text-sm ${liClass}`}
+      >
+        {/* 상단: 이름 + D±표시 + lastChecked 인라인 달력 */}
+        <div className="flex justify-between items-center font-medium">
+          <div className="flex items-center space-x-2 font-bold text-base">
+            <span>{item.name}</span>
+          </div>
+          <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrap">
+            <span className="font-light">
+              {item.remaining > 0
+                ? `D+${item.remaining}`
+                : item.remaining < 0
+                ? `D-${Math.abs(item.remaining)}`
+                : "오늘"}
+            </span>
+            <div className="relative w-5 h-5">
+              <input
+                type="date"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                value={tempDates[item.id]?.lastChecked ?? ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setTempDates((prev) => ({
+                    ...prev,
+                    [item.id]: {
+                      ...prev[item.id],
+                      lastChecked: value,
+                    },
+                  }));
+                }}
+                onBlur={() => {
+                  const temp = tempDates[item.id]?.lastChecked;
+                  if (temp && temp !== item.lastChecked) {
+                    handleInlineDateChange(item.id, "lastChecked", temp);
+                  }
+                  setTempDates((prev) => {
+                    const { [item.id]: removed, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 text-zinc-400 pointer-events-none"
+                fill="none"
+                viewBox="0 -6 36 36"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          </span>
+        </div>
+
+        {/* 하단: 메모 + 공백 + 세부(비일상만) + (마지막 교체) 날짜-텍스트 클릭 */}
+        <div className="flex flex-col text-[11px] font-light">
+          <span className={`whitespace-pre-wrap break-words ${memoClass}`}>
+            {item.memo}
+          </span>
+
+          <div className="h-2" aria-hidden="true" />
+
+          {!isDaily && (
+            <div className="flex items-center justify-between mt-0 text-[11px] text-zinc-400 dark:text-zinc-400">
+              <span>
+                주기:{" "}
+                <b className="font-medium text-zinc-400 dark:text-zinc-400">
+                  {Number(item.cycle) || 0}일
+                </b>
+              </span>
+              <span className="tabular-nums">
+                마지막 체크:{" "}
+                <span className="text-zinc-400 dark:text-zinc-400">
+                  {item.lastChecked || "—"}
+                </span>
+              </span>
+            </div>
+          )}
+
+          {item.lastReplaced && (
+            <div className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap text-zinc-400">
+              <span className="text-[11px]">마지막 교체:</span>
+              <span
+                className="relative inline-flex items-center leading-none text-[11px]"
+                aria-label="마지막 교체 날짜 선택"
+                title="마지막 교체 날짜 선택"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector(
+                    'input[type="date"]'
+                  ) as HTMLInputElement | null;
+                  if (input && (input as any).showPicker) {
+                    (input as any).showPicker();
+                  }
+                }}
+              >
+                <input
+                  type="date"
+                  className="absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer"
+                  value={tempDates[item.id]?.lastReplaced ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setTempDates((prev) => ({
+                      ...prev,
+                      [item.id]: {
+                        ...prev[item.id],
+                        lastReplaced: value,
+                      },
+                    }));
+                  }}
+                  onBlur={() => {
+                    const temp = tempDates[item.id]?.lastReplaced;
+                    if (temp && temp !== item.lastReplaced) {
+                      handleInlineDateChange(item.id, "lastReplaced", temp);
+                    }
+                    setTempDates((prev) => {
+                      const { [item.id]: removed, ...rest } = prev;
+                      return rest;
+                    });
+                  }}
+                />
+                <span className="text-zinc-400 dark:text-zinc-400 underline decoration-dotted decoration-1 select-none">
+                  {item.lastReplaced}
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
+      </li>
+    );
+  };
 
   return (
     <div className="border border-gray-300 dark:border-zinc-700 p-2 rounded shadow bg-white dark:bg-zinc-900 w-full transition-opacity">
+      {/* 헤더 */}
       <div className="flex items-center justify-between">
         <button
           className="mx-1 text-zinc-400 hover:text-white cursor-pointer text-sm transition"
           onClick={() => setShowList(!showList)}
+          aria-label={showList ? "접기" : "펼치기"}
+          title={showList ? "접기" : "펼치기"}
         >
           {showList ? "▷" : "▽"}
         </button>
@@ -86,137 +283,38 @@ export default function TodayRoutine() {
       </div>
 
       {showList && (
-        <ul className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
-          {sortedItems.map((item) => {
-            const liClass =
-              item.remaining >= 0
-                ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-zinc-100 border-red-300 dark:border-red-500"
-                : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
+        <div className="space-y-3 mt-2">
+          <section>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                매일 루틴 (cycle = 1)
+              </h3>
+              <span className="text-[10px] text-zinc-400">{dailyItems.length}개</span>
+            </div>
+            <ul
+              className="grid gap-2"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}
+            >
+              {dailyItems.map(renderItem)}
+            </ul>
+          </section>
 
-            const memoClass =
-              item.remaining >= 0
-                ? "text-zinc-500 dark:text-zinc-400"
-                : "text-gray-400 dark:text-zinc-700";
-
-            return (
-              <li
-                key={item.id}
-                className={`border rounded px-2 py-1 space-y-1 text-sm ${liClass}`}
-              >
-                <div className="flex justify-between items-center font-medium">
-                  <div className="flex items-center space-x-2 font-bold">
-                    <span>{item.name}</span>
-                  </div>
-                  <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrap">
-                    <span className="font-light">
-                      {item.remaining > 0
-                        ? `D+${item.remaining}`
-                        : item.remaining < 0
-                          ? `D-${Math.abs(item.remaining)}`
-                          : "오늘"}
-                    </span>
-                    <div className="relative w-5 h-5">
-                      <input
-                        type="date"
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                        value={tempDates[item.id]?.lastChecked ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setTempDates((prev) => ({
-                            ...prev,
-                            [item.id]: {
-                              ...prev[item.id],
-                              lastChecked: value,
-                            },
-                          }));
-                        }}
-                        onBlur={() => {
-                          const temp = tempDates[item.id]?.lastChecked;
-                          if (temp && temp !== item.lastChecked) {
-                            handleInlineDateChange(item.id, "lastChecked", temp);
-                          }
-                          // 정리
-                          setTempDates((prev) => {
-                            const { [item.id]: removed, ...rest } = prev;
-                            return rest;
-                          });
-                        }}
-                      />
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-5 h-5 text-zinc-400 pointer-events-none"
-                        fill="none"
-                        viewBox="0 -6 36 36"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                  </span>
-                </div>
-
-                <div className="flex flex-col text-[11px] font-light">
-                  <span className={`whitespace-pre-wrap break-words ${memoClass}`}>
-                    {item.memo}
-                  </span>
-                  {item.lastReplaced && (
-                    <span className="flex items-center gap-1 self-end mt-1 text-xs whitespace-nowrap text-zinc-400">
-                      {item.lastReplaced}
-                      <div className="relative w-5 h-5">
-                        <input
-                          type="date"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          value={tempDates[item.id]?.lastReplaced ?? ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setTempDates((prev) => ({
-                              ...prev,
-                              [item.id]: {
-                                ...prev[item.id],
-                                lastReplaced: value,
-                              },
-                            }));
-                          }}
-                          onBlur={() => {
-                            const temp = tempDates[item.id]?.lastReplaced;
-                            if (temp && temp !== item.lastReplaced) {
-                              handleInlineDateChange(item.id, "lastReplaced", temp);
-                            }
-                            setTempDates((prev) => {
-                              const { [item.id]: removed, ...rest } = prev;
-                              return rest;
-                            });
-                          }}
-                        />
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-5 text-zinc-400 pointer-events-none"
-                          fill="none"
-                          viewBox="0 -6 36 36"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                    </span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+          <section>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                주기 루틴 (cycle ≠ 1)
+              </h3>
+              <span className="text-[10px] text-zinc-400">{nonDailyItems.length}개</span>
+            </div>
+            <ul
+              className="grid gap-2"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}
+            >
+              {nonDailyItems.map(renderItem)}
+            </ul>
+          </section>
+        </div>
       )}
     </div>
   );
 }
-
