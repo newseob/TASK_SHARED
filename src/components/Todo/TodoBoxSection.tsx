@@ -1,3 +1,5 @@
+// TodoBoxSection.tsx
+
 import { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -21,16 +23,23 @@ import {
 import SortableItem from "./SortableItem";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
-
+// ⬇️ Firestore 추가
+import {
+  getFirestore,
+  doc,
+  runTransaction,
+  serverTimestamp,
+  onSnapshot,
+  getDoc,
+} from "firebase/firestore";
 
 interface TodoItem {
   id: string;
   text: string;
   count?: string;
   unit?: string;
-  status?: "none" | "blue" | "red"; // ← 새 상태 필드
+  status?: "none" | "blue" | "red";
 }
-
 interface TodoBox {
   id: string;
   title: string;
@@ -38,6 +47,180 @@ interface TodoBox {
   mode: "default" | "shopping";
 }
 
+// === 옵션 플래그 ===
+const USE_REALTIME_SNAPSHOT = true;
+const USE_FOCUS_REFRESH = true;
+
+// === Firestore 트랜잭션 유틸들 ===
+const boxesRef = () => {
+  const db = getFirestore();
+  return doc(db, "sharedData", "main");
+};
+
+// 박스 추가
+async function txAddBox(mode: "default" | "shopping") {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const newBox: TodoBox = {
+      id: uuidv4(),
+      title: mode === "shopping" ? "장보기" : "제목 없음",
+      items: [],
+      mode,
+    };
+    tx.update(ref, {
+      items: [...items, newBox],
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
+// 박스 삭제
+async function txRemoveBox(boxId: string) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const next = items.filter((b) => b.id !== boxId);
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 박스 제목 변경
+async function txChangeTitle(boxId: string, value: string) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const next = items.map((b) =>
+      b.id === boxId ? { ...b, title: value } : b
+    );
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 박스 순서 변경(activeId를 overId 위치로 이동)
+async function txReorderBoxes(activeId: string, overId: string) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const oldIdx = items.findIndex((b) => b.id === activeId);
+    const newIdx = items.findIndex((b) => b.id === overId);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(items, oldIdx, newIdx);
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 아이템 추가
+async function txAddItem(boxId: string, item: TodoItem) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const next = items.map((b) =>
+      b.id === boxId ? { ...b, items: [...b.items, item] } : b
+    );
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 아이템 삭제
+async function txRemoveItem(boxId: string, itemId: string) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const next = items.map((b) =>
+      b.id === boxId
+        ? { ...b, items: b.items.filter((i) => i.id !== itemId) }
+        : b
+    );
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 아이템 필드 변경
+async function txChangeItemField(
+  boxId: string,
+  itemId: string,
+  field: "text" | "count" | "unit" | "status",
+  value: string
+) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const next = items.map((b) =>
+      b.id === boxId
+        ? {
+            ...b,
+            items: b.items.map((i) =>
+              i.id === itemId ? { ...i, [field]: value } : i
+            ),
+          }
+        : b
+    );
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 아이템 순서 변경 (newItems의 id 순서를 최신 스냅샷에 반영)
+async function txReorderItems(boxId: string, newItems: TodoItem[]) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+
+    const target = items.find((b) => b.id === boxId);
+    if (!target) return;
+
+    const byId = new Map(target.items.map((it) => [it.id, it]));
+    const ordered = newItems
+      .map((ni) => byId.get(ni.id))
+      .filter(Boolean) as TodoItem[];
+
+    // 혹시 스냅샷에만 있고 newItems에 없는 항목이 있다면(동시 편집),
+    // 뒤에 그대로 붙여 보존
+    const missing = target.items.filter(
+      (it) => !newItems.some((ni) => ni.id === it.id)
+    );
+
+    const nextItems = [...ordered, ...missing];
+
+    const next = items.map((b) =>
+      b.id === boxId ? { ...b, items: nextItems } : b
+    );
+
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// 박스 한 칸 내리기
+async function txMoveBoxDown(boxId: string) {
+  await runTransaction(getFirestore(), async (tx) => {
+    const ref = boxesRef();
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+    const idx = items.findIndex((b) => b.id === boxId);
+    if (idx < 0 || idx === items.length - 1) return;
+    const next = arrayMove(items, idx, idx + 1);
+    tx.update(ref, { items: next, updatedAt: serverTimestamp() });
+  });
+}
+
+// =========================== SortableBox ===========================
 function SortableBox({
   box,
   activeBox,
@@ -50,6 +233,8 @@ function SortableBox({
   toggleItemSelection,
   onChangeItemOrder,
   selectedItemIds,
+  moveBoxDown,
+  isLastBox,
 }: {
   box: TodoBox;
   activeBox: TodoBox | null;
@@ -71,8 +256,8 @@ function SortableBox({
   isLastBox: boolean;
 }) {
   const { attributes, listeners, setNodeRef } = useSortable({ id: box.id });
-  const [collapsed, setCollapsed] = useState(false); // 펼침/접힘 상태
-  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null); // 길게 눌러야 드래그
+  const [collapsed, setCollapsed] = useState(false);
+  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [newText, setNewText] = useState("");
   const [newCount, setNewCount] = useState("");
   const [newUnit, setNewUnit] = useState("");
@@ -97,24 +282,25 @@ function SortableBox({
       nameRef.current?.focus();
       return;
     }
-
     if (box.mode === "shopping" && !newCount.trim()) {
       countRef.current?.focus();
       return;
     }
-
     if (box.mode === "shopping" && !newUnit.trim()) {
       unitRef.current?.focus();
       return;
     }
 
-    onAddItem(box.id, {
-      id: uuidv4(),
-      text: newText.trim(),
-      count: newCount.trim(),
-      unit: newUnit.trim(),
-      status: "none",
-    });
+    onAddItem(
+      box.id,
+      {
+        id: uuidv4(),
+        text: newText.trim(),
+        count: newCount.trim(),
+        unit: newUnit.trim(),
+        status: "none",
+      }
+    );
 
     setNewText("");
     setNewCount("");
@@ -132,8 +318,8 @@ function SortableBox({
         setActiveBox(activeBox?.id === box.id ? null : box);
       }}
       style={{
-        opacity: isDragging && activeBox?.id === box.id ? 0 : 1, // ✅ 드래그 중일 때만 안 보이게
-        visibility: "visible", // ✅ 항상 자리 유지
+        opacity: isDragging && activeBox?.id === box.id ? 0 : 1,
+        visibility: "visible",
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
@@ -143,10 +329,9 @@ function SortableBox({
       <div className="flex items-center gap-1 mb-2">
         <button
           {...attributes}
-          {...listeners} // ① DnD Kit 리스너 흘려주기
+          {...listeners}
           onMouseDown={(e) => {
             dragTimeoutRef.current = setTimeout(() => {
-              // ② 제대로 된 포인터 다운 핸들러 호출
               listeners.onPointerDown?.(e as unknown as PointerEvent);
             }, 300);
           }}
@@ -158,7 +343,7 @@ function SortableBox({
           }}
           onClick={(e) => {
             e.stopPropagation();
-            setCollapsed((prev) => !prev); // 클릭 시 토글
+            setCollapsed((prev) => !prev);
           }}
           className="mx-1 text-zinc-300 cursor-pointer text-sm transition"
           title="길게 누르면 드래그 / 클릭하면 접기/펼치기"
@@ -180,10 +365,9 @@ function SortableBox({
         </button>
       </div>
 
-      {/* collapsed === false일 때만 이 아래가 보이도록 */}
+      {/* 리스트/입력 */}
       {!collapsed && (
         <>
-          {/* 아이템 정렬 가능한 리스트 */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -193,10 +377,9 @@ function SortableBox({
               const oldIndex = box.items.findIndex((i) => i.id === active.id);
               const newIndex = box.items.findIndex((i) => i.id === over.id);
               if (oldIndex < 0 || newIndex < 0) return;
-              onChangeItemOrder(
-                box.id,
-                arrayMove(box.items, oldIndex, newIndex)
-              );
+              // 로컬에서 순서 만든 뒤 → 트랜잭션에 id순서 반영
+              const next = arrayMove(box.items, oldIndex, newIndex);
+              onChangeItemOrder(box.id, next);
             }}
           >
             <SortableContext
@@ -216,11 +399,9 @@ function SortableBox({
                     isLowCount={
                       box.mode === "shopping" && Number(item.count || 0) <= 3
                     }
-                    // 체크 토글 핸들러
                     onToggle={toggleItemSelection}
                     onChangeItem={onChangeItem}
                     onRemoveItem={onRemoveItem}
-                    // 편집 중인 필드별 상태
                     editingItemId={editingItemId}
                     setEditingItemId={setEditingItemId}
                     editingCountId={editingCountId}
@@ -233,11 +414,9 @@ function SortableBox({
             </SortableContext>
           </DndContext>
 
-          {/* 새 항목 입력 */}
+          {/* 입력 */}
           <div className="flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded">
-            {/* 체크박스 공간 확보용 여백 */}
             <div className="w-5 h-5 mr-2" />
-
             <input
               ref={nameRef}
               className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded"
@@ -295,10 +474,13 @@ function SortableBox({
     </div>
   );
 }
+
+// =========================== 섹션 ===========================
 export default function TodoBoxSection() {
+  // ✅ useFirestoreHistory는 selection용으로만 사용 (배열 저장은 모두 트랜잭션)
   const {
-    items: todoBoxes,
-    updateWithHistory: updateTodoBoxesWithHistory,
+    items: _unusedItems,
+    updateWithHistory: _unusedUpdate,
     selectedItemIds,
     toggleItemSelection,
   } = useFirestoreHistory<TodoBox>("sharedData", "main", []);
@@ -306,102 +488,73 @@ export default function TodoBoxSection() {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeBox, setActiveBox] = useState<TodoBox | null>(null);
-  const importantTodos: { boxId: string; item: TodoItem }[] = [];
-  const importantShopping: { boxId: string; item: TodoItem }[] = [];
 
-  todoBoxes.forEach((box) => {
-    if (box.mode === "default") {
-      box.items.forEach((item) => {
-        if (item.status === "red" || item.status === "blue") {
-          importantTodos.push({ boxId: box.id, item });
-        }
-      });
-    } else if (box.mode === "shopping") {
-      box.items.forEach((item) => {
-        const count = Number(item.count || 0);
-        if (count <= 3) {
-          importantShopping.push({ boxId: box.id, item });
-        }
-      });
-    }
-  });
+  // 실시간 스냅샷 & 포커스 리프레시
+  const [liveBoxes, setLiveBoxes] = useState<TodoBox[]>([]);
 
-  const addTodoBox = (mode: "default" | "shopping") => {
-    const newBox: TodoBox = {
-      id: uuidv4(),
-      title: mode === "shopping" ? "장보기" : "제목 없음",
-      items: [],
-      mode,
+  // 실시간 구독
+  useEffect(() => {
+    if (!USE_REALTIME_SNAPSHOT) return;
+    const ref = boxesRef();
+    const unsub = onSnapshot(ref, (snap) => {
+      const data = snap.data() || {};
+      const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+      setLiveBoxes(items);
+    });
+    return () => unsub();
+  }, []);
+
+  // 포커스 복귀 시 최신화
+  useEffect(() => {
+    if (!USE_FOCUS_REFRESH) return;
+    const ref = boxesRef();
+    const refresh = async () => {
+      try {
+        const snap = await getDoc(ref);
+        const data = snap.data() || {};
+        const items: TodoBox[] = Array.isArray(data.items) ? data.items : [];
+        setLiveBoxes(items);
+      } catch {}
     };
+    const onFocus = () => refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
-    const updated = [...todoBoxes, newBox];
-    updateTodoBoxesWithHistory(updated);
-  };
+  // 박스/아이템 조작 핸들러들 → 전부 트랜잭션 호출
+  const addTodoBox = (mode: "default" | "shopping") => txAddBox(mode);
 
-  const moveBoxDown = (id: string) => {
-    const idx = todoBoxes.findIndex((b) => b.id === id);
-    if (idx < 0 || idx === todoBoxes.length - 1) return;
-    const updated = arrayMove(todoBoxes, idx, idx + 1);
-    updateTodoBoxesWithHistory(updated);
-  };
+  const moveBoxDown = (id: string) => txMoveBoxDown(id);
 
-  const addTodoItem = (boxId: string, item: TodoItem) => {
-    const updated = todoBoxes.map(b =>
-      b.id === boxId ? { ...b, items: [...b.items, item] } : b
-    );
-    updateTodoBoxesWithHistory(updated);
-  };
+  const addTodoItem = (boxId: string, item: TodoItem) => txAddItem(boxId, item);
 
   const removeItem = (boxId: string, itemId: string) => {
     if (itemId === "__box__") {
       const confirmDelete = confirm("정말 이 소주제를 삭제할까요?");
       if (!confirmDelete) return;
-
-      const updated = todoBoxes.filter((b) => b.id !== boxId);
-      updateTodoBoxesWithHistory(updated);
-      return;
+      return txRemoveBox(boxId);
     }
-
-    const updated = todoBoxes.map((b) =>
-      b.id === boxId
-        ? { ...b, items: b.items.filter((i) => i.id !== itemId) }
-        : b
-    );
-    updateTodoBoxesWithHistory(updated);
+    return txRemoveItem(boxId, itemId);
   };
 
-  const updateItemOrder = (boxId: string, newItems: TodoItem[]) => {
-    const updated = todoBoxes.map((b) =>
-      b.id === boxId ? { ...b, items: newItems } : b
-    );
-    updateTodoBoxesWithHistory(updated);
-  };
+  const updateItemOrder = (boxId: string, newItems: TodoItem[]) =>
+    txReorderItems(boxId, newItems);
 
-  const changeTitle = (id: string, value: string) => {
-    const updated = todoBoxes.map((b) =>
-      b.id === id ? { ...b, title: value } : b
-    );
-    updateTodoBoxesWithHistory(updated);
-  };
+  const changeTitle = (id: string, value: string) => txChangeTitle(id, value);
 
   const changeItem = (
     boxId: string,
     itemId: string,
     value: string,
     field: "text" | "count" | "unit" | "status" = "text"
-  ) => {
-    const updated = todoBoxes.map((b) =>
-      b.id === boxId
-        ? {
-          ...b,
-          items: b.items.map((i) =>
-            i.id === itemId ? { ...i, [field]: value } : i
-          ),
-        }
-        : b
-    );
-    updateTodoBoxesWithHistory(updated);
-  };
+  ) => txChangeItemField(boxId, itemId, field, value);
 
   // 외부 클릭·Esc 처리
   useEffect(() => {
@@ -424,7 +577,7 @@ export default function TodoBoxSection() {
     };
   }, []);
 
-  // 드래그 이벤트 핸들링
+  // DnD: 박스 순서 변경도 트랜잭션에서 처리
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { delay: 200, tolerance: 5 },
@@ -433,8 +586,9 @@ export default function TodoBoxSection() {
       activationConstraint: { delay: 200, tolerance: 5 },
     })
   );
+
   const handleDragStart = (evt: DragStartEvent) => {
-    const b = todoBoxes.find((b) => b.id === evt.active.id);
+    const b = liveBoxes.find((b) => b.id === evt.active.id);
     if (b) {
       setActiveBox(b);
       setIsDragging(true);
@@ -447,15 +601,13 @@ export default function TodoBoxSection() {
       setActiveBox(null);
       return;
     }
-    const oldIdx = todoBoxes.findIndex((b) => b.id === active.id);
-    const newIdx = todoBoxes.findIndex((b) => b.id === over.id);
-    if (oldIdx >= 0 && newIdx >= 0) {
-      const updated = arrayMove(todoBoxes, oldIdx, newIdx);
-      updateTodoBoxesWithHistory(updated);
-    }
+    // 서버의 최신 배열에 대해 activeId를 overId 위치로 이동
+    txReorderBoxes(String(active.id), String(over.id));
     setIsDragging(false);
     setActiveBox(null);
   };
+
+  const todoBoxes = liveBoxes; // 화면에 쓰는 소스
 
   return (
     <div
@@ -472,7 +624,10 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-            <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}
+          >
             {todoBoxes.map((b, i) => (
               <SortableBox
                 key={b.id}
@@ -514,15 +669,15 @@ export default function TodoBoxSection() {
               box={activeBox}
               activeBox={activeBox}
               isDragging={false}
-              setActiveBox={() => { }}
-              onChangeTitle={() => { }}
-              onChangeItem={() => { }}
-              onAddItem={() => { }}
-              onRemoveItem={() => { }}
-              toggleItemSelection={() => { }}
-              onChangeItemOrder={() => { }}
+              setActiveBox={() => {}}
+              onChangeTitle={() => {}}
+              onChangeItem={() => {}}
+              onAddItem={() => {}}
+              onRemoveItem={() => {}}
+              toggleItemSelection={() => {}}
+              onChangeItemOrder={() => {}}
               selectedItemIds={selectedItemIds}
-              moveBoxDown={() => { }}
+              moveBoxDown={() => {}}
               isLastBox={false}
             />
           )}

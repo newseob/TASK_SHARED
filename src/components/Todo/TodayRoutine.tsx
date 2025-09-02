@@ -1,7 +1,15 @@
 // TodayRoutine.tsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
+import {
+  getFirestore,
+  doc,
+  runTransaction,
+  serverTimestamp,
+  onSnapshot,
+  getDoc,
+} from "firebase/firestore";
 
 interface RoutineItem {
   id: string;
@@ -13,17 +21,107 @@ interface RoutineItem {
   cycle: number;
 }
 
+// 선택사항 플래그: 실시간 구독/포커스 리프레시 사용 여부
+const USE_REALTIME_SNAPSHOT = true;
+const USE_FOCUS_REFRESH = true;
+
+/** 트랜잭션: 최신 스냅샷 기준으로 특정 item의 특정 필드만 부분 업데이트 */
+async function safeUpdateItemField(
+  collectionId: string,
+  docId: string,
+  fieldPath: string, // "items"
+  itemId: string,
+  field: "lastChecked" | "lastReplaced",
+  value: string
+) {
+  const db = getFirestore();
+  const ref = doc(db, collectionId, docId);
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.data() || {};
+    const items: any[] = Array.isArray(data[fieldPath]) ? data[fieldPath] : [];
+
+    const next = items.map((it) =>
+      it?.id === itemId
+        ? {
+            ...it,
+            [field]: value,
+            updatedAt: serverTimestamp(),
+          }
+        : it
+    );
+
+    tx.update(ref, { [fieldPath]: next, updatedAt: serverTimestamp() });
+  });
+}
+
 export default function TodayRoutine() {
   const [showList, setShowList] = useState(true);
 
-  const { items, updateWithHistory } = useFirestoreHistory<RoutineItem>(
+  // 기존 훅 (초기 데이터 소스)
+  const { items, /* updateWithHistory */ } = useFirestoreHistory<RoutineItem>(
     "routineItems",
     "config",
     [],
     "items"
   );
 
-  if (!Array.isArray(items)) return null;
+  // 실시간/포커스 리프레시용 로컬 최신 소스(선택사항)
+  const [liveItems, setLiveItems] = useState<RoutineItem[] | null>(null);
+
+  // ───────────────────────────────
+  // 실시간 구독(선택사항)
+  // ───────────────────────────────
+  useEffect(() => {
+    if (!USE_REALTIME_SNAPSHOT) return;
+    const db = getFirestore();
+    const ref = doc(db, "routineItems", "config");
+    const unsub = onSnapshot(ref, (snap) => {
+      const data = snap.data();
+      const arr = Array.isArray(data?.items) ? (data!.items as RoutineItem[]) : [];
+      setLiveItems(arr);
+    });
+    return () => unsub();
+  }, []);
+
+  // ───────────────────────────────
+  // 창 포커스/탭 복귀 시 강제 최신화(선택사항)
+  // ───────────────────────────────
+  useEffect(() => {
+    if (!USE_FOCUS_REFRESH) return;
+
+    const db = getFirestore();
+    const ref = doc(db, "routineItems", "config");
+
+    const refresh = async () => {
+      try {
+        const snap = await getDoc(ref);
+        const data = snap.data();
+        const arr = Array.isArray(data?.items) ? (data!.items as RoutineItem[]) : [];
+        setLiveItems(arr);
+      } catch (e) {
+        // noop: 실패해도 기존 상태 유지
+      }
+    };
+
+    const onFocus = () => refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  // 화면에 사용할 실제 소스: 실시간/포커스 최신값 우선, 없으면 훅의 값
+  const sourceItems = Array.isArray(liveItems) ? liveItems : items;
+
+  if (!Array.isArray(sourceItems)) return null;
 
   const [tempDates, setTempDates] = useState<{
     [id: string]: { lastChecked?: string; lastReplaced?: string };
@@ -44,23 +142,20 @@ export default function TodayRoutine() {
   };
 
   // "YYYY-MM-DD" → 로컬 기준 해당 날짜의 06:00으로 파싱
-  // 타임스탬프가 포함된 문자열은 기본 Date 파서를 사용
+  // 타임스탬프가 포함된 문자열은 기본 Date 파서 사용
   const parseLocalDateAtSix = (s: string) => {
     if (!s) return null;
-    // 순수 날짜 형태면 로컬 06:00으로 생성
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
       const [y, m, d] = s.split("-").map(Number);
-      return new Date(y, m - 1, d, 6, 0, 0, 0); // ← 로컬 06:00
+      return new Date(y, m - 1, d, 6, 0, 0, 0); // 로컬 06:00
     }
-    // 그 외(ISO 문자열 등)는 기본 파서 (로컬/UTC 혼합 허용)
     const dt = new Date(s);
     return isNaN(dt.getTime()) ? null : dt;
   };
 
-  // 남은일 계산: (오늘06:00 - 마지막체크(해당날짜06:00 기준)) 일수 - 주기
-  // 예) 어제 체크 & 주기 1 → diffDays=1 → remaining=0 → "오늘"
+  // 남은일 = (오늘06:00 - 마지막체크(해당날짜06:00))일수 - 주기
   const calculateDays = (lastChecked: string, cycle: number): number => {
-    if (!lastChecked) return -9999; // 없으면 리스트에서 여유로 보이도록 멀리 보내기(원하면 0으로 변경 가능)
+    if (!lastChecked) return -9999; // 미기록 항목은 필터에 의해 감춤
     const last = parseLocalDateAtSix(lastChecked);
     if (!last) return -9999;
     const now = getToday6AM();
@@ -70,31 +165,29 @@ export default function TodayRoutine() {
   };
 
   // ───────────────────────────────
-  // 인라인 날짜 수정
+  // 인라인 날짜 수정 → 트랜잭션 기반 부분 업데이트
   // ───────────────────────────────
   const handleInlineDateChange = async (
     id: string,
     field: "lastChecked" | "lastReplaced",
     value: string
   ) => {
-    const updated = items.map((item) =>
-      item.id === id ? { ...item, [field]: value } : item
-    );
+    // Firestore 최신 스냅샷에 내 변경만 병합
+    await safeUpdateItemField("routineItems", "config", "items", id, field, value);
 
-    updateWithHistory(updated);
-
+    // 외부 히스토리 로깅 필요 시
     if ((window as any).externalRoutineHistory?.push) {
       (window as any).externalRoutineHistory.push({
-        boxes: updated,
-        lastCheckedDate: "",
+        changed: { id, field, value },
+        lastCheckedDate: field === "lastChecked" ? value : "",
       });
     }
   };
 
   // ───────────────────────────────
-  // 전처리: remaining 계산 → -3일 이상만 남기기
+  // 전처리: remaining 계산 → -3일 이상만 노출
   // ───────────────────────────────
-  const prepared = items
+  const prepared = sourceItems
     .map((item) => ({
       ...item,
       remaining: calculateDays(item.lastChecked, Number(item.cycle)),
@@ -120,9 +213,7 @@ export default function TodayRoutine() {
         : "bg-white dark:bg-zinc-900 text-zinc-400 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
 
     const memoClass =
-      item.remaining >= 0
-        ? "text-zinc-400"
-        : "text-gray-400 dark:text-zinc-700";
+      item.remaining >= 0 ? "text-zinc-400" : "text-gray-400 dark:text-zinc-700";
 
     const isDaily = Number(item.cycle) === 1;
 
@@ -170,6 +261,7 @@ export default function TodayRoutine() {
                   });
                 }}
               />
+              {/* 달력 아이콘은 원하면 제거 가능 */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-5 h-5 text-zinc-400 pointer-events-none"
@@ -284,6 +376,7 @@ export default function TodayRoutine() {
 
       {showList && (
         <div className="space-y-3 mt-2">
+          {/* 매일 루틴 (cycle=1) */}
           <section>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
@@ -299,6 +392,7 @@ export default function TodayRoutine() {
             </ul>
           </section>
 
+          {/* 주기 루틴 (cycle ≠ 1) */}
           <section>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
