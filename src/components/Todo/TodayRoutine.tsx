@@ -300,10 +300,7 @@ export default function TodayRoutine() {
               </h3>
               <span className="text-[10px] text-zinc-400">{dailyItems.length}개</span>
             </div>
-            <ul
-              className="grid gap-2"
-              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))" }}
-            >
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
               {dailyItems.map(renderItem)}
             </ul>
           </section>
