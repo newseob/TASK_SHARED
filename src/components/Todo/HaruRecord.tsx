@@ -163,11 +163,14 @@ const DayRow = React.memo(function DayRow({ day, label, highlight, requestSave }
               {labelText}
             </label>
             <input
-              type="text"
-              value={(local as any)[field] ?? ""}
-              onChange={(e) => onChange(field as keyof Fields, e.target.value)}
-              onBlur={() => flushSave(local)}
-              className="flex-1 min-w-[450px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1"
+            type="text"
+            value={(local as any)[field] ?? ""}
+            onChange={(e) => onChange(field as keyof Fields, e.target.value)}
+            onBlur={() => flushSave(local)}
+            className={[
+                "flex-1 min-w-[250px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1",
+                isTomorrow ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"
+            ].join(" ")}
             />
           </div>
         ))}
@@ -180,8 +183,11 @@ const DayRow = React.memo(function DayRow({ day, label, highlight, requestSave }
             value={local.memo ?? ""}
             onChange={(e) => onChange("memo", e.target.value)}
             onBlur={() => flushSave(local)}
-            className="flex-1 rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1 min-h-[60px]"
-          />
+            className={[
+                "flex-1 min-w-[250px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1 min-h-[60px]",
+                isTomorrow ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"
+            ].join(" ")}
+            />
         </div>
       </div>
     </div>
