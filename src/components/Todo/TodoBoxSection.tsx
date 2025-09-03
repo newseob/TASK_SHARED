@@ -505,6 +505,7 @@ export default function TodoBoxSection() {
                 + 장보기
               </button>
             </div>
+            <div className="mb-[80px]"></div>
           </div>
         </SortableContext>
 

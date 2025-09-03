@@ -282,9 +282,9 @@ export default function TodayRoutine() {
           aria-label={showList ? "접기" : "펼치기"}
           title={showList ? "접기" : "펼치기"}
         >
-          {showList ? "▷" : "▽"}
+          {showList ? "▽" : "▷"}
         </button>
-        <h2 className="flex-1 min-w-0 text-blue-600 bg-transparent outline-none truncate text-xs">
+        <h2 className="flex-1 min-w-0 text-blue-600 dark:text-blue-300 bg-transparent outline-none truncate text-xs">
           집안일루틴
         </h2>
       </div>
