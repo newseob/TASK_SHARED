@@ -168,7 +168,7 @@ const DayRow = React.memo(function DayRow({ day, label, highlight, requestSave }
             onChange={(e) => onChange(field as keyof Fields, e.target.value)}
             onBlur={() => flushSave(local)}
             className={[
-                "flex-1 min-w-[450px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1",
+                "flex-1 rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1",
                 isTomorrow ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"
             ].join(" ")}
             />
