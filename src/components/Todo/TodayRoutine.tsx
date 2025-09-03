@@ -294,12 +294,6 @@ export default function TodayRoutine() {
         <div className="space-y-[80px] mt-2 mb-[80px]">
           {/* ── 매일 루틴 박스 ─────────────────────── */}
           <section className="bg-transparent p-0 shadow-none">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
-                매일 루틴 (cycle = 1)
-              </h3>
-              <span className="text-[10px] text-zinc-400">{dailyItems.length}개</span>
-            </div>
             <ul className="grid grid-cols-1 gap-2 min-w-0">
               {dailyItems.map(renderItem)}
             </ul>
@@ -307,12 +301,6 @@ export default function TodayRoutine() {
   
           {/* ── 주기 루틴 박스 ─────────────────────── */}
           <section className="bg-transparent p-0 shadow-none">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
-                주기 루틴 (cycle ≠ 1)
-              </h3>
-              <span className="text-[10px] text-zinc-400">{nonDailyItems.length}개</span>
-            </div>
             <ul className="grid grid-cols-1 gap-2 min-w-0">
               {nonDailyItems.map(renderItem)}
             </ul>
