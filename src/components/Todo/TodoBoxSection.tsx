@@ -137,7 +137,7 @@ function SortableBox({
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
-      className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[80px]"
+      className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[80px] min-w-0 break-words [overflow-wrap:anywhere]"
     >
       {/* 제목 + 핸들러 */}
       <div className="flex items-center gap-1 mb-2">
@@ -203,7 +203,7 @@ function SortableBox({
               items={box.items.map((i) => i.id)}
               strategy={rectSortingStrategy}
             >
-              <ul className="mb-2">
+              <ul className="mb-2 min-w-0 break-words [overflow-wrap:anywhere]">
                 {box.items.map((item) => (
                   <SortableItem
                     key={item.id}
@@ -234,7 +234,7 @@ function SortableBox({
           </DndContext>
 
           {/* 새 항목 입력 */}
-          <div className="flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded">
+          <div className="flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded min-w-0">
             {/* 체크박스 공간 확보용 여백 */}
             <div className="w-5 h-5 mr-2" />
 
@@ -472,7 +472,7 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-            <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))" }}>
+            <div className="grid gap-2 min-w-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(0, 1fr))" }}>
             {todoBoxes.map((b, i) => (
               <SortableBox
                 key={b.id}
@@ -491,7 +491,7 @@ export default function TodoBoxSection() {
                 isLastBox={i === todoBoxes.length - 1}
               />
             ))}
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 min-w-0">
               <button
                 onClick={() => addTodoBox("default")}
                 className="border-dashed border border-zinc-500 rounded flex-1 h-12"

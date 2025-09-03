@@ -300,7 +300,7 @@ export default function TodayRoutine() {
               </h3>
               <span className="text-[10px] text-zinc-400">{dailyItems.length}개</span>
             </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
+            <ul className="grid grid-cols-1 gap-2 min-w-0">
               {dailyItems.map(renderItem)}
             </ul>
           </section>
@@ -313,7 +313,7 @@ export default function TodayRoutine() {
               </h3>
               <span className="text-[10px] text-zinc-400">{nonDailyItems.length}개</span>
             </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
+            <ul className="grid grid-cols-1 gap-2 min-w-0">
               {nonDailyItems.map(renderItem)}
             </ul>
           </section>
