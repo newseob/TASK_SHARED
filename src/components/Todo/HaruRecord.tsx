@@ -262,11 +262,7 @@ export default function HaruRecord() {
 
   return (
     <div className="bg-transparent">
-      <h2 className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">하루 기록</h2>
-      <p className="mt-[8px] text-[11px] text-zinc-500 dark:text-zinc-400">
-        내일이 맨 위, 그다음 오늘(06시 경계), 아래로 어제~5일 전. 입력은 로컬에 즉시 반영되고, 잠시 멈추거나
-        포커스를 벗어나면 자동 저장됩니다.
-      </p>
+      <h2 className="mt-[2px] text-xs text-blue-600 dark:text-blue-300">하루 기록</h2>
 
       <div className="mt-[12px] space-y-6">
         {renderList.map((d, idx) => {
