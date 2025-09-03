@@ -168,7 +168,7 @@ const DayRow = React.memo(function DayRow({ day, label, highlight, requestSave }
             onChange={(e) => onChange(field as keyof Fields, e.target.value)}
             onBlur={() => flushSave(local)}
             className={[
-                "flex-1 min-w-[250px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1",
+                "flex-1 min-w-[450px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1",
                 isTomorrow ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"
             ].join(" ")}
             />
@@ -184,7 +184,7 @@ const DayRow = React.memo(function DayRow({ day, label, highlight, requestSave }
             onChange={(e) => onChange("memo", e.target.value)}
             onBlur={() => flushSave(local)}
             className={[
-                "flex-1 min-w-[250px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1 min-h-[60px]",
+                "flex-1 min-w-[450px] rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1 min-h-[60px]",
                 isTomorrow ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"
             ].join(" ")}
             />
@@ -268,7 +268,7 @@ export default function HaruRecord() {
 
   return (
     <div className="bg-transparent">
-      <h2 className="mt-[2px] text-xs text-blue-600 dark:text-blue-300">하루 기록</h2>
+      <h2 className="mt-[2px] text-xs text-blue-600 dark:text-blue-300">식단 기록</h2>
 
       <div className="mt-[12px] space-y-6">
         {renderList.map((d, idx) => {
