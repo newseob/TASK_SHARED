@@ -472,7 +472,7 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-            <div className="grid gap-2 min-w-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(0, 1fr))" }}>
+            <div className="grid grid-cols-1 gap-2 min-w-0">
             {todoBoxes.map((b, i) => (
               <SortableBox
                 key={b.id}
