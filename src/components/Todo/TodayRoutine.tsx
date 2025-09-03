@@ -133,7 +133,7 @@ export default function TodayRoutine() {
       >
         {/* 상단: 이름 + D±표시 + lastChecked 인라인 달력 */}
         <div className="flex justify-between items-center font-medium">
-          <div className="flex items-center space-x-2 font-bold text-base">
+          <div className="flex items-center space-x-2 font-bold text-sm">
             <span>{item.name}</span>
           </div>
           <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrap">
@@ -273,11 +273,11 @@ export default function TodayRoutine() {
   };
 
   return (
-    <div className="border border-gray-300 dark:border-zinc-700 p-2 rounded shadow bg-white dark:bg-zinc-900 w-full transition-opacity">
+    <div className="rounded shadow-none bg-transparent w-full transition-opacity">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <button
-          className="mx-1 text-zinc-400 hover:text-white cursor-pointer text-sm transition"
+          className="mx-1 text-zinc-400 hover:text-white cursor-pointer text-xs transition"
           onClick={() => setShowList(!showList)}
           aria-label={showList ? "접기" : "펼치기"}
           title={showList ? "접기" : "펼치기"}
@@ -288,34 +288,37 @@ export default function TodayRoutine() {
           집안일루틴
         </h2>
       </div>
-
+  
       {showList && (
-        <div className="space-y-3 mt-2">
-          <section>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+        // 두 박스 사이 간격만 유지
+        <div className="space-y-[80px] mt-2 mb-[80px]">
+          {/* ── 매일 루틴 박스 ─────────────────────── */}
+          <section className="bg-transparent p-0 shadow-none">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
                 매일 루틴 (cycle = 1)
               </h3>
               <span className="text-[10px] text-zinc-400">{dailyItems.length}개</span>
             </div>
             <ul
               className="grid gap-2"
-              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))" }}
             >
               {dailyItems.map(renderItem)}
             </ul>
           </section>
-
-          <section>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+  
+          {/* ── 주기 루틴 박스 ─────────────────────── */}
+          <section className="bg-transparent p-0 shadow-none">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
                 주기 루틴 (cycle ≠ 1)
               </h3>
               <span className="text-[10px] text-zinc-400">{nonDailyItems.length}개</span>
             </div>
             <ul
               className="grid gap-2"
-              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))" }}
             >
               {nonDailyItems.map(renderItem)}
             </ul>

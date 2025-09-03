@@ -137,7 +137,7 @@ function SortableBox({
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
-      className="border border-gray-300 dark:border-zinc-700 p-2 rounded shadow bg-white dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity"
+      className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[80px]"
     >
       {/* 제목 + 핸들러 */}
       <div className="flex items-center gap-1 mb-2">
@@ -472,7 +472,7 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-            <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
+            <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))" }}>
             {todoBoxes.map((b, i) => (
               <SortableBox
                 key={b.id}
@@ -494,13 +494,13 @@ export default function TodoBoxSection() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={() => addTodoBox("default")}
-                className="border-dashed border-2 border-zinc-500 rounded flex-1 h-12"
+                className="border-dashed border border-zinc-500 rounded flex-1 h-12"
               >
                 + 할일
               </button>
               <button
                 onClick={() => addTodoBox("shopping")}
-                className="border-dashed border-2 border-zinc-500 rounded flex-1 h-12"
+                className="border-dashed border border-zinc-500 rounded flex-1 h-12"
               >
                 + 장보기
               </button>
