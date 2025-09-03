@@ -262,7 +262,7 @@ export default function HaruRecord() {
 
   return (
     <div className="bg-transparent">
-      <h2 className="mt-[2px] text-xs text-blue-600 dark:text-blue-300">하루  기록</h2>
+      <h2 className="mt-[2px] text-xs text-blue-600 dark:text-blue-300">하루 기록</h2>
 
       <div className="mt-[12px] space-y-6">
         {renderList.map((d, idx) => {
