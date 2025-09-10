@@ -203,7 +203,7 @@ export default function TodayRoutine() {
             {/* 1행 오른쪽: 마지막 체크 (주기=1이면 숨김) */}
             {Number(item.cycle) !== 1 ? (
               <span className="tabular-nums justify-self-end text-zinc-400 dark:text-zinc-400">
-                마지막 체크:{" "}
+                {" "}
                 <span className="text-zinc-400 dark:text-zinc-400">
                   {item.lastChecked || "—"}
                 </span>
@@ -224,7 +224,7 @@ export default function TodayRoutine() {
             {/* 2행 오른쪽: 마지막 교체 (텍스트 클릭 → 날짜 선택) */}
             {item.lastReplaced ? (
               <span className="justify-self-end flex items-center gap-1 text-xs whitespace-nowrap text-zinc-400">
-                <span className="text-[11px]">마지막 교체:</span>
+                <span className="text-[11px]"></span>
                 <span
                   className="relative inline-flex items-center leading-none text-[11px] cursor-pointer"
                   aria-label="마지막 교체 날짜 선택"
