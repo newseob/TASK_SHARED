@@ -1,7 +1,6 @@
 // TodoTab.tsx
 import TodayRoutine from "./Todo/TodayRoutine.tsx";
 import TodoBoxSection from "./Todo/TodoBoxSection.tsx";
-import HaruRecord from "./Todo/HaruRecord.tsx";
 
 export default function TodoTab() {
   return (
@@ -13,9 +12,6 @@ export default function TodoTab() {
           </section>
           <section className="w-full max-w-[560px] min-w-0 break-words [overflow-wrap:anywhere]">
             <TodoBoxSection />
-          </section>
-          <section className="w-full max-w-[560px] min-w-0 break-words [overflow-wrap:anywhere]">
-            <HaruRecord />
           </section>
         </div>
       </div>
