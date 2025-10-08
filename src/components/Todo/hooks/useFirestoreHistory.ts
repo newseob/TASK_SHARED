@@ -37,21 +37,24 @@ export function useFirestoreHistory<T>(
   const [items, setItems] = useState<T[]>(defaultData);
   const [history, setHistory] = useState<T[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+
   const isUndoing = useRef(false);
   const isRemoteUpdate = useRef(false);
   const hasLoadedInitially = useRef(false);
+  const savingRef = useRef(false);
 
   const [selectedItemIds, setSelectedItemIds] = useState<{
     [boxId: string]: string[];
   }>({});
 
-  // ✅ Firestore → 로컬 반영
+  // Firestore → 로컬 반영
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     const unsubscribe = onSnapshot(docRef, (snap) => {
       const docData = snap.data() as Record<string, unknown> | undefined;
-      const data = (docData?.[field] as T[]) || defaultData;
+      const data = (docData?.[field] as T[]) ?? defaultData;
 
+      // 이 업데이트는 Firestore에서 온 것 → 저장 한 번 건너뜀
       isRemoteUpdate.current = true;
       setItems(data);
 
@@ -59,49 +62,64 @@ export function useFirestoreHistory<T>(
         hasLoadedInitially.current = true;
       }
 
-      if (historyIndex === -1) {
-        setHistory([data]);
-        setHistoryIndex(0);
-      }
+      // ❗ stale historyIndex 방지: 함수형 업데이트로 초기화
+      setHistory((prev) => (prev.length === 0 ? [data] : prev));
+      setHistoryIndex((prev) => (prev === -1 ? 0 : prev));
     });
 
     return () => unsubscribe();
-  }, [collection, docId, field]);
+  }, [collection, docId, field, defaultData]);
 
-  // ✅ 로컬 변경 → Firestore 저장 + 히스토리 추가
+  // 로컬 변경 → Firestore 저장 + 히스토리 추가
   useEffect(() => {
-    // 저장 제외 조건
     if (
-      !hasLoadedInitially.current || // 초기 로드 전이면 X
-      isUndoing.current || // Undo 중이면 X
-      isRemoteUpdate.current // Firestore에서 온 변경이면 X
+      !hasLoadedInitially.current || // 초기 로드 전이면 저장 금지
+      isUndoing.current ||           // Undo 중이면 저장 금지
+      isRemoteUpdate.current ||      // 방금 Firestore에서 온 변경이면 금지
+      savingRef.current              // 저장 중복 방지
     ) {
+      // Firestore에서 온 변경은 한 번만 무시하고 해제
       isRemoteUpdate.current = false;
       return;
     }
 
-    // 저장 실행
-    const docRef = doc(db, collection, docId);
-    setDoc(docRef, { [field]: items });
+    const save = async () => {
+      savingRef.current = true;
+      try {
+        await setDoc(doc(db, collection, docId), { [field]: items });
 
-    // 히스토리 추가
-    setHistory((prev) => {
-      const cut = prev.slice(0, historyIndex + 1);
-      return [...cut, items];
-    });
-    setHistoryIndex((i) => i + 1);
-  }, [items, collection, docId, field]);
+        // 저장 성공 후에만 히스토리 쌓기
+        setHistory((prev) => {
+          const cut = prev.slice(0, historyIndex + 1);
+          return [...cut, items];
+        });
+        setHistoryIndex((i) => i + 1);
+      } finally {
+        savingRef.current = false;
+      }
+    };
 
-  // ✅ Ctrl+Z (Undo)
+    save();
+  }, [items, collection, docId, field, historyIndex]);
+
+  // Ctrl+Z (Undo)
   useEffect(() => {
-    const handler = async (e: KeyboardEvent) => {
+    const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && historyIndex > 0) {
+        e.preventDefault();
         isUndoing.current = true;
+
         const newIdx = historyIndex - 1;
-        setItems(history[newIdx]);
+        const snapshot = history[newIdx];
+
+        setItems(snapshot);
         setHistoryIndex(newIdx);
-        await setDoc(doc(db, collection, docId), { [field]: history[newIdx] });
-        isUndoing.current = false;
+
+        // Firestore 반영 (UI는 즉시 반응, 저장은 비동기)
+        setDoc(doc(db, collection, docId), { [field]: snapshot })
+          .finally(() => {
+            isUndoing.current = false;
+          });
       }
     };
 
@@ -109,12 +127,10 @@ export function useFirestoreHistory<T>(
     return () => window.removeEventListener("keydown", handler);
   }, [history, historyIndex, collection, docId, field]);
 
-  // ✅ 외부에서 호출할 업데이트 함수
-  const updateWithHistory = (newItems: T[]) => {
-    setItems(newItems);
-  };
+  // 외부 업데이트 함수
+  const updateWithHistory = (newItems: T[]) => setItems(newItems);
 
-  // ✅ 선택 항목 토글
+  // 선택 토글
   const toggleItemSelection = (boxId: string, itemId: string) => {
     setSelectedItemIds((prev) => {
       const selected = prev[boxId] || [];
