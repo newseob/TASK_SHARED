@@ -37,9 +37,11 @@ export function useFirestoreHistory<T>(
   const [items, setItems] = useState<T[]>(defaultData);
   const [history, setHistory] = useState<T[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+
   const isUndoing = useRef(false);
   const isRemoteUpdate = useRef(false);
   const hasLoadedInitially = useRef(false);
+  const savingRef = useRef(false);
 
   const [selectedItemIds, setSelectedItemIds] = useState<{
     [boxId: string]: string[];
@@ -55,52 +57,70 @@ export function useFirestoreHistory<T>(
       isRemoteUpdate.current = true;
       setItems(data);
 
+      // 초기 로딩 완료 표시
       if (!hasLoadedInitially.current) {
         hasLoadedInitially.current = true;
       }
 
-      if (historyIndex === -1) {
-        setHistory([data]);
-        setHistoryIndex(0);
-      }
+      // 최초 로딩 시 히스토리 초기화
+      setHistory((prev) => {
+        if (prev.length === 0) return [data];
+        return prev;
+      });
+      setHistoryIndex((prev) => (prev === -1 ? 0 : prev));
     });
 
     return () => unsubscribe();
-  }, [collection, docId, field]);
+  }, [collection, docId, field, defaultData]);
 
   // ✅ 로컬 변경 → Firestore 저장 + 히스토리 추가
   useEffect(() => {
-    // 저장 제외 조건
-    if (
-      !hasLoadedInitially.current || // 초기 로드 전이면 X
-      isUndoing.current || // Undo 중이면 X
-      isRemoteUpdate.current // Firestore에서 온 변경이면 X
-    ) {
-      isRemoteUpdate.current = false;
-      return;
-    }
+    const saveData = async () => {
+      if (
+        !hasLoadedInitially.current || // 초기 로드 전이면 X
+        isUndoing.current || // Undo 중이면 X
+        isRemoteUpdate.current || // Firestore에서 온 변경이면 X
+        savingRef.current // 저장 중일 때 중복 방지
+      ) {
+        isRemoteUpdate.current = false;
+        return;
+      }
 
-    // 저장 실행
-    const docRef = doc(db, collection, docId);
-    setDoc(docRef, { [field]: items });
+      savingRef.current = true;
+      try {
+        const docRef = doc(db, collection, docId);
+        await setDoc(docRef, { [field]: items });
 
-    // 히스토리 추가
-    setHistory((prev) => {
-      const cut = prev.slice(0, historyIndex + 1);
-      return [...cut, items];
-    });
-    setHistoryIndex((i) => i + 1);
-  }, [items, collection, docId, field]);
+        // 히스토리 스택에 추가
+        setHistory((prev) => {
+          const cut = prev.slice(0, historyIndex + 1);
+          return [...cut, items];
+        });
+        setHistoryIndex((i) => i + 1);
+      } finally {
+        savingRef.current = false;
+      }
+    };
+
+    saveData();
+  }, [items, collection, docId, field, historyIndex]);
 
   // ✅ Ctrl+Z (Undo)
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && historyIndex > 0) {
+        e.preventDefault();
         isUndoing.current = true;
+
         const newIdx = historyIndex - 1;
-        setItems(history[newIdx]);
+        const newData = history[newIdx];
+
+        setItems(newData);
         setHistoryIndex(newIdx);
-        await setDoc(doc(db, collection, docId), { [field]: history[newIdx] });
+
+        const docRef = doc(db, collection, docId);
+        await setDoc(docRef, { [field]: newData });
+
         isUndoing.current = false;
       }
     };
