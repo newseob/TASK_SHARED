@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { doc, setDoc, onSnapshot, serverTimestamp, Timestamp } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  onSnapshot,
+  serverTimestamp,
+  Timestamp,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "../../../firebase";
 
 export interface TodoItem {
@@ -42,7 +49,7 @@ export function useFirestoreHistory<T>(
   const isRemoteUpdate = useRef(false);
   const hasLoadedInitially = useRef(false);
   const savingRef = useRef(false);
-  const localLastModified = useRef<number>(0); // 🔹 로컬 저장시간 기록
+  const localLastModified = useRef<number>(0); // 🔹 로컬 저장 시간 기록
 
   const [selectedItemIds, setSelectedItemIds] = useState<{
     [boxId: string]: string[];
@@ -59,7 +66,7 @@ export function useFirestoreHistory<T>(
       const data = (docData?.[field] as T[]) || defaultData;
       const remoteModified = docData?.lastModifiedAt?.toMillis?.() ?? 0;
 
-      // 🔒 로컬이 더 최신이라면 Firestore 데이터 무시
+      // 🔒 로컬이 더 최신이면 Firestore 데이터 무시
       if (remoteModified < localLastModified.current) {
         console.log("⚠️ Firestore 데이터가 더 오래됨 → 무시");
         return;
@@ -80,7 +87,7 @@ export function useFirestoreHistory<T>(
     return () => unsubscribe();
   }, [collection, docId, field, defaultData]);
 
-  // ✅ 로컬 변경 → Firestore 저장 + 히스토리 추가
+  // ✅ 로컬 변경 → Firestore 저장 (충돌 방지 포함)
   useEffect(() => {
     const saveData = async () => {
       if (
@@ -97,20 +104,37 @@ export function useFirestoreHistory<T>(
       try {
         const docRef = doc(db, collection, docId);
         const now = Date.now();
-        localLastModified.current = now;
+
+        // 🔍 Firestore의 최신 수정 시간 확인
+        const snap = await getDoc(docRef);
+        const remoteModified =
+          snap.data()?.lastModifiedAt?.toMillis?.() ?? 0;
+
+        // 🛑 Firestore가 더 최신이라면 덮어쓰기 방지
+        if (remoteModified > localLastModified.current) {
+          console.warn(
+            "⚠️ Firestore에 더 최신 데이터가 존재하므로 저장을 중단합니다."
+          );
+          savingRef.current = false;
+          alert("다른 기기 또는 탭에서 이미 수정된 최신 데이터가 있습니다.");
+          return;
+        }
 
         // ⏰ Firestore에 저장 + 서버시간 기록
+        localLastModified.current = now;
         await setDoc(docRef, {
           [field]: items,
           lastModifiedAt: serverTimestamp(),
         });
 
-        // 히스토리 스택에 추가
+        // ✅ 히스토리 추가
         setHistory((prev) => {
           const cut = prev.slice(0, historyIndex + 1);
           return [...cut, items];
         });
         setHistoryIndex((i) => i + 1);
+      } catch (err) {
+        console.error("❌ Firestore 저장 중 오류:", err);
       } finally {
         savingRef.current = false;
       }
@@ -148,7 +172,7 @@ export function useFirestoreHistory<T>(
     return () => window.removeEventListener("keydown", handler);
   }, [history, historyIndex, collection, docId, field]);
 
-  // ✅ 외부 업데이트 함수
+  // ✅ 외부에서 호출할 업데이트 함수
   const updateWithHistory = (newItems: T[]) => {
     setItems(newItems);
   };
