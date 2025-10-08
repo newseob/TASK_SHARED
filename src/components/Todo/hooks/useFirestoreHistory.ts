@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "../../../firebase";
 
 export interface TodoItem {
@@ -42,6 +42,7 @@ export function useFirestoreHistory<T>(
   const isRemoteUpdate = useRef(false);
   const hasLoadedInitially = useRef(false);
   const savingRef = useRef(false);
+  const localLastModified = useRef<number>(0); // 🔹 로컬 저장시간 기록
 
   const [selectedItemIds, setSelectedItemIds] = useState<{
     [boxId: string]: string[];
@@ -51,22 +52,28 @@ export function useFirestoreHistory<T>(
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     const unsubscribe = onSnapshot(docRef, (snap) => {
-      const docData = snap.data() as Record<string, unknown> | undefined;
+      const docData = snap.data() as
+        | (Record<string, unknown> & { lastModifiedAt?: Timestamp })
+        | undefined;
+
       const data = (docData?.[field] as T[]) || defaultData;
+      const remoteModified = docData?.lastModifiedAt?.toMillis?.() ?? 0;
+
+      // 🔒 로컬이 더 최신이라면 Firestore 데이터 무시
+      if (remoteModified < localLastModified.current) {
+        console.log("⚠️ Firestore 데이터가 더 오래됨 → 무시");
+        return;
+      }
 
       isRemoteUpdate.current = true;
       setItems(data);
 
-      // 초기 로딩 완료 표시
       if (!hasLoadedInitially.current) {
         hasLoadedInitially.current = true;
       }
 
-      // 최초 로딩 시 히스토리 초기화
-      setHistory((prev) => {
-        if (prev.length === 0) return [data];
-        return prev;
-      });
+      // 히스토리 초기화
+      setHistory((prev) => (prev.length === 0 ? [data] : prev));
       setHistoryIndex((prev) => (prev === -1 ? 0 : prev));
     });
 
@@ -77,10 +84,10 @@ export function useFirestoreHistory<T>(
   useEffect(() => {
     const saveData = async () => {
       if (
-        !hasLoadedInitially.current || // 초기 로드 전이면 X
-        isUndoing.current || // Undo 중이면 X
-        isRemoteUpdate.current || // Firestore에서 온 변경이면 X
-        savingRef.current // 저장 중일 때 중복 방지
+        !hasLoadedInitially.current || // 초기 로드 전
+        isUndoing.current || // Undo 중
+        isRemoteUpdate.current || // Firestore에서 온 변경
+        savingRef.current // 중복 저장 방지
       ) {
         isRemoteUpdate.current = false;
         return;
@@ -89,7 +96,14 @@ export function useFirestoreHistory<T>(
       savingRef.current = true;
       try {
         const docRef = doc(db, collection, docId);
-        await setDoc(docRef, { [field]: items });
+        const now = Date.now();
+        localLastModified.current = now;
+
+        // ⏰ Firestore에 저장 + 서버시간 기록
+        await setDoc(docRef, {
+          [field]: items,
+          lastModifiedAt: serverTimestamp(),
+        });
 
         // 히스토리 스택에 추가
         setHistory((prev) => {
@@ -114,12 +128,17 @@ export function useFirestoreHistory<T>(
 
         const newIdx = historyIndex - 1;
         const newData = history[newIdx];
+        const now = Date.now();
+        localLastModified.current = now;
 
         setItems(newData);
         setHistoryIndex(newIdx);
 
         const docRef = doc(db, collection, docId);
-        await setDoc(docRef, { [field]: newData });
+        await setDoc(docRef, {
+          [field]: newData,
+          lastModifiedAt: serverTimestamp(),
+        });
 
         isUndoing.current = false;
       }
@@ -129,7 +148,7 @@ export function useFirestoreHistory<T>(
     return () => window.removeEventListener("keydown", handler);
   }, [history, historyIndex, collection, docId, field]);
 
-  // ✅ 외부에서 호출할 업데이트 함수
+  // ✅ 외부 업데이트 함수
   const updateWithHistory = (newItems: T[]) => {
     setItems(newItems);
   };
