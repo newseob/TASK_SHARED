@@ -308,8 +308,7 @@ export default function TodoBoxSection() {
     updateWithHistory: updateTodoBoxesWithHistory,
     selectedItemIds,
     toggleItemSelection,
-  } = useFirestoreHistory<TodoBox>("sharedData", "main", defaultBoxes, "items");
-
+  } = useFirestoreHistory<TodoBox>("sharedData", "main", defaultBoxes, "todoBoxes");
 
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
