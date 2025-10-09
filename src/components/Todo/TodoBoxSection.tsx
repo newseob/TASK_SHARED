@@ -309,7 +309,7 @@ export default function TodoBoxSection() {
       items: [],
     },
   ], []);
-    
+
   const {
     items: todoBoxes,
     updateWithHistory: updateTodoBoxesWithHistory,
