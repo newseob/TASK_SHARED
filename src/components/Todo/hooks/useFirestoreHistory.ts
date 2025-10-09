@@ -120,11 +120,13 @@ export function useFirestoreHistory<T>(
       }
 
       // Undo 중이 아닐 때만 히스토리 추가
-      setHistory((prev) => {
-        const cut = prev.slice(0, prev.length); // or just [...prev, data]
-        return [...cut, data];
-      });
-      setHistoryIndex((i) => i + 1);
+      if (!isRemoteUpdate.current && !isUndoing.current) {
+        setHistory((prev) => {
+          const cut = prev.slice(0, prev.length);
+          return [...cut, data];
+        });
+        setHistoryIndex((i) => i + 1);
+      }
     });
 
     return () => {
