@@ -74,50 +74,55 @@ export function useFirestoreHistory<T>(
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     console.log("[Firestore] 🔗 Subscribing to:", `${collection}/${docId}`);
-
+  
     const unsubscribe = onSnapshot(docRef, (snap) => {
       if (!snap.exists()) {
         console.warn("[Firestore] ❗ Document not found → initializing defaultData");
         setItems(defaultData);
         return;
       }
-
+  
       const docData = snap.data() as Record<string, unknown> | undefined;
       let data = (docData?.[field] as T[]) ?? defaultData;
-
+  
       if (!Array.isArray(data)) data = defaultData;
-
+  
       // Undo 중이면 Firestore 스냅샷 무시
       if (isUndoing.current) {
         console.log("[Firestore] ⏸️ Undo in progress → skip snapshot apply");
         return;
       }
-
+  
       console.log("[Firestore] 📥 onSnapshot received:", data);
-
+  
+      // Firestore 업데이트 표시
       isRemoteUpdate.current = true;
       setItems(data);
-
+  
+      // 최초 구독 시 히스토리 초기화
       if (!hasLoadedInitially.current) {
         hasLoadedInitially.current = true;
         setHistory([data]);
         setHistoryIndex(0);
-        console.log("[History] ✅ Initialized first snapshot.");
+        console.log("[History] ✅ Initialized with first snapshot.");
         return;
       }
-
+  
+      // Undo 중이 아닐 때만 히스토리 추가
       setHistory((prev) => {
         const cut = prev.slice(0, historyIndex + 1);
         return [...cut, data];
       });
       setHistoryIndex((i) => i + 1);
     });
-
+  
     return () => {
       console.log("[Firestore] 🔌 Unsubscribed from:", `${collection}/${docId}`);
       unsubscribe();
     };
-  }, [collection, docId, field, defaultData, historyIndex]);
+    // ✅ 의존성 최소화 — 문서가 바뀔 때만 새 구독 생성
+  }, [collection, docId, field, defaultData]);
+  
 
   // ───────────────────────────────
   // 로컬 → Firestore 저장
