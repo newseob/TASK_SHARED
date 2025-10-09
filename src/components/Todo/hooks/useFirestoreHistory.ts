@@ -47,28 +47,37 @@ export function useFirestoreHistory<T>(
     [boxId: string]: string[];
   }>({});
 
-  // Firestore → 로컬 반영
+  // Firestore → 로컬 반영 (Undo 대응 버전)
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     const unsubscribe = onSnapshot(docRef, (snap) => {
       const docData = snap.data() as Record<string, unknown> | undefined;
       const data = (docData?.[field] as T[]) ?? defaultData;
 
-      // 이 업데이트는 Firestore에서 온 것 → 저장 한 번 건너뜀
+      // 🔹 Firestore에서 온 업데이트 처리
       isRemoteUpdate.current = true;
       setItems(data);
 
+      // ✅ 초기 로드시만 첫 히스토리 생성
       if (!hasLoadedInitially.current) {
         hasLoadedInitially.current = true;
+        setHistory([data]);
+        setHistoryIndex(0);
+        return;
       }
 
-      // ❗ stale historyIndex 방지: 함수형 업데이트로 초기화
-      setHistory((prev) => (prev.length === 0 ? [data] : prev));
-      setHistoryIndex((prev) => (prev === -1 ? 0 : prev));
+      // ✅ Undo 중이 아닐 때만 외부 변경을 히스토리에 반영
+      if (!isUndoing.current) {
+        setHistory((prev) => {
+          const cut = prev.slice(0, historyIndex + 1);
+          return [...cut, data];
+        });
+        setHistoryIndex((i) => i + 1);
+      }
     });
 
     return () => unsubscribe();
-  }, [collection, docId, field, defaultData]);
+  }, [collection, docId, field, defaultData, historyIndex]);
 
   // 로컬 변경 → Firestore 저장 + 히스토리 추가
   useEffect(() => {
