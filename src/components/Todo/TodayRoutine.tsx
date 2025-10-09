@@ -127,8 +127,6 @@ export default function TodayRoutine() {
         ? "text-zinc-400"
         : "text-gray-400 dark:text-zinc-700";
 
-    const isDaily = Number(item.cycle) === 1;
-
     return (
       <li
         key={item.id}
