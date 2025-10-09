@@ -119,8 +119,12 @@ export function useFirestoreHistory<T>(
 
   // 🧹 로컬 → Firestore 저장
   const save = async () => {
-    if (!Array.isArray(items)) {
-      console.warn("[Save] 🚫 items is not an array, skipping save.");
+    const safeData = items.filter(Boolean).map(cleanData);
+
+    // 🔸 직전 히스토리와 동일하면 저장 생략
+    const lastHistory = history[historyIndex];
+    if (JSON.stringify(lastHistory) === JSON.stringify(safeData)) {
+      console.log("[Save] ⚪ No actual changes, skip Firestore update.");
       return;
     }
 
