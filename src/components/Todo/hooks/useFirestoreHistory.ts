@@ -107,8 +107,8 @@ export function useFirestoreHistory<T>(
       console.log("[Firestore] 📥 onSnapshot received:", data);
 
       // Firestore 업데이트 표시
-      setItems(data);
       isRemoteUpdate.current = true;
+      setItems(data);
 
       // 최초 구독 시 히스토리 초기화
       if (!hasLoadedInitially.current) {
