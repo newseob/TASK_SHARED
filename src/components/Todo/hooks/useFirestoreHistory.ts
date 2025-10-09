@@ -116,7 +116,7 @@ export function useFirestoreHistory<T>(
       unsubscribe();
     };
   }, [collection, docId, field]);
-  
+
   // 🧹 로컬 → Firestore 저장
   const save = async () => {
     const safeData = items.filter(Boolean).map(cleanData);
@@ -174,9 +174,7 @@ export function useFirestoreHistory<T>(
     save();
   }, [items]);
 
-  // ───────────────────────────────
   // Ctrl+Z (Undo)
-  // ───────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && historyIndex > 0) {
@@ -185,14 +183,22 @@ export function useFirestoreHistory<T>(
 
         const newIdx = historyIndex - 1;
         const snapshot = history[newIdx];
-        console.log("[Undo] ⏪ Reverting to history index:", newIdx);
+        if (!snapshot) {
+          console.warn("[Undo] ⚠️ Snapshot undefined, skip.");
+          isUndoing.current = false;
+          return;
+        }
 
-        setItems(snapshot);
+        const cleanedSnapshot = Array.isArray(snapshot)
+          ? snapshot.filter(Boolean).map(cleanData)
+          : [];
+
+        setItems(cleanedSnapshot);
         setHistoryIndex(newIdx);
 
-        setDoc(doc(db, collection, docId), { [field]: cleanData(snapshot) })
-          .then(() => console.log("[Undo] ✅ Firestore updated with reverted data."))
-          .catch((err) => console.error("[Undo] ❌ Firestore update failed:", err))
+        setDoc(doc(db, collection, docId), { [field]: cleanedSnapshot })
+          .then(() => console.log("[Undo] ✅ Firestore reverted to history"))
+          .catch((err) => console.error("[Undo] ❌ Firestore update error:", err))
           .finally(() => {
             isUndoing.current = false;
           });
@@ -202,7 +208,7 @@ export function useFirestoreHistory<T>(
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [history, historyIndex, collection, docId, field]);
-
+  
   // ───────────────────────────────
   // 외부에서 items 갱신
   // ───────────────────────────────
