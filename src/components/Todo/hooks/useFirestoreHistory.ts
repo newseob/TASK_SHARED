@@ -115,8 +115,8 @@ export function useFirestoreHistory<T>(
       console.log("[Firestore] 🔌 Unsubscribed from:", `${collection}/${docId}`);
       unsubscribe();
     };
-  }, [collection, docId, field, defaultData, historyIndex]);
-
+  }, [collection, docId, field]);
+  
   // 🧹 로컬 → Firestore 저장
   const save = async () => {
     const safeData = items.filter(Boolean).map(cleanData);

@@ -1,6 +1,6 @@
 // TodayRoutine.tsx
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
 interface RoutineItem {
@@ -16,10 +16,13 @@ interface RoutineItem {
 export default function TodayRoutine() {
   const [showList, setShowList] = useState(true);
 
+  // 🔹 빈 배열을 useMemo로 감싸서 "항상 같은 참조"로 유지
+  const defaultData = useMemo<RoutineItem[]>(() => [], []);
+
   const { items, updateWithHistory } = useFirestoreHistory<RoutineItem>(
     "routineItems",
     "config",
-    [],
+    defaultData,
     "items"
   );
 

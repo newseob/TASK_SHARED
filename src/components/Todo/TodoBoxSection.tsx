@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   DndContext,
@@ -20,6 +20,7 @@ import {
 
 import SortableItem from "./SortableItem";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
+
 
 
 
@@ -295,13 +296,17 @@ function SortableBox({
     </div>
   );
 }
+
+// 🔹 항상 동일한 참조를 유지하는 빈 배열 생성
+const defaultBoxes = useMemo<TodoBox[]>(() => [], []);
+
 export default function TodoBoxSection() {
   const {
     items: todoBoxes,
     updateWithHistory: updateTodoBoxesWithHistory,
     selectedItemIds,
     toggleItemSelection,
-  } = useFirestoreHistory<TodoBox>("sharedData", "main", []);
+  } = useFirestoreHistory<TodoBox>("sharedData", "main", defaultBoxes);
 
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -472,7 +477,7 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-            <div className="grid grid-cols-1 gap-2 min-w-0">
+          <div className="grid grid-cols-1 gap-2 min-w-0">
             {todoBoxes.map((b, i) => (
               <SortableBox
                 key={b.id}
