@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 
-// ───────────────────────────────
-// 타입 정의
-// ───────────────────────────────
 export interface TodoItem {
   id: string;
   text: string;
@@ -12,43 +9,31 @@ export interface TodoItem {
   unit?: string;
   status?: "none" | "blue" | "red";
 }
-
 export interface TodoBox {
   id: string;
   title: string;
   items: TodoItem[];
   mode: "default" | "shopping";
 }
-
 export interface UseFirestoreHistoryResult<T> {
   items: T[];
   updateWithHistory: (newItems: T[]) => void;
   selectedItemIds: { [boxId: string]: string[] };
-  setSelectedItemIds: React.Dispatch<
-    React.SetStateAction<{ [boxId: string]: string[] }>
-  >;
+  setSelectedItemIds: React.Dispatch<React.SetStateAction<{ [boxId: string]: string[] }>>;
   toggleItemSelection: (boxId: string, itemId: string) => void;
   isUndoing: boolean;
 }
 
-// ───────────────────────────────
-// undefined 필드 정리 유틸
-// ───────────────────────────────
 function cleanData(obj: any): any {
   if (Array.isArray(obj)) return obj.map(cleanData).filter(Boolean);
   if (obj && typeof obj === "object") {
-    const cleaned: any = {};
-    Object.entries(obj).forEach(([k, v]) => {
-      if (v !== undefined) cleaned[k] = cleanData(v);
-    });
-    return cleaned;
+    const out: any = {};
+    for (const [k, v] of Object.entries(obj)) if (v !== undefined) out[k] = cleanData(v);
+    return out;
   }
   return obj;
 }
 
-// ───────────────────────────────
-// useFirestoreHistory
-// ───────────────────────────────
 export function useFirestoreHistory<T>(
   collection: string,
   docId: string,
@@ -64,88 +49,80 @@ export function useFirestoreHistory<T>(
   const hasLoadedInitially = useRef(false);
   const savingRef = useRef(false);
 
-  const [selectedItemIds, setSelectedItemIds] = useState<{
-    [boxId: string]: string[];
-  }>({});
+  const [selectedItemIds, setSelectedItemIds] = useState<{ [boxId: string]: string[] }>({});
 
   // ───────────────────────────────
-  // Firestore → 로컬 반영
+  // 1) 구독 시작 전: 문서 존재 보장 (pre-create)
   // ───────────────────────────────
   useEffect(() => {
+    let unsub: (() => void) | null = null;
     const docRef = doc(db, collection, docId);
 
-    const unsubscribe = onSnapshot(docRef, async (snap) => {
-      if (!snap.exists()) {
-        console.warn("[Firestore] ❗ Document not found. Initializing.");
-
-        // ✅ Firestore 문서가 없을 때 즉시 생성
-        try {
+    (async () => {
+      console.log(`[Init] 🔗 Path = ${collection}/${docId} (field=${field})`);
+      try {
+        const first = await getDoc(docRef);
+        if (!first.exists()) {
+          console.warn("[Firestore] ❗ Document not found → creating with defaultData");
           await setDoc(docRef, { [field]: defaultData });
-          console.log("[Firestore] 🟢 Created new document:", `${collection}/${docId}`);
-        } catch (err) {
-          console.error("[Firestore] 🔴 Failed to create document:", err);
+          console.log("[Firestore] 🟢 Created:", `${collection}/${docId}`);
+        }
+      } catch (e) {
+        console.error("[Firestore] 🔴 Pre-create failed:", e);
+      }
+
+      // ── 이제 안전하게 구독 시작
+      unsub = onSnapshot(docRef, (snap) => {
+        const dataInDoc = (snap.data()?.[field] as T[]) ?? defaultData;
+        const data = Array.isArray(dataInDoc) ? dataInDoc : defaultData;
+
+        if (!hasLoadedInitially.current) {
+          hasLoadedInitially.current = true;
+          setItems(data);
+          setHistory([data]);
+          setHistoryIndex(0);
+          console.log("[History] ✅ Initialized first snapshot.");
+          return;
         }
 
-        // 로컬 상태 초기화 (Firestore 문서와 동일하게)
-        setItems(defaultData);
-        setHistory([defaultData]);
-        setHistoryIndex(0);
-        hasLoadedInitially.current = true; // 첫 로드 완료 표시
-        return;
-      }
+        if (isUndoing.current) {
+          console.log("[Firestore] ⏸️ Undo in progress → skip snapshot apply");
+          return;
+        }
 
-      // ✅ 문서가 존재하면 Firestore 데이터를 불러옴
-      const docData = snap.data() as Record<string, unknown> | undefined;
-      let data = (docData?.[field] as T[]) ?? defaultData;
-      if (!Array.isArray(data)) data = defaultData;
-
-      // 첫 로드시 히스토리 설정
-      if (!hasLoadedInitially.current) {
-        hasLoadedInitially.current = true;
+        console.log("[Firestore] 📥 onSnapshot received");
+        isRemoteUpdate.current = true;
         setItems(data);
-        setHistory([data]);
-        setHistoryIndex(0);
-        console.log("[History] ✅ Initialized first snapshot.");
-        return;
-      }
-
-      // Undo 중이면 Firestore 스냅샷 무시
-      if (isUndoing.current) {
-        console.log("[Firestore] ⏸️ Undo in progress → skip snapshot apply");
-        return;
-      }
-
-      console.log("[Firestore] 📥 onSnapshot received:", data);
-
-      isRemoteUpdate.current = true;
-      setItems(data);
-    });
+      });
+    })();
 
     return () => {
-      console.log("[Firestore] 🔌 Unsubscribed from:", `${collection}/${docId}`);
-      unsubscribe();
+      if (unsub) {
+        console.log("[Firestore] 🔌 Unsubscribed:", `${collection}/${docId}`);
+        unsub();
+      }
     };
-  }, [collection, docId, field, defaultData]);
-
-
+    // ⚠️ defaultData는 초기값일 뿐이므로 의존성에서 제외 (불필요 재구독 방지)
+  }, [collection, docId, field]);
 
   // ───────────────────────────────
-  // 로컬 → Firestore 저장
+  // 2) 로컬 → Firestore 저장
   // ───────────────────────────────
   const save = async () => {
     const safeData = items.filter(Boolean).map(cleanData);
 
-    const lastHistory = history[historyIndex];
-    if (JSON.stringify(lastHistory) === JSON.stringify(safeData)) {
+    // 첫 저장 방어: 히스토리가 없으면 무조건 한 번 기록
+    const last = historyIndex >= 0 ? history[historyIndex] : undefined;
+    if (last && JSON.stringify(last) === JSON.stringify(safeData)) {
       console.log("[Save] ⚪ No actual change → skip save");
       return;
     }
 
     savingRef.current = true;
     try {
-      console.log("[Save] 💾 Saving to Firestore:", safeData);
-      await setDoc(doc(db, collection, docId), { [field]: safeData });
-      console.log("[Save] ✅ Firestore save complete.");
+      console.log("[Save] 💾 setDoc");
+      await setDoc(doc(db, collection, docId), { [field]: safeData }, { merge: true });
+      console.log("[Save] ✅ Firestore save complete");
 
       setHistory((prev) => {
         const cut = prev.slice(0, historyIndex + 1);
@@ -160,33 +137,21 @@ export function useFirestoreHistory<T>(
   };
 
   // ───────────────────────────────
-  // 로컬 변경 감지 → 자동 저장
+  // 3) items 변경 → 자동 저장 (원격/Undo 중은 스킵)
   // ───────────────────────────────
   useEffect(() => {
-    // 🔒 저장 금지 조건
-    if (
-      !hasLoadedInitially.current ||
-      isUndoing.current ||
-      isRemoteUpdate.current ||
-      savingRef.current
-    ) {
+    if (!hasLoadedInitially.current || isUndoing.current || isRemoteUpdate.current || savingRef.current) {
       if (isRemoteUpdate.current) {
-        console.log("[Sync] 🔄 Firestore update detected → skip save once");
-        // Firestore 이벤트 해제는 늦게 처리해야 중복 방지
-        setTimeout(() => {
-          isRemoteUpdate.current = false;
-        }, 500);
+        console.log("[Sync] 🔄 Remote snapshot → skip this save");
+        setTimeout(() => (isRemoteUpdate.current = false), 300);
       }
       return;
     }
-
     console.log("[Sync] 🟢 Local change detected → trigger save()");
     save();
-  }, [items]);
+  }, [items]); // eslint-disable-line
 
-  // ───────────────────────────────
-  // 최신 history / index 동기화 ref
-  // ───────────────────────────────
+  // 최신 history refs
   const historyRef = useRef<T[][]>([]);
   const historyIndexRef = useRef<number>(-1);
   useEffect(() => {
@@ -195,92 +160,55 @@ export function useFirestoreHistory<T>(
   }, [history, historyIndex]);
 
   // ───────────────────────────────
-  // Ctrl+Z (Undo)
+  // 4) Ctrl+Z (Undo)
   // ───────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const currentHistory = historyRef.current;
-      const currentIndex = historyIndexRef.current;
-
-      // 🧩 히스토리 검사
-      if (!currentHistory || currentHistory.length === 0) {
-        console.warn("[Undo] ❌ No history available.");
-        return;
-      }
+      const h = historyRef.current;
+      const idx = historyIndexRef.current;
+      if (!h || h.length === 0) return;
 
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
+        if (idx <= 0) return;
 
-        if (currentIndex <= 0) {
-          console.warn("[Undo] ⚠️ Already at oldest state, cannot undo.");
-          return;
-        }
-
-        console.log("[Undo] ⏪ Triggered Ctrl+Z");
         isUndoing.current = true;
+        const newIdx = idx - 1;
+        const snapshot = h[newIdx] ?? [];
+        const cleaned = Array.isArray(snapshot) ? snapshot.filter(Boolean).map(cleanData) : [];
 
-        const newIdx = currentIndex - 1;
-        const snapshot = currentHistory[newIdx];
-
-        if (!snapshot) {
-          console.warn("[Undo] ⚠️ Snapshot undefined, skip.");
-          isUndoing.current = false;
-          return;
-        }
-
-        const cleanedSnapshot = Array.isArray(snapshot)
-          ? snapshot.filter(Boolean).map(cleanData)
-          : [];
-
-        console.log("[Undo] 🔄 Restoring snapshot index:", newIdx);
-        setItems(cleanedSnapshot);
+        setItems(cleaned);
         setHistoryIndex(newIdx);
 
-        // Firestore 반영
-        setDoc(doc(db, collection, docId), { [field]: cleanedSnapshot })
+        setDoc(doc(db, collection, docId), { [field]: cleaned }, { merge: true })
           .then(() => {
-            console.log("[Undo] ✅ Firestore reverted to snapshot");
-            // Firestore 응답 도착 이후 약간의 여유를 두고 해제
+            console.log("[Undo] ✅ Reverted in Firestore");
             setTimeout(() => {
               isUndoing.current = false;
-              console.log("[Undo] 🔚 Undo complete, resume syncing");
-            }, 1000);
+            }, 400);
           })
           .catch((err) => console.error("[Undo] ❌ Firestore update error:", err));
       }
     };
-
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [collection, docId, field]);
 
-  // ───────────────────────────────
-  // 외부에서 items 갱신
-  // ───────────────────────────────
   const updateWithHistory = (newItems: T[]) => {
-    console.log("[Update] ✏️ updateWithHistory:", newItems);
+    console.log("[Update] ✏️ updateWithHistory");
     setItems(newItems);
   };
 
-  // ───────────────────────────────
-  // 선택 토글
-  // ───────────────────────────────
   const toggleItemSelection = (boxId: string, itemId: string) => {
     setSelectedItemIds((prev) => {
-      const selected = prev[boxId] || [];
-      console.log(`[Selection] 🔘 Toggled '${itemId}' in '${boxId}'`);
+      const cur = prev[boxId] || [];
       return {
         ...prev,
-        [boxId]: selected.includes(itemId)
-          ? selected.filter((id) => id !== itemId)
-          : [...selected, itemId],
+        [boxId]: cur.includes(itemId) ? cur.filter((id) => id !== itemId) : [...cur, itemId],
       };
     });
   };
 
-  // ───────────────────────────────
-  // 반환
-  // ───────────────────────────────
   return {
     items,
     updateWithHistory,
