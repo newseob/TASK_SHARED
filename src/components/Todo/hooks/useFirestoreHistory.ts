@@ -186,12 +186,15 @@ export function useFirestoreHistory<T>(
   // Ctrl+Z (Undo)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && historyIndex > 0) {
+      const currentHistory = historyRef.current;
+      const currentIndex = historyIndexRef.current;
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && currentIndex > 0) {
         e.preventDefault();
         isUndoing.current = true;
 
-        const newIdx = historyIndex - 1;
-        const snapshot = history[newIdx];
+        const newIdx = currentIndex - 1;
+        const snapshot = currentHistory[newIdx];
         if (!snapshot) {
           console.warn("[Undo] ⚠️ Snapshot undefined, skip.");
           isUndoing.current = false;
@@ -202,6 +205,7 @@ export function useFirestoreHistory<T>(
           ? snapshot.filter(Boolean).map(cleanData)
           : [];
 
+        console.log("[Undo] 🔄 Restoring snapshot index", newIdx, cleanedSnapshot);
         setItems(cleanedSnapshot);
         setHistoryIndex(newIdx);
 
@@ -216,7 +220,7 @@ export function useFirestoreHistory<T>(
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [history, historyIndex, collection, docId, field]);
+  }, [collection, docId, field]);
 
   // ───────────────────────────────
   // 외부에서 items 갱신
