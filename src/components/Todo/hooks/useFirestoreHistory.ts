@@ -88,6 +88,12 @@ export function useFirestoreHistory<T>(
         data = defaultData;
       }
 
+      // 🧩 Undo 중일 때는 Firestore에서 온 데이터 무시
+      if (isUndoing.current) {
+        console.log("[Firestore] ⏸️ Undo in progress → skip applying snapshot");
+        return;
+      }
+
       console.log("[Firestore] 📥 onSnapshot received:", data);
 
       isRemoteUpdate.current = true;
@@ -101,21 +107,20 @@ export function useFirestoreHistory<T>(
         return;
       }
 
-      if (!isUndoing.current) {
-        setHistory((prev) => {
-          const cut = prev.slice(0, historyIndex + 1);
-          console.log("[History] ➕ Added Firestore change to history.");
-          return [...cut, data];
-        });
-        setHistoryIndex((i) => i + 1);
-      }
+      // Undo 중이 아닐 때만 히스토리 반영
+      setHistory((prev) => {
+        const cut = prev.slice(0, historyIndex + 1);
+        console.log("[History] ➕ Added Firestore change to history.");
+        return [...cut, data];
+      });
+      setHistoryIndex((i) => i + 1);
     });
 
     return () => {
       console.log("[Firestore] 🔌 Unsubscribed from:", `${collection}/${docId}`);
       unsubscribe();
     };
-  }, [collection, docId, field]);
+  }, [collection, docId, field, defaultData, historyIndex]);
 
   // 🧹 로컬 → Firestore 저장
   const save = async () => {
@@ -213,7 +218,10 @@ export function useFirestoreHistory<T>(
           .then(() => console.log("[Undo] ✅ Firestore reverted to history"))
           .catch((err) => console.error("[Undo] ❌ Firestore update error:", err))
           .finally(() => {
-            isUndoing.current = false;
+            setTimeout(() => {
+              isUndoing.current = false;
+              console.log("[Undo] 🔚 Undo complete, resume snapshot listening");
+            }, 300);
           });
       }
     };
