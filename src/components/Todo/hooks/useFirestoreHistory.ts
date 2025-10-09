@@ -73,30 +73,33 @@ export function useFirestoreHistory<T>(
   // ───────────────────────────────
   useEffect(() => {
     const docRef = doc(db, collection, docId);
+
     const unsubscribe = onSnapshot(docRef, async (snap) => {
       if (!snap.exists()) {
         console.warn("[Firestore] ❗ Document not found. Initializing.");
+
+        // ✅ Firestore 문서가 없을 때 즉시 생성
         try {
-          // ✅ Firestore 문서가 없으면 즉시 생성
           await setDoc(docRef, { [field]: defaultData });
           console.log("[Firestore] 🟢 Created new document:", `${collection}/${docId}`);
         } catch (err) {
           console.error("[Firestore] 🔴 Failed to create document:", err);
         }
 
-        // 로컬 상태 초기화
+        // 로컬 상태 초기화 (Firestore 문서와 동일하게)
         setItems(defaultData);
         setHistory([defaultData]);
         setHistoryIndex(0);
-        hasLoadedInitially.current = true; // 중요: 첫 로드 완료 표시
+        hasLoadedInitially.current = true; // 첫 로드 완료 표시
         return;
       }
 
+      // ✅ 문서가 존재하면 Firestore 데이터를 불러옴
       const docData = snap.data() as Record<string, unknown> | undefined;
       let data = (docData?.[field] as T[]) ?? defaultData;
       if (!Array.isArray(data)) data = defaultData;
 
-      // ✅ 최초 로드 시 히스토리 초기화
+      // 첫 로드시 히스토리 설정
       if (!hasLoadedInitially.current) {
         hasLoadedInitially.current = true;
         setItems(data);
@@ -116,15 +119,6 @@ export function useFirestoreHistory<T>(
 
       isRemoteUpdate.current = true;
       setItems(data);
-
-      // 히스토리 추가
-      if (!isRemoteUpdate.current && !isUndoing.current) {
-        setHistory((prev) => {
-          const cut = prev.slice(0, prev.length);
-          return [...cut, data];
-        });
-        setHistoryIndex((i) => i + 1);
-      }
     });
 
     return () => {
@@ -132,6 +126,7 @@ export function useFirestoreHistory<T>(
       unsubscribe();
     };
   }, [collection, docId, field, defaultData]);
+
 
 
   // ───────────────────────────────
