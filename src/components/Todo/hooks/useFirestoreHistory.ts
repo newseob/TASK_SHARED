@@ -174,6 +174,15 @@ export function useFirestoreHistory<T>(
     save();
   }, [items]);
 
+  // 최신 history / index 값을 ref로 동기화
+  const historyRef = useRef<T[][]>([]);
+  const historyIndexRef = useRef<number>(-1);
+
+  useEffect(() => {
+    historyRef.current = history;
+    historyIndexRef.current = historyIndex;
+  }, [history, historyIndex]);
+
   // Ctrl+Z (Undo)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -208,7 +217,7 @@ export function useFirestoreHistory<T>(
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [history, historyIndex, collection, docId, field]);
-  
+
   // ───────────────────────────────
   // 외부에서 items 갱신
   // ───────────────────────────────
