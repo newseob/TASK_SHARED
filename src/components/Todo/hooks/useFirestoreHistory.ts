@@ -68,7 +68,9 @@ export function useFirestoreHistory<T>(
     [boxId: string]: string[];
   }>({});
 
-  // 🧹 Firestore → 로컬 반영 (onSnapshot)
+  // ───────────────────────────────
+  // Firestore → 로컬 반영
+  // ───────────────────────────────
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     console.log("[Firestore] 🔗 Subscribing to:", `${collection}/${docId}`);
@@ -88,14 +90,15 @@ export function useFirestoreHistory<T>(
         data = defaultData;
       }
 
-      // 🧩 Undo 중일 때는 Firestore에서 온 데이터 무시
+      // Undo 중이면 Firestore 스냅샷 무시
       if (isUndoing.current) {
-        console.log("[Firestore] ⏸️ Undo in progress → skip applying snapshot");
+        console.log("[Firestore] ⏸️ Undo in progress → skip snapshot apply");
         return;
       }
 
       console.log("[Firestore] 📥 onSnapshot received:", data);
 
+      // Firestore 갱신 신호
       isRemoteUpdate.current = true;
       setItems(data);
 
@@ -107,7 +110,7 @@ export function useFirestoreHistory<T>(
         return;
       }
 
-      // Undo 중이 아닐 때만 히스토리 반영
+      // Undo 중이 아닐 때만 히스토리 추가
       setHistory((prev) => {
         const cut = prev.slice(0, historyIndex + 1);
         console.log("[History] ➕ Added Firestore change to history.");
@@ -122,28 +125,27 @@ export function useFirestoreHistory<T>(
     };
   }, [collection, docId, field, defaultData, historyIndex]);
 
-  // 🧹 로컬 → Firestore 저장
+  // ───────────────────────────────
+  // 로컬 → Firestore 저장
+  // ───────────────────────────────
   const save = async () => {
     const safeData = items.filter(Boolean).map(cleanData);
 
-    // 🔸 직전 히스토리와 동일하면 저장 생략
     const lastHistory = history[historyIndex];
     if (JSON.stringify(lastHistory) === JSON.stringify(safeData)) {
-      console.log("[Save] ⚪ No actual changes, skip Firestore update.");
+      console.log("[Save] ⚪ No actual change, skip Firestore update.");
       return;
     }
 
     savingRef.current = true;
     try {
-      let safeData = items.filter(Boolean).map(cleanData);
-      console.log("[Save] 💾 Trying to save:", safeData);
-
+      console.log("[Save] 💾 Saving to Firestore:", safeData);
       await setDoc(doc(db, collection, docId), { [field]: safeData });
       console.log("[Save] ✅ Saved successfully to Firestore.");
 
+      // 로컬 히스토리 갱신
       setHistory((prev) => {
         const cut = prev.slice(0, historyIndex + 1);
-        console.log("[History] ➕ Added local change to history.");
         return [...cut, safeData];
       });
       setHistoryIndex((i) => i + 1);
@@ -154,8 +156,11 @@ export function useFirestoreHistory<T>(
     }
   };
 
-  // 로컬 변경 감지 → 자동 저장 useEffect 내부
+  // ───────────────────────────────
+  // 로컬 변경 감지 → 자동 저장
+  // ───────────────────────────────
   useEffect(() => {
+    // Undo, Firestore, 초기로드, 저장 중이면 스킵
     if (
       !hasLoadedInitially.current ||
       isUndoing.current ||
@@ -164,22 +169,20 @@ export function useFirestoreHistory<T>(
     ) {
       if (isRemoteUpdate.current) {
         console.log("[Sync] 🔄 Firestore update detected, skip saving once.");
-
-        // 🔸 300ms 후에 플래그 해제 (루프 방지)
         setTimeout(() => {
           isRemoteUpdate.current = false;
         }, 300);
-
-        return;
       }
       return;
     }
 
-    console.log("[Sync] 🟢 Local items changed, triggering save...");
+    console.log("[Sync] 🟢 Local items changed → save()");
     save();
   }, [items]);
 
-  // 최신 history / index 값을 ref로 동기화
+  // ───────────────────────────────
+  // 최신 history / index 동기화 ref
+  // ───────────────────────────────
   const historyRef = useRef<T[][]>([]);
   const historyIndexRef = useRef<number>(-1);
 
@@ -188,7 +191,9 @@ export function useFirestoreHistory<T>(
     historyIndexRef.current = historyIndex;
   }, [history, historyIndex]);
 
+  // ───────────────────────────────
   // Ctrl+Z (Undo)
+  // ───────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const currentHistory = historyRef.current;
@@ -196,6 +201,7 @@ export function useFirestoreHistory<T>(
 
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && currentIndex > 0) {
         e.preventDefault();
+        console.log("[Undo] ⏪ Triggered Ctrl+Z");
         isUndoing.current = true;
 
         const newIdx = currentIndex - 1;
@@ -210,18 +216,19 @@ export function useFirestoreHistory<T>(
           ? snapshot.filter(Boolean).map(cleanData)
           : [];
 
-        console.log("[Undo] 🔄 Restoring snapshot index", newIdx, cleanedSnapshot);
+        console.log("[Undo] 🔄 Restoring snapshot index:", newIdx);
         setItems(cleanedSnapshot);
         setHistoryIndex(newIdx);
 
         setDoc(doc(db, collection, docId), { [field]: cleanedSnapshot })
-          .then(() => console.log("[Undo] ✅ Firestore reverted to history"))
+          .then(() => console.log("[Undo] ✅ Firestore reverted to snapshot"))
           .catch((err) => console.error("[Undo] ❌ Firestore update error:", err))
           .finally(() => {
+            // 500ms 딜레이 후 Undo 상태 해제 (루프 방지)
             setTimeout(() => {
               isUndoing.current = false;
-              console.log("[Undo] 🔚 Undo complete, resume snapshot listening");
-            }, 300);
+              console.log("[Undo] 🔚 Undo complete, resume syncing");
+            }, 500);
           });
       }
     };
@@ -244,7 +251,7 @@ export function useFirestoreHistory<T>(
   const toggleItemSelection = (boxId: string, itemId: string) => {
     setSelectedItemIds((prev) => {
       const selected = prev[boxId] || [];
-      console.log(`[Selection] 🔘 Toggled item '${itemId}' in box '${boxId}'.`);
+      console.log(`[Selection] 🔘 Toggle '${itemId}' in box '${boxId}'`);
       return {
         ...prev,
         [boxId]: selected.includes(itemId)
