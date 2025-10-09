@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../../../firebase";
 
+// ───────────────────────────────
+// 타입 정의
+// ───────────────────────────────
 export interface TodoItem {
   id: string;
   text: string;
@@ -28,6 +31,24 @@ export interface UseFirestoreHistoryResult<T> {
   isUndoing: boolean;
 }
 
+// ───────────────────────────────
+// undefined 필드 정리 유틸
+// ───────────────────────────────
+function cleanData(obj: any): any {
+  if (Array.isArray(obj)) return obj.map(cleanData);
+  if (obj && typeof obj === "object") {
+    const cleaned: any = {};
+    Object.entries(obj).forEach(([k, v]) => {
+      if (v !== undefined) cleaned[k] = cleanData(v);
+    });
+    return cleaned;
+  }
+  return obj;
+}
+
+// ───────────────────────────────
+// useFirestoreHistory
+// ───────────────────────────────
 export function useFirestoreHistory<T>(
   collection: string,
   docId: string,
@@ -47,14 +68,16 @@ export function useFirestoreHistory<T>(
     [boxId: string]: string[];
   }>({});
 
-  // Firestore → 로컬 반영 (Undo 대응 버전)
+  // ───────────────────────────────
+  // Firestore → 로컬 반영 (Undo 대응)
+  // ───────────────────────────────
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     const unsubscribe = onSnapshot(docRef, (snap) => {
       const docData = snap.data() as Record<string, unknown> | undefined;
       const data = (docData?.[field] as T[]) ?? defaultData;
 
-      // 🔹 Firestore에서 온 업데이트 처리
+      // 🔹 Firestore에서 온 업데이트 표시
       isRemoteUpdate.current = true;
       setItems(data);
 
@@ -66,7 +89,7 @@ export function useFirestoreHistory<T>(
         return;
       }
 
-      // ✅ Undo 중이 아닐 때만 외부 변경을 히스토리에 반영
+      // ✅ Undo 중이 아닐 때 외부 변경도 히스토리에 반영
       if (!isUndoing.current) {
         setHistory((prev) => {
           const cut = prev.slice(0, historyIndex + 1);
@@ -79,7 +102,9 @@ export function useFirestoreHistory<T>(
     return () => unsubscribe();
   }, [collection, docId, field, defaultData, historyIndex]);
 
+  // ───────────────────────────────
   // 로컬 변경 → Firestore 저장 + 히스토리 추가
+  // ───────────────────────────────
   useEffect(() => {
     if (
       !hasLoadedInitially.current || // 초기 로드 전이면 저장 금지
@@ -95,12 +120,16 @@ export function useFirestoreHistory<T>(
     const save = async () => {
       savingRef.current = true;
       try {
-        await setDoc(doc(db, collection, docId), { [field]: items });
+        // 🔸 undefined 필드 제거 후 Firestore에 저장
+        const safeData = cleanData(items);
+        if (!Array.isArray(safeData)) return; // 안전장치
 
-        // 저장 성공 후에만 히스토리 쌓기
+        await setDoc(doc(db, collection, docId), { [field]: safeData });
+
+        // ✅ 저장 성공 후에만 히스토리 추가
         setHistory((prev) => {
           const cut = prev.slice(0, historyIndex + 1);
-          return [...cut, items];
+          return [...cut, safeData];
         });
         setHistoryIndex((i) => i + 1);
       } finally {
@@ -111,7 +140,9 @@ export function useFirestoreHistory<T>(
     save();
   }, [items, collection, docId, field, historyIndex]);
 
+  // ───────────────────────────────
   // Ctrl+Z (Undo)
+  // ───────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && historyIndex > 0) {
@@ -124,8 +155,8 @@ export function useFirestoreHistory<T>(
         setItems(snapshot);
         setHistoryIndex(newIdx);
 
-        // Firestore 반영 (UI는 즉시 반응, 저장은 비동기)
-        setDoc(doc(db, collection, docId), { [field]: snapshot })
+        // 🔸 Firestore 반영 (UI 즉시 반영, 저장 비동기)
+        setDoc(doc(db, collection, docId), { [field]: cleanData(snapshot) })
           .finally(() => {
             isUndoing.current = false;
           });
@@ -136,10 +167,14 @@ export function useFirestoreHistory<T>(
     return () => window.removeEventListener("keydown", handler);
   }, [history, historyIndex, collection, docId, field]);
 
-  // 외부 업데이트 함수
+  // ───────────────────────────────
+  // 외부에서 items 갱신
+  // ───────────────────────────────
   const updateWithHistory = (newItems: T[]) => setItems(newItems);
 
+  // ───────────────────────────────
   // 선택 토글
+  // ───────────────────────────────
   const toggleItemSelection = (boxId: string, itemId: string) => {
     setSelectedItemIds((prev) => {
       const selected = prev[boxId] || [];
@@ -152,6 +187,9 @@ export function useFirestoreHistory<T>(
     });
   };
 
+  // ───────────────────────────────
+  // 반환
+  // ───────────────────────────────
   return {
     items,
     updateWithHistory,
