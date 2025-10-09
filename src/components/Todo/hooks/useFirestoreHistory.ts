@@ -145,7 +145,7 @@ export function useFirestoreHistory<T>(
     }
   };
 
-  // 로컬 변경 감지 → 자동 저장
+  // 로컬 변경 감지 → 자동 저장 useEffect 내부
   useEffect(() => {
     if (
       !hasLoadedInitially.current ||
@@ -155,7 +155,13 @@ export function useFirestoreHistory<T>(
     ) {
       if (isRemoteUpdate.current) {
         console.log("[Sync] 🔄 Firestore update detected, skip saving once.");
-        isRemoteUpdate.current = false;
+
+        // 🔸 300ms 후에 플래그 해제 (루프 방지)
+        setTimeout(() => {
+          isRemoteUpdate.current = false;
+        }, 300);
+
+        return;
       }
       return;
     }
