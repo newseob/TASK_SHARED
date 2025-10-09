@@ -217,4 +217,4 @@ export function useFirestoreHistory<T>(
     toggleItemSelection,
     isUndoing: isUndoing.current,
   };
-}
+} 
