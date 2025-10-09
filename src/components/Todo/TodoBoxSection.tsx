@@ -297,10 +297,12 @@ function SortableBox({
   );
 }
 
-// 🔹 항상 동일한 참조를 유지하는 빈 배열 생성
-const defaultBoxes = useMemo<TodoBox[]>(() => [], []);
+
 
 export default function TodoBoxSection() {
+  // 🔹 항상 동일한 참조를 유지하는 빈 배열 생성
+  const defaultBoxes = useMemo<TodoBox[]>(() => [], []);
+  
   const {
     items: todoBoxes,
     updateWithHistory: updateTodoBoxesWithHistory,
