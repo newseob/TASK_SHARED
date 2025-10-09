@@ -301,14 +301,22 @@ function SortableBox({
 
 export default function TodoBoxSection() {
   // 🔹 항상 동일한 참조를 유지하는 빈 배열 생성
-  const defaultBoxes = useMemo<TodoBox[]>(() => [], []);
-  
+  const defaultBoxes = useMemo<TodoBox[]>(() => [
+    {
+      id: uuidv4(),
+      title: "기본 할일",
+      mode: "default",
+      items: [],
+    },
+  ], []);
+    
   const {
     items: todoBoxes,
     updateWithHistory: updateTodoBoxesWithHistory,
     selectedItemIds,
     toggleItemSelection,
   } = useFirestoreHistory<TodoBox>("sharedData", "main", defaultBoxes, "todoBoxes");
+
 
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
