@@ -68,20 +68,27 @@ export function useFirestoreHistory<T>(
     [boxId: string]: string[];
   }>({});
 
-  // ───────────────────────────────
-  // Firestore → 로컬 반영 (Undo 대응)
-  // ───────────────────────────────
+  // 🧹 Firestore → 로컬 반영 (onSnapshot)
   useEffect(() => {
     const docRef = doc(db, collection, docId);
     const unsubscribe = onSnapshot(docRef, (snap) => {
-      const docData = snap.data() as Record<string, unknown> | undefined;
-      const data = (docData?.[field] as T[]) ?? defaultData;
+      // 🔸 문서가 아직 없을 수도 있음
+      if (!snap.exists()) {
+        console.warn("Firestore 문서가 존재하지 않아 기본값으로 초기화됨");
+        setItems(defaultData);
+        return;
+      }
 
-      // 🔹 Firestore에서 온 업데이트 표시
+      const docData = snap.data() as Record<string, unknown> | undefined;
+      let data = (docData?.[field] as T[]) ?? defaultData;
+
+      // 🔸 데이터가 배열이 아닐 경우 방어
+      if (!Array.isArray(data)) data = defaultData;
+
       isRemoteUpdate.current = true;
       setItems(data);
 
-      // ✅ 초기 로드시만 첫 히스토리 생성
+      // ✅ 초기 로드시 첫 히스토리 생성
       if (!hasLoadedInitially.current) {
         hasLoadedInitially.current = true;
         setHistory([data]);
@@ -89,7 +96,7 @@ export function useFirestoreHistory<T>(
         return;
       }
 
-      // ✅ Undo 중이 아닐 때 외부 변경도 히스토리에 반영
+      // ✅ Undo 중이 아닐 때 외부 변경 히스토리 반영
       if (!isUndoing.current) {
         setHistory((prev) => {
           const cut = prev.slice(0, historyIndex + 1);
@@ -102,43 +109,28 @@ export function useFirestoreHistory<T>(
     return () => unsubscribe();
   }, [collection, docId, field, defaultData, historyIndex]);
 
-  // ───────────────────────────────
-  // 로컬 변경 → Firestore 저장 + 히스토리 추가
-  // ───────────────────────────────
-  useEffect(() => {
-    if (
-      !hasLoadedInitially.current || // 초기 로드 전이면 저장 금지
-      isUndoing.current ||           // Undo 중이면 저장 금지
-      isRemoteUpdate.current ||      // 방금 Firestore에서 온 변경이면 금지
-      savingRef.current              // 저장 중복 방지
-    ) {
-      // Firestore에서 온 변경은 한 번만 무시하고 해제
-      isRemoteUpdate.current = false;
-      return;
+  // 🧹 로컬 → Firestore 저장
+  const save = async () => {
+    savingRef.current = true;
+    try {
+      // 🔸 데이터 방어: undefined 제거 + 필터
+      let safeData = Array.isArray(items)
+        ? items.filter(Boolean).map(cleanData)
+        : [];
+
+      // 🔸 Firestore 저장 (undefined 완전 차단)
+      await setDoc(doc(db, collection, docId), { [field]: safeData });
+
+      // ✅ 저장 성공 후 히스토리 추가
+      setHistory((prev) => {
+        const cut = prev.slice(0, historyIndex + 1);
+        return [...cut, safeData];
+      });
+      setHistoryIndex((i) => i + 1);
+    } finally {
+      savingRef.current = false;
     }
-
-    const save = async () => {
-      savingRef.current = true;
-      try {
-        // 🔸 undefined 필드 제거 후 Firestore에 저장
-        const safeData = cleanData(items);
-        if (!Array.isArray(safeData)) return; // 안전장치
-
-        await setDoc(doc(db, collection, docId), { [field]: safeData });
-
-        // ✅ 저장 성공 후에만 히스토리 추가
-        setHistory((prev) => {
-          const cut = prev.slice(0, historyIndex + 1);
-          return [...cut, safeData];
-        });
-        setHistoryIndex((i) => i + 1);
-      } finally {
-        savingRef.current = false;
-      }
-    };
-
-    save();
-  }, [items, collection, docId, field, historyIndex]);
+  };
 
   // ───────────────────────────────
   // Ctrl+Z (Undo)
