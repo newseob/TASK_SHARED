@@ -61,16 +61,9 @@ export default function SortableItem({
         ? "bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-100"
         : item.status === "red"
           ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-100"
-          : "bg-white dark:bg-zinc-800 text-gray-800 dark:text-white";
+          : "bg-white dark:bg-zinc-900 text-gray-800 dark:text-white";
 
-  const borderColorClass =
-    isLowCount
-      ? "border-red-300 dark:border-red-500"
-      : item.status === "blue"
-        ? "border-blue-300 dark:border-blue-500"
-        : item.status === "red"
-          ? "border-red-300 dark:border-red-500"
-          : "border-gray-300 dark:border-zinc-600";
+  const borderColorClass = "border-none";
 
   const textColorClass =
     isLowCount
@@ -104,12 +97,12 @@ export default function SortableItem({
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
         className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors ${isLowCount
-            ? "bg-gray-100 dark:bg-gray-900 text-red-600 dark:text-red-400 border-red-400"
-            : item.status === "blue"
-              ? "bg-blue-500 text-white border-blue-500"
-              : item.status === "red"
-                ? "bg-red-500 text-white border-red-500"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-400 border-gray-400 dark:border-gray-500"
+          ? "bg-gray-100 dark:bg-gray-900 text-red-600 dark:text-red-400 border-red-400"
+          : item.status === "blue"
+            ? "bg-blue-500 text-white border-blue-500"
+            : item.status === "red"
+              ? "bg-red-500 text-white border-red-500"
+              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-400 border-gray-400 dark:border-gray-500"
           }`}
       ></button>
 

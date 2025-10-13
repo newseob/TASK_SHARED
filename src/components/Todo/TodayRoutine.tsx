@@ -94,15 +94,14 @@ export default function TodayRoutine() {
     }
   };
 
-  // ───────────────────────────────
-  // 전처리: remaining 계산 → -3일 이상만 남기기
-  // ───────────────────────────────
+  // 전처리: remaining 계산 → D-3 미만(즉, 아직 3일 이상 남은 항목)은 숨김
   const prepared = items
     .map((item) => ({
       ...item,
       remaining: calculateDays(item.lastChecked, Number(item.cycle)),
     }))
-    .filter((item) => item.remaining >= -3);
+    // 🔹 0 이상 = 오늘 또는 주기가 지난 항목만 표시
+    .filter((item) => item.remaining >= 0);
 
   // 섹션 분리 및 정렬(remaining 내림차순)
   const dailyItems = prepared
@@ -142,8 +141,8 @@ export default function TodayRoutine() {
               {item.remaining > 0
                 ? `D+${item.remaining}`
                 : item.remaining < 0
-                ? `D-${Math.abs(item.remaining)}`
-                : "오늘"}
+                  ? `D-${Math.abs(item.remaining)}`
+                  : "오늘"}
             </span>
             <div className="relative w-5 h-5">
               <input
@@ -276,7 +275,7 @@ export default function TodayRoutine() {
   return (
     <div className="rounded shadow-none bg-transparent w-full transition-opacity">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-[3px]">
         <button
           className="mx-1 text-zinc-400 hover:text-white cursor-pointer text-xs transition"
           onClick={() => setShowList(!showList)}
@@ -289,17 +288,17 @@ export default function TodayRoutine() {
           집안일루틴
         </h2>
       </div>
-  
+
       {showList && (
         // 두 박스 사이 간격만 유지
-        <div className="space-y-[80px] mt-2 mb-[80px]">
+        <div className="space-y-[40px] mt-2 mb-[80px]">
           {/* ── 매일 루틴 박스 ─────────────────────── */}
           <section className="bg-transparent p-0 shadow-none">
             <ul className="grid grid-cols-1 gap-2 min-w-0">
               {dailyItems.map(renderItem)}
             </ul>
           </section>
-  
+
           {/* ── 주기 루틴 박스 ─────────────────────── */}
           <section className="bg-transparent p-0 shadow-none">
             <ul className="grid grid-cols-1 gap-2 min-w-0">

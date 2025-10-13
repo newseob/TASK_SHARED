@@ -138,7 +138,7 @@ function SortableBox({
         height: "auto",
         touchAction: isDragging ? "none" : "auto",
       }}
-      className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[80px] min-w-0 break-words [overflow-wrap:anywhere]"
+      className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[40px] min-w-0 break-words [overflow-wrap:anywhere]"
     >
       {/* 제목 + 핸들러 */}
       <div className="flex items-center gap-1 mb-2">
@@ -506,21 +506,17 @@ export default function TodoBoxSection() {
                 isLastBox={i === todoBoxes.length - 1}
               />
             ))}
-            <div className="flex gap-2 mt-2 min-w-0">
-              <button
-                onClick={() => addTodoBox("default")}
-                className="border-dashed border border-zinc-500 rounded flex-1 h-12"
-              >
-                + 할일
-              </button>
-              <button
-                onClick={() => addTodoBox("shopping")}
-                className="border-dashed border border-zinc-500 rounded flex-1 h-12"
-              >
-                + 장보기
-              </button>
-            </div>
-            <div className="mb-[80px]"></div>
+          </div>
+          <div className="flex gap-2 mt-2 min-w-0">
+            <button
+              onClick={() => addTodoBox("default")}
+              className="border-none flex-1 h-12"
+            >
+              + 할일
+            </button>
+          </div>
+          <div className="mb-[40px]">
+
           </div>
         </SortableContext>
 
