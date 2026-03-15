@@ -1,6 +1,6 @@
 // CycleRoutine.tsx
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
 interface RoutineItem {
@@ -14,7 +14,16 @@ interface RoutineItem {
 }
 
 export default function CycleRoutine() {
-  const [showList, setShowList] = useState(true);
+  const [showList, setShowList] = useState(() => {
+    // localStorage에서 상태 복원
+    const saved = localStorage.getItem('cycleRoutine_showList');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('cycleRoutine_showList', JSON.stringify(showList));
+  }, [showList]);
 
   // 🔹 빈 배열을 useMemo로 감싸서 "항상 같은 참조"로 유지
   const defaultData = useMemo<RoutineItem[]>(() => [], []);

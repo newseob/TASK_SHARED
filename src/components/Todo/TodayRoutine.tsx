@@ -1,6 +1,6 @@
 // TodayRoutine.tsx
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
 interface RoutineItem {
@@ -14,7 +14,16 @@ interface RoutineItem {
 }
 
 export default function TodayRoutine() {
-  const [showList, setShowList] = useState(true);
+  const [showList, setShowList] = useState(() => {
+    // localStorage에서 상태 복원
+    const saved = localStorage.getItem('todayRoutine_showList');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('todayRoutine_showList', JSON.stringify(showList));
+  }, [showList]);
 
   // 🔹 빈 배열을 useMemo로 감싸서 "항상 같은 참조"로 유지
   const defaultData = useMemo<RoutineItem[]>(() => [], []);
@@ -106,14 +115,6 @@ export default function TodayRoutine() {
   // 섹션 분리 및 정렬(remaining 내림차순)
   const dailyItems = prepared
     .filter((i) => Number(i.cycle) === 1)
-    .sort((a, b) => b.remaining - a.remaining);
-
-  const cycleItems = prepared
-    .filter((i) => Number(i.cycle) >= 2)
-    .sort((a, b) => b.remaining - a.remaining);
-
-  const zeroCycleItems = prepared
-    .filter((i) => Number(i.cycle) === 0)
     .sort((a, b) => b.remaining - a.remaining);
 
   // ───────────────────────────────

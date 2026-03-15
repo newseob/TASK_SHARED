@@ -10,15 +10,19 @@ export default function TodoTab() {
       <div className="mx-auto w-full max-w-screen-2xl px-4">
         {/* 499px 이하: 1열, 500px 이상: 2열 */}
         <div className="flex flex-col sm:flex-row justify-center gap-6 min-w-0">
-          {/* 왼쪽 열 */}
-          <div className="flex flex-col gap-6 w-full max-w-[400px] min-w-0 break-words [overflow-wrap:anywhere]">
+          {/* 1열일 때 가운데 정렬, 2열일 때 왼쪽 열 */}
+          <div className="flex flex-col items-center sm:items-start gap-6 w-full max-w-[500px] min-w-0 break-words [overflow-wrap:anywhere]">
             <TodayRoutine />
             <CycleRoutine />
             <OtherRoutine />
+            {/* 1열일 때만 TodoBoxSection 표시 */}
+            <section className="sm:hidden w-full max-w-[500px] min-w-0 break-words [overflow-wrap:anywhere]">
+              <TodoBoxSection />
+            </section>
           </div>
           
-          {/* 오른쪽 열 */}
-          <section className="w-full max-w-[400px] min-w-0 break-words [overflow-wrap:anywhere]">
+          {/* 오른쪽 열 (2열일 때만 표시) */}
+          <section className="hidden sm:block w-full max-w-[500px] min-w-0 break-words [overflow-wrap:anywhere]">
             <TodoBoxSection />
           </section>
         </div>
