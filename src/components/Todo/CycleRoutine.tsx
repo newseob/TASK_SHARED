@@ -1,4 +1,4 @@
-// TodayRoutine.tsx
+// CycleRoutine.tsx
 
 import { useState, useMemo } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
@@ -13,7 +13,7 @@ interface RoutineItem {
   cycle: number;
 }
 
-export default function TodayRoutine() {
+export default function CycleRoutine() {
   const [showList, setShowList] = useState(true);
 
   // 🔹 빈 배열을 useMemo로 감싸서 "항상 같은 참조"로 유지
@@ -104,16 +104,8 @@ export default function TodayRoutine() {
     .filter((item) => item.remaining >= 0);
 
   // 섹션 분리 및 정렬(remaining 내림차순)
-  const dailyItems = prepared
-    .filter((i) => Number(i.cycle) === 1)
-    .sort((a, b) => b.remaining - a.remaining);
-
   const cycleItems = prepared
     .filter((i) => Number(i.cycle) >= 2)
-    .sort((a, b) => b.remaining - a.remaining);
-
-  const zeroCycleItems = prepared
-    .filter((i) => Number(i.cycle) === 0)
     .sort((a, b) => b.remaining - a.remaining);
 
   // ───────────────────────────────
@@ -289,16 +281,16 @@ export default function TodayRoutine() {
           {showList ? "▽" : "▷"}
         </button>
         <h2 className="flex-1 min-w-0 text-blue-600 dark:text-blue-300 bg-transparent outline-none truncate text-xs">
-          매일 루틴
+          주기 루틴
         </h2>
       </div>
 
       {showList && (
-        // 매일 루틴 박스
+        // 주기 루틴 박스
         <div className="space-y-[40px] mt-2 mb-[80px]">
           <section className="bg-transparent p-0 shadow-none">
             <ul className="grid grid-cols-1 gap-2 min-w-0">
-              {dailyItems.map(renderItem)}
+              {cycleItems.map(renderItem)}
             </ul>
           </section>
         </div>
