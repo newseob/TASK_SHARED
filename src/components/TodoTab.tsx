@@ -8,7 +8,8 @@ export default function TodoTab() {
   return (
     <div className="bg-white text-black dark:bg-zinc-900 dark:text-white overflow-x-hidden">
       <div className="mx-auto w-full max-w-screen-2xl px-4">
-        <div className="flex justify-center gap-6 min-w-0">
+        {/* 499px 이하: 1열, 500px 이상: 2열 */}
+        <div className="flex flex-col sm:flex-row justify-center gap-6 min-w-0">
           {/* 왼쪽 열 */}
           <div className="flex flex-col gap-6 w-full max-w-[400px] min-w-0 break-words [overflow-wrap:anywhere]">
             <TodayRoutine />
