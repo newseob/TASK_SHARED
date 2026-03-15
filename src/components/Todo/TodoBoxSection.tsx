@@ -72,7 +72,16 @@ function SortableBox({
   isLastBox: boolean;
 }) {
   const { attributes, listeners, setNodeRef } = useSortable({ id: box.id });
-  const [collapsed, setCollapsed] = useState(false); // 펼침/접힘 상태
+  const [collapsed, setCollapsed] = useState(() => {
+    // localStorage에서 상태 복원
+    const saved = localStorage.getItem(`todoBox_${box.id}_collapsed`);
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem(`todoBox_${box.id}_collapsed`, JSON.stringify(collapsed));
+  }, [collapsed, box.id]);
   const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null); // 길게 눌러야 드래그
   const [newText, setNewText] = useState("");
   const [newCount, setNewCount] = useState("");

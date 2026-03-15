@@ -1,0 +1,368 @@
+// MoneyBox.tsx
+
+import { useState, useEffect, useRef } from "react";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
+
+interface MoneyData {
+  categoryBudget: string[];
+  categoryCurrent: string[];
+  memo?: string[];
+  users?: {
+    yuseop: {
+      budget: string[];
+      current: string[];
+    };
+    gyeongin: {
+      budget: string[];
+      current: string[];
+    };
+    aca: {
+      budget: string[];
+      current: string[];
+    };
+  };
+}
+
+export default function MoneyBox() {
+  const [showList, setShowList] = useState(() => {
+    // localStorage에서 상태 복원
+    const saved = localStorage.getItem("moneyBox_showList");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem("moneyBox_showList", JSON.stringify(showList));
+  }, [showList]);
+
+  const categories = [
+    "장보기",
+    "식비",
+    "생활",
+    "간식/카페",
+    "꾸밈",
+    "여가",
+    "여행",
+    "고양이",
+    "경조사비",
+    "구독",
+    "기타",
+  ];
+
+  const [categoryBudget, setCategoryBudget] = useState<string[][]>(
+    Array(3).fill(null).map(() => Array(categories.length).fill(""))
+  );
+
+  const [categoryCurrent, setCategoryCurrent] = useState<string[][]>(
+    Array(3).fill(null).map(() => Array(categories.length).fill(""))
+  );
+
+  const [categoryMemo, setCategoryMemo] = useState<string[]>(
+    Array(categories.length).fill("")
+  );
+
+  const hasLoadedInitially = useRef(false);
+
+  const getNumber = (v: string) => v.replace(/[^0-9]/g, "");
+
+  const formatNumber = (v: number | string) => {
+    if (!v) return "";
+    return Number(v).toLocaleString();
+  };
+
+
+  // Firestore에서 데이터 불러오기
+  useEffect(() => {
+    const loadData = async () => {
+      console.log("[MoneyBox] 🔗 Loading money data...");
+      try {
+        const docRef = doc(db, "moneyData", "main");
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data() as MoneyData;
+          console.log("[MoneyBox] 📥 Loaded money data:", data);
+
+          if (data.memo) {
+            setCategoryMemo(data.memo);
+          }
+
+          // users 구조 먼저 처리
+          if (data.users) {
+            setCategoryBudget([
+              data.users.yuseop?.budget || Array(categories.length).fill(""),
+              data.users.gyeongin?.budget || Array(categories.length).fill(""),
+              data.users.aca?.budget || Array(categories.length).fill("")
+            ]);
+
+            setCategoryCurrent([
+              data.users.yuseop?.current || Array(categories.length).fill(""),
+              data.users.gyeongin?.current || Array(categories.length).fill(""),
+              data.users.aca?.current || Array(categories.length).fill("")
+            ]);
+          }
+          // 구버전 데이터 호환
+          else if (data.categoryBudget && data.categoryCurrent) {
+            setCategoryBudget([
+              data.categoryBudget,
+              Array(categories.length).fill(""),
+              Array(categories.length).fill("")
+            ]);
+
+            setCategoryCurrent([
+              data.categoryCurrent,
+              Array(categories.length).fill(""),
+              Array(categories.length).fill("")
+            ]);
+          }
+        } else {
+          console.log("[MoneyBox] ❗ Document not found → creating with default");
+          await setDoc(docRef, {
+            users: {
+              yuseop: {
+                budget: categoryBudget[0],
+                current: categoryCurrent[0]
+              },
+              gyeongin: {
+                budget: categoryBudget[1],
+                current: categoryCurrent[1]
+              },
+              aca: {
+                budget: categoryBudget[2],
+                current: categoryCurrent[2]
+              }
+            },
+            memo: categoryMemo
+          }, { merge: true });
+          console.log("[MoneyBox] 🟢 Created money data");
+        }
+        hasLoadedInitially.current = true;
+      } catch (e) {
+        console.error("[MoneyBox] 🔴 Load failed:", e);
+        hasLoadedInitially.current = true;
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleCategoryInput = (
+    userIndex: number,
+    categoryIndex: number,
+    value: string,
+    type: "budget" | "current"
+  ) => {
+    const num = getNumber(value);
+
+    if (type === "budget") {
+      const updated = [...categoryBudget];
+      updated[userIndex][categoryIndex] = num;
+      setCategoryBudget(updated);
+    } else {
+      const updated = [...categoryCurrent];
+      updated[userIndex][categoryIndex] = num;
+      setCategoryCurrent(updated);
+    }
+  };
+
+  // Firestore에 저장
+  const handleSave = async () => {
+    console.log("[MoneyBox] 💾 Saving money data...");
+    try {
+      const docRef = doc(db, "moneyData", "main");
+      await setDoc(docRef, {
+        users: {
+          yuseop: {
+            budget: categoryBudget[0] || Array(categories.length).fill(""),
+            current: categoryCurrent[0] || Array(categories.length).fill("")
+          },
+          gyeongin: {
+            budget: categoryBudget[1] || Array(categories.length).fill(""),
+            current: categoryCurrent[1] || Array(categories.length).fill("")
+          },
+          aca: {
+            budget: categoryBudget[2] || Array(categories.length).fill(""),
+            current: categoryCurrent[2] || Array(categories.length).fill("")
+          }
+        },
+        memo: categoryMemo
+      }, { merge: true });
+      console.log("[MoneyBox] ✅ Save complete");
+    } catch (err) {
+      console.error("[MoneyBox] ❌ Save failed:", err);
+    }
+  };
+
+  const totalBudget = categoryBudget[0].reduce(
+    (sum, v) => sum + (Number(v) || 0),
+    0
+  );
+
+  const totalExpense = categories.reduce((sum, _, i) => {
+    const yuseop = Number(categoryCurrent[0][i]) || 0;
+    const gyeongin = Number(categoryCurrent[1][i]) || 0;
+    const aca = Number(categoryCurrent[2][i]) || 0;
+
+    return sum + yuseop + gyeongin + aca;
+  }, 0);
+
+  const remainBudget = totalBudget - totalExpense;
+
+  return (
+    <div className="rounded shadow-none bg-transparent w-full transition-opacity">
+
+      {/* 헤더 */}
+      <div className="flex items-center justify-between mt-[3px]">
+        <button
+          className="mx-1 text-zinc-400 hover:text-white text-xs"
+          onClick={() => setShowList(!showList)}
+        >
+          {showList ? "▽" : "▷"}
+        </button>
+
+        <h2 className="flex-1 text-blue-600 dark:text-blue-300 truncate text-xs">
+          MONEY
+        </h2>
+      </div>
+
+      {showList && (
+        <div className="mt-2 mb-[80px]">
+
+          <div className="text-sm text-zinc-600 dark:text-zinc-400 p-4 border border-zinc-200 dark:border-zinc-700 rounded space-y-3">
+
+            {/* 총 예산 */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">총 예산</span>
+              <span className="text-xs font-semibold">
+                {formatNumber(totalBudget)}
+              </span>
+            </div>
+
+            {/* 지출 총합 */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">지출 총합</span>
+              <span className="text-xs font-semibold">
+                {formatNumber(totalExpense)}
+              </span>
+            </div>
+
+            {/* 남은 예산 */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">남은 예산</span>
+
+              <span
+                className={`text-xs font-semibold ${remainBudget < 0
+                  ? "text-red-500"
+                  : "text-zinc-700 dark:text-zinc-300"
+                  }`}
+              >
+                {formatNumber(remainBudget)}
+              </span>
+            </div>
+
+            {/* 카테고리 표 */}
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+
+              <div className="grid grid-cols-6 text-xs font-medium mb-2">
+                <span>카테고리</span>
+                <span className="text-right">예산</span>
+                <span className="text-right">유섭</span>
+                <span className="text-right">경인</span>
+                <span className="text-right">아카</span>
+                <span className="text-right">합계</span>
+              </div>
+
+              {categories.map((cat, i) => {
+                const budget = Number(categoryBudget[0][i]) || 0;
+                const yuseopCurrent = Number(categoryCurrent[0][i]) || 0;
+                const gyeonginCurrent = Number(categoryCurrent[1][i]) || 0;
+                const acaCurrent = Number(categoryCurrent[2][i]) || 0;
+                const sum = yuseopCurrent + gyeonginCurrent + acaCurrent;
+
+                const isOver = sum > budget && budget !== 0;
+
+                return (
+                  <div
+                    key={cat}
+                    className={`grid grid-cols-6 items-center gap-2 mb-1 px-1 py-[2px] rounded ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
+                      }`}
+                  >
+                    <span className="text-xs">{cat}</span>
+
+                    <input
+                      type="text"
+                      value={formatNumber(categoryBudget[0][i])}
+                      onChange={(e) =>
+                        handleCategoryInput(0, i, e.target.value, "budget")
+                      }
+                      className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
+                    />
+
+                    <input
+                      type="text"
+                      value={formatNumber(categoryCurrent[0][i])}
+                      onChange={(e) =>
+                        handleCategoryInput(0, i, e.target.value, "current")
+                      }
+                      className={`px-2 py-1 text-right bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded text-xs ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        }`}
+                    />
+
+                    <input
+                      type="text"
+                      value={formatNumber(categoryCurrent[1][i])}
+                      onChange={(e) =>
+                        handleCategoryInput(1, i, e.target.value, "current")
+                      }
+                      className={`px-2 py-1 text-right bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded text-xs ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        }`}
+                    />
+
+                    <input
+                      type="text"
+                      value={formatNumber(categoryCurrent[2][i])}
+                      onChange={(e) =>
+                        handleCategoryInput(2, i, e.target.value, "current")
+                      }
+                      className={`px-2 py-1 text-right bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded text-xs ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        }`}
+                    />
+
+                    <span
+                      title={categoryMemo[i] || ""}
+                      onClick={() => {
+                        const newMemo = prompt("메모 수정", categoryMemo[i] || "");
+                        if (newMemo !== null) {
+                          const updated = [...categoryMemo];
+                          updated[i] = newMemo;
+                          setCategoryMemo(updated);
+                        }
+                      }}
+                      className={`text-xs text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
+                        } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
+                    >
+                      {formatNumber(sum)}
+                    </span>
+                  </div>
+                );
+              })}
+
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="pt-3 flex justify-center">
+              <button
+                onClick={handleSave}
+                className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"
+              >
+                저장
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -3,6 +3,7 @@ import TodayRoutine from "./Todo/TodayRoutine.tsx";
 import TodoBoxSection from "./Todo/TodoBoxSection.tsx";
 import CycleRoutine from "./Todo/CycleRoutine.tsx";
 import OtherRoutine from "./Todo/OtherRoutine.tsx";
+import MoneyBox from "./Todo/MoneyBox.tsx";
 
 export default function TodoTab() {
   return (
@@ -25,6 +26,11 @@ export default function TodoTab() {
           <section className="hidden sm:block w-full max-w-[500px] min-w-0 break-words [overflow-wrap:anywhere]">
             <TodoBoxSection />
           </section>
+        </div>
+        
+        {/* MONEY 항목 - 전체 너비 차지 */}
+        <div className="w-full max-w-screen-2xl px-4 mt-6">
+          <MoneyBox />
         </div>
       </div>
     </div>
