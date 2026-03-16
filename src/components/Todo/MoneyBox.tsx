@@ -8,6 +8,7 @@ interface MoneyData {
   categoryBudget: string[];
   categoryCurrent: string[];
   memo?: string[];
+  cumulative?: string[];
   users?: {
     yuseop: {
       budget: string[];
@@ -62,18 +63,24 @@ export default function MoneyBox() {
     Array(categories.length).fill("")
   );
 
+  const [categoryCumulative, setCategoryCumulative] = useState<string[]>(
+    Array(categories.length).fill("")
+  );
+
   // 초기 데이터 상태 저장 (변경 감지용)
   const [initialData, setInitialData] = useState<{
     budget: string[][];
     current: string[][];
     memo: string[];
+    cumulative: string[];
   } | null>(null);
 
   // 데이터 변경 감지
   const hasChanges = initialData ? (
     JSON.stringify(initialData.budget) !== JSON.stringify(categoryBudget) ||
     JSON.stringify(initialData.current) !== JSON.stringify(categoryCurrent) ||
-    JSON.stringify(initialData.memo) !== JSON.stringify(categoryMemo)
+    JSON.stringify(initialData.memo) !== JSON.stringify(categoryMemo) ||
+    JSON.stringify(initialData.cumulative) !== JSON.stringify(categoryCumulative)
   ) : false;
 
   // 변경 감지 디버깅
@@ -117,6 +124,15 @@ export default function MoneyBox() {
           let loadedBudget: string[][];
           let loadedCurrent: string[][];
           let loadedMemo: string[];
+          let loadedCumulative: string[];
+
+          if (data.cumulative) {
+            loadedCumulative = data.cumulative;
+          } else {
+            loadedCumulative = Array(categories.length).fill("");
+          }
+
+          setCategoryCumulative(loadedCumulative);
 
           if (data.memo) {
             setCategoryMemo(data.memo);
@@ -163,13 +179,15 @@ export default function MoneyBox() {
           setInitialData({
             budget: loadedBudget,
             current: loadedCurrent,
-            memo: loadedMemo
+            memo: loadedMemo,
+            cumulative: loadedCumulative
           });
         } else {
           console.log("[MoneyBox] ❗ Document not found → creating with default");
           const defaultBudget = Array(3).fill(null).map(() => Array(categories.length).fill(""));
           const defaultCurrent = Array(3).fill(null).map(() => Array(categories.length).fill(""));
           const defaultMemo = Array(categories.length).fill("");
+          const defaultCumulative = Array(categories.length).fill("");
 
           await setDoc(docRef, {
             users: {
@@ -186,7 +204,8 @@ export default function MoneyBox() {
                 current: defaultCurrent[2]
               }
             },
-            memo: defaultMemo
+            memo: defaultMemo,
+            cumulative: defaultCumulative
           }, { merge: true });
           console.log("[MoneyBox] 🟢 Created money data");
 
@@ -194,7 +213,8 @@ export default function MoneyBox() {
           setInitialData({
             budget: defaultBudget,
             current: defaultCurrent,
-            memo: defaultMemo
+            memo: defaultMemo,
+            cumulative: defaultCumulative
           });
         }
         hasLoadedInitially.current = true;
@@ -246,7 +266,8 @@ export default function MoneyBox() {
             current: categoryCurrent[2] || Array(categories.length).fill("")
           }
         },
-        memo: categoryMemo
+        memo: categoryMemo,
+        cumulative: categoryCumulative
       }, { merge: true });
       console.log("[MoneyBox] ✅ Save complete");
 
@@ -254,7 +275,8 @@ export default function MoneyBox() {
       setInitialData({
         budget: categoryBudget,
         current: categoryCurrent,
-        memo: categoryMemo
+        memo: categoryMemo,
+        cumulative: categoryCumulative
       });
     } catch (err) {
       console.error("[MoneyBox] ❌ Save failed:", err);
@@ -331,13 +353,14 @@ export default function MoneyBox() {
             {/* 카테고리 표 */}
             <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
 
-              <div className="grid grid-cols-6 text-xs font-medium mb-2">
+              <div className="grid grid-cols-7 text-xs font-medium mb-2">
                 <span>카테고리</span>
                 <span className="text-right">예산</span>
                 <span className="text-right">유섭</span>
                 <span className="text-right">경인</span>
                 <span className="text-right">아카</span>
                 <span className="text-right">합계</span>
+                <span className="text-right">누적</span>
               </div>
 
               {categories.map((cat, i) => {
@@ -352,7 +375,7 @@ export default function MoneyBox() {
                 return (
                   <div
                     key={cat}
-                    className={`grid grid-cols-6 items-center gap-2 mb-1 px-1 py-[2px] rounded ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
+                    className={`grid grid-cols-7 items-center gap-2 mb-1 px-1 py-[2px] rounded ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
                       }`}
                   >
                     <span className="text-xs">{cat}</span>
@@ -411,6 +434,18 @@ export default function MoneyBox() {
                     >
                       {formatNumber(sum)}
                     </span>
+
+                    <input
+                      type="text"
+                      value={formatNumber(categoryCumulative[i])}
+                      onChange={(e) => {
+                        const num = getNumber(e.target.value);
+                        const updated = [...categoryCumulative];
+                        updated[i] = num;
+                        setCategoryCumulative(updated);
+                      }}
+                      className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
+                    />
                   </div>
                 );
               })}
@@ -422,8 +457,8 @@ export default function MoneyBox() {
               <button
                 onClick={handleSave}
                 className={`px-3 py-1 text-xs rounded transition ${hasChanges
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
                   }`}
               >
                 저장
