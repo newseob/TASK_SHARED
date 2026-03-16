@@ -326,7 +326,7 @@ export default function MoneyBox() {
           <div className="text-sm text-zinc-600 dark:text-zinc-400 p-4 border border-zinc-200 dark:border-zinc-700 rounded space-y-3">
 
             {/* 통계 */}
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs">
 
               {/* 1행 */}
               <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
@@ -339,6 +339,10 @@ export default function MoneyBox() {
                 <span className="font-semibold">{formatNumber(totalExpense)}</span>
               </div>
 
+
+
+              {/* 2행 */}
+
               <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
                 <span className="font-medium">잔액</span>
                 <span
@@ -349,14 +353,15 @@ export default function MoneyBox() {
                 </span>
               </div>
 
-              {/* 2행 */}
-              <div></div>
-              <div></div>
-
-              <div className="col-start-3 flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
+              <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
                 <span className="font-medium">이전누적</span>
-                <span className="font-semibold">
-                  {formatNumber(totalCumulative)}
+                <span
+                  className={`font-semibold ${totalCumulative < 0 ? "text-red-500" : ""
+                    }`}
+                >
+                  {totalCumulative === 0
+                    ? "0"
+                    : formatNumber(totalCumulative)}
                 </span>
               </div>
 
@@ -451,11 +456,20 @@ export default function MoneyBox() {
 
                       <input
                         type="text"
-                        value={formatNumber(categoryCumulative[i])}
+                        value={categoryCumulative[i]}
                         onChange={(e) => {
-                          const num = getNumber(e.target.value);
+                          let value = e.target.value;
+
+                          // 숫자와 -만 허용
+                          value = value.replace(/[^0-9-]/g, "");
+
+                          // -는 맨 앞에만 허용
+                          if (value.indexOf("-") > 0) {
+                            value = value.replace(/-/g, "");
+                          }
+
                           const updated = [...categoryCumulative];
-                          updated[i] = num;
+                          updated[i] = value;
                           setCategoryCumulative(updated);
                         }}
                         className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
