@@ -496,25 +496,24 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-1 gap-2 min-w-0">
-            {todoBoxes.map((b, i) => (
-              <SortableBox
-                key={b.id}
-                box={b}
-                activeBox={activeBox}
-                isDragging={isDragging && activeBox?.id === b.id}
-                setActiveBox={setActiveBox}
-                onChangeTitle={changeTitle}
-                onChangeItem={changeItem}
-                onAddItem={addTodoItem}
-                onRemoveItem={removeItem}
-                toggleItemSelection={toggleItemSelection}
-                onChangeItemOrder={updateItemOrder}
-                selectedItemIds={selectedItemIds}
-                moveBoxDown={moveBoxDown}
-                isLastBox={i === todoBoxes.length - 1}
-              />
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3">            {todoBoxes.map((b, i) => (
+            <SortableBox
+              key={b.id}
+              box={b}
+              activeBox={activeBox}
+              isDragging={isDragging && activeBox?.id === b.id}
+              setActiveBox={setActiveBox}
+              onChangeTitle={changeTitle}
+              onChangeItem={changeItem}
+              onAddItem={addTodoItem}
+              onRemoveItem={removeItem}
+              toggleItemSelection={toggleItemSelection}
+              onChangeItemOrder={updateItemOrder}
+              selectedItemIds={selectedItemIds}
+              moveBoxDown={moveBoxDown}
+              isLastBox={i === todoBoxes.length - 1}
+            />
+          ))}
           </div>
           <div className="flex gap-2 mt-2 min-w-0">
             <button

@@ -62,6 +62,36 @@ export default function MoneyBox() {
     Array(categories.length).fill("")
   );
 
+  // 초기 데이터 상태 저장 (변경 감지용)
+  const [initialData, setInitialData] = useState<{
+    budget: string[][];
+    current: string[][];
+    memo: string[];
+  } | null>(null);
+
+  // 데이터 변경 감지
+  const hasChanges = initialData ? (
+    JSON.stringify(initialData.budget) !== JSON.stringify(categoryBudget) ||
+    JSON.stringify(initialData.current) !== JSON.stringify(categoryCurrent) ||
+    JSON.stringify(initialData.memo) !== JSON.stringify(categoryMemo)
+  ) : false;
+
+  // 변경 감지 디버깅
+  useEffect(() => {
+    if (initialData) {
+      const budgetChanged = JSON.stringify(initialData.budget) !== JSON.stringify(categoryBudget);
+      const currentChanged = JSON.stringify(initialData.current) !== JSON.stringify(categoryCurrent);
+      const memoChanged = JSON.stringify(initialData.memo) !== JSON.stringify(categoryMemo);
+
+      console.log("[MoneyBox] 🔄 Change detection:", {
+        budgetChanged,
+        currentChanged,
+        memoChanged,
+        hasChanges: budgetChanged || currentChanged || memoChanged
+      });
+    }
+  }, [categoryBudget, categoryCurrent, categoryMemo, initialData]);
+
   const hasLoadedInitially = useRef(false);
 
   const getNumber = (v: string) => v.replace(/[^0-9]/g, "");
@@ -84,58 +114,88 @@ export default function MoneyBox() {
           const data = docSnap.data() as MoneyData;
           console.log("[MoneyBox] 📥 Loaded money data:", data);
 
+          let loadedBudget: string[][];
+          let loadedCurrent: string[][];
+          let loadedMemo: string[];
+
           if (data.memo) {
             setCategoryMemo(data.memo);
+            loadedMemo = data.memo;
+          } else {
+            loadedMemo = Array(categories.length).fill("");
           }
 
           // users 구조 먼저 처리
           if (data.users) {
-            setCategoryBudget([
+            loadedBudget = [
               data.users.yuseop?.budget || Array(categories.length).fill(""),
               data.users.gyeongin?.budget || Array(categories.length).fill(""),
               data.users.aca?.budget || Array(categories.length).fill("")
-            ]);
-
-            setCategoryCurrent([
+            ];
+            loadedCurrent = [
               data.users.yuseop?.current || Array(categories.length).fill(""),
               data.users.gyeongin?.current || Array(categories.length).fill(""),
               data.users.aca?.current || Array(categories.length).fill("")
-            ]);
+            ];
           }
           // 구버전 데이터 호환
           else if (data.categoryBudget && data.categoryCurrent) {
-            setCategoryBudget([
+            loadedBudget = [
               data.categoryBudget,
               Array(categories.length).fill(""),
               Array(categories.length).fill("")
-            ]);
-
-            setCategoryCurrent([
+            ];
+            loadedCurrent = [
               data.categoryCurrent,
               Array(categories.length).fill(""),
               Array(categories.length).fill("")
-            ]);
+            ];
+          } else {
+            // 기본값
+            loadedBudget = Array(3).fill(null).map(() => Array(categories.length).fill(""));
+            loadedCurrent = Array(3).fill(null).map(() => Array(categories.length).fill(""));
           }
+
+          setCategoryBudget(loadedBudget);
+          setCategoryCurrent(loadedCurrent);
+
+          // 초기 데이터 상태 저장
+          setInitialData({
+            budget: loadedBudget,
+            current: loadedCurrent,
+            memo: loadedMemo
+          });
         } else {
           console.log("[MoneyBox] ❗ Document not found → creating with default");
+          const defaultBudget = Array(3).fill(null).map(() => Array(categories.length).fill(""));
+          const defaultCurrent = Array(3).fill(null).map(() => Array(categories.length).fill(""));
+          const defaultMemo = Array(categories.length).fill("");
+
           await setDoc(docRef, {
             users: {
               yuseop: {
-                budget: categoryBudget[0],
-                current: categoryCurrent[0]
+                budget: defaultBudget[0],
+                current: defaultCurrent[0]
               },
               gyeongin: {
-                budget: categoryBudget[1],
-                current: categoryCurrent[1]
+                budget: defaultBudget[1],
+                current: defaultCurrent[1]
               },
               aca: {
-                budget: categoryBudget[2],
-                current: categoryCurrent[2]
+                budget: defaultBudget[2],
+                current: defaultCurrent[2]
               }
             },
-            memo: categoryMemo
+            memo: defaultMemo
           }, { merge: true });
           console.log("[MoneyBox] 🟢 Created money data");
+
+          // 초기 데이터 상태 저장
+          setInitialData({
+            budget: defaultBudget,
+            current: defaultCurrent,
+            memo: defaultMemo
+          });
         }
         hasLoadedInitially.current = true;
       } catch (e) {
@@ -156,11 +216,11 @@ export default function MoneyBox() {
     const num = getNumber(value);
 
     if (type === "budget") {
-      const updated = [...categoryBudget];
+      const updated = categoryBudget.map((row) => [...row]);
       updated[userIndex][categoryIndex] = num;
       setCategoryBudget(updated);
     } else {
-      const updated = [...categoryCurrent];
+      const updated = categoryCurrent.map((row) => [...row]);
       updated[userIndex][categoryIndex] = num;
       setCategoryCurrent(updated);
     }
@@ -189,6 +249,13 @@ export default function MoneyBox() {
         memo: categoryMemo
       }, { merge: true });
       console.log("[MoneyBox] ✅ Save complete");
+
+      // 저장 후 초기 데이터 상태 업데이트
+      setInitialData({
+        budget: categoryBudget,
+        current: categoryCurrent,
+        memo: categoryMemo
+      });
     } catch (err) {
       console.error("[MoneyBox] ❌ Save failed:", err);
     }
@@ -305,7 +372,7 @@ export default function MoneyBox() {
                       onChange={(e) =>
                         handleCategoryInput(0, i, e.target.value, "current")
                       }
-                      className={`px-2 py-1 text-right bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded text-xs ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                      className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                         }`}
                     />
 
@@ -315,7 +382,7 @@ export default function MoneyBox() {
                       onChange={(e) =>
                         handleCategoryInput(1, i, e.target.value, "current")
                       }
-                      className={`px-2 py-1 text-right bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded text-xs ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                      className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                         }`}
                     />
 
@@ -325,7 +392,7 @@ export default function MoneyBox() {
                       onChange={(e) =>
                         handleCategoryInput(2, i, e.target.value, "current")
                       }
-                      className={`px-2 py-1 text-right bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded text-xs ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                      className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                         }`}
                     />
 
@@ -354,7 +421,10 @@ export default function MoneyBox() {
             <div className="pt-3 flex justify-center">
               <button
                 onClick={handleSave}
-                className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"
+                className={`px-3 py-1 text-xs rounded transition ${hasChanges
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                  }`}
               >
                 저장
               </button>
