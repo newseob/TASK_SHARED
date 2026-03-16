@@ -36,7 +36,7 @@ function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: s
     <div
       ref={setNodeRef}
       style={style}
-      className="group p-2 bg-zinc-300 dark:bg-zinc-700 dark:text-white rounded text-xs flex justify-between cursor-move"
+      className="group p-2 bg-zinc-300 dark:bg-zinc-700 dark:text-white rounded text-sm flex justify-between cursor-move"
       {...attributes}
       {...listeners}
     >
@@ -57,7 +57,7 @@ function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: s
             onDelete(link.id);
           }
         }}
-        className="text-red-500 ml-2 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity"
+        className="text-red-500 ml-2 opacity-0 xs:opacity-0 xs:group-hover:opacity-100 opacity-100 transition-opacity"
       >
         x
       </button>
@@ -246,7 +246,7 @@ export default function LinkBox() {
                       items={groupedLinks[category].map((link: LinkData) => link.id)}
                       strategy={rectSortingStrategy}
                     >
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {groupedLinks[category].map((link: LinkData) => (
                           <SortableLinkItem
                             key={link.id}
