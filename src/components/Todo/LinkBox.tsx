@@ -1,12 +1,68 @@
 import { useState, useEffect } from "react";
-import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface LinkData {
   title: string;
   url: string;
   id: string;
   category: string;
+}
+
+function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: link.id });
+  
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group p-2 bg-zinc-300 dark:bg-zinc-700 dark:text-white rounded text-xs flex justify-between cursor-move"
+      {...attributes}
+      {...listeners}
+    >
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="truncate flex-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {link.title}
+      </a>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (confirm("정말 이 링크를 삭제할까요?")) {
+            onDelete(link.id);
+          }
+        }}
+        className="text-red-500 ml-2 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity"
+      >
+        x
+      </button>
+    </div>
+  );
 }
 
 export default function LinkBox() {
@@ -103,6 +159,39 @@ export default function LinkBox() {
     }));
   };
 
+  // 드래그 센서 설정
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    })
+  );
+
+  // 드래그 종료 핸들러
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = links.findIndex((link) => link.id === active.id);
+    const newIndex = links.findIndex((link) => link.id === over.id);
+    
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reorderedLinks = arrayMove(links, oldIndex, newIndex);
+    setLinks(reorderedLinks);
+
+    // Firestore에 순서 저장
+    try {
+      const docRef = doc(db, "links", "main");
+      await setDoc(docRef, { links: reorderedLinks }, { merge: true });
+    } catch (e) {
+      console.error("[LinkBox] ❌ 순서 저장 실패:", e);
+    }
+  };
+
   const groupedLinks = links.reduce((acc: any, link) => {
     if (!acc[link.category]) {
       acc[link.category] = [];
@@ -148,30 +237,26 @@ export default function LinkBox() {
 
                 {/* 해당 분류 링크 */}
                 {!collapsedGroups[category] && (
-                <div className="grid grid-cols-6 gap-2">
-                  {groupedLinks[category].map((link: LinkData) => (
-                    <div
-                      key={link.id}
-                      className="group p-2 border border-zinc-200 dark:border-zinc-600 rounded text-xs flex justify-between"
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={groupedLinks[category].map((link: LinkData) => link.id)}
+                      strategy={rectSortingStrategy}
                     >
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate flex-1"
-                      >
-                        {link.title}
-                      </a>
-
-                      <button
-                        onClick={() => handleDelete(link.id)}
-                        className="text-red-500 ml-2 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity"
-                      >
-                        x
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {groupedLinks[category].map((link: LinkData) => (
+                          <SortableLinkItem
+                            key={link.id}
+                            link={link}
+                            onDelete={handleDelete}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
             ))}
@@ -187,7 +272,7 @@ export default function LinkBox() {
           {!isAdding ? (
             <button
               onClick={() => setIsAdding(true)}
-              className="w-full py-2 text-xs bg-transparent rounded transition"
+              className="w-full py-2 text-xs bg-transparent rounded transition text-black dark:text-white"
             >
               + 링크 추가
             </button>
@@ -198,14 +283,14 @@ export default function LinkBox() {
                 placeholder="제목"
                 value={newLink.title}
                 onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 select-auto"
+                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-white select-auto"
               />
               <input
                 type="url"
                 placeholder="URL (https://...)"
                 value={newLink.url}
                 onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 select-auto"
+                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-white select-auto"
               />
               <input
                 type="text"
@@ -214,12 +299,12 @@ export default function LinkBox() {
                 onChange={(e) =>
                   setNewLink({ ...newLink, category: e.target.value })
                 }
-                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 select-auto"
+                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-white select-auto"
               />
               <div className="flex justify-center gap-2">
                 <button
                   onClick={handleAdd}
-                  className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"
+                  className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-600 dark:text-white dark:hover:bg-zinc-500 transition"
                 >
                   저장
                 </button>
@@ -228,7 +313,7 @@ export default function LinkBox() {
                     setIsAdding(false);
                     setNewLink({ title: "", url: "", category: "" });
                   }}
-                  className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"
+                  className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-600 dark:text-white dark:hover:bg-zinc-500 transition"
                 >
                   취소
                 </button>

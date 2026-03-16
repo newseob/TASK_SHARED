@@ -71,7 +71,7 @@ function SortableBox({
   moveBoxDown: (id: string) => void;
   isLastBox: boolean;
 }) {
-  const { attributes, listeners, setNodeRef } = useSortable({ id: box.id });
+  const { attributes, listeners, setNodeRef, transform } = useSortable({ id: box.id });
   const [collapsed, setCollapsed] = useState(() => {
     // localStorage에서 상태 복원
     const saved = localStorage.getItem(`todoBox_${box.id}_collapsed`);
@@ -142,9 +142,9 @@ function SortableBox({
         setActiveBox(activeBox?.id === box.id ? null : box);
       }}
       style={{
-        opacity: isDragging && activeBox?.id === box.id ? 0 : 1, // ✅ 드래그 중일 때만 안 보이게
-        visibility: "visible", // ✅ 항상 자리 유지
-        height: "auto",
+        ...transform,
+        transition: transform ? 'transform 0.2s ease-out, opacity 0.2s ease-out' : 'none',
+        opacity: isDragging && activeBox?.id === box.id ? 0.5 : 1,
         touchAction: isDragging ? "none" : "auto",
       }}
       className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[40px] min-w-0 break-words [overflow-wrap:anywhere]"

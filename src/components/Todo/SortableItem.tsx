@@ -85,7 +85,10 @@ export default function SortableItem({
     <li
       {...attributes}
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        transition: transform ? 'transform 0.2s ease-out, opacity 0.2s ease-out' : 'none',
+      }}
       className={`group p-1 mb-1 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg} ${borderColorClass}`}
     >
       {/* ✅ 왼쪽 체크 버튼 */}
@@ -209,7 +212,11 @@ export default function SortableItem({
 
       {/* ✅ 삭제 버튼 */}
       <button
-        onClick={() => onRemoveItem(boxId, item.id)}
+        onClick={() => {
+          if (confirm("정말 이 항목을 삭제할까요?")) {
+            onRemoveItem(boxId, item.id);
+          }
+        }}
         className="ml-2 px-2 text-gray rounded hover:bg-gray-200 transition text-sm opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100"
         title="삭제"
       >
