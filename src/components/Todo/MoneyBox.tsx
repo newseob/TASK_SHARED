@@ -298,6 +298,11 @@ export default function MoneyBox() {
 
   const remainBudget = totalBudget - totalExpense;
 
+  const totalCumulative = categoryCumulative.reduce(
+    (sum, v) => sum + (Number(v) || 0),
+    0
+  );
+
   return (
     <div className="rounded shadow-none bg-transparent w-full transition-opacity">
 
@@ -320,136 +325,146 @@ export default function MoneyBox() {
 
           <div className="text-sm text-zinc-600 dark:text-zinc-400 p-4 border border-zinc-200 dark:border-zinc-700 rounded space-y-3">
 
-            {/* 총 예산 */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">총 예산</span>
-              <span className="text-xs font-semibold">
-                {formatNumber(totalBudget)}
-              </span>
-            </div>
+            {/* 통계 */}
+            <div className="grid grid-cols-3 gap-2 text-xs">
 
-            {/* 지출 총합 */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">지출 총합</span>
-              <span className="text-xs font-semibold">
-                {formatNumber(totalExpense)}
-              </span>
-            </div>
+              {/* 1행 */}
+              <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
+                <span className="font-medium">총예산</span>
+                <span className="font-semibold">{formatNumber(totalBudget)}</span>
+              </div>
 
-            {/* 남은 예산 */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium">남은 예산</span>
+              <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
+                <span className="font-medium">지출</span>
+                <span className="font-semibold">{formatNumber(totalExpense)}</span>
+              </div>
 
-              <span
-                className={`text-xs font-semibold ${remainBudget < 0
-                  ? "text-red-500"
-                  : "text-zinc-700 dark:text-zinc-300"
-                  }`}
-              >
-                {formatNumber(remainBudget)}
-              </span>
+              <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
+                <span className="font-medium">잔액</span>
+                <span
+                  className={`font-semibold ${remainBudget < 0 ? "text-red-500" : ""
+                    }`}
+                >
+                  {formatNumber(remainBudget)}
+                </span>
+              </div>
+
+              {/* 2행 */}
+              <div></div>
+              <div></div>
+
+              <div className="col-start-3 flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
+                <span className="font-medium">이전누적</span>
+                <span className="font-semibold">
+                  {formatNumber(totalCumulative)}
+                </span>
+              </div>
+
             </div>
 
             {/* 카테고리 표 */}
-            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
 
-              <div className="grid grid-cols-7 text-xs font-medium mb-2">
-                <span>카테고리</span>
-                <span className="text-right">예산</span>
-                <span className="text-right">유섭</span>
-                <span className="text-right">경인</span>
-                <span className="text-right">아카</span>
-                <span className="text-right">합계</span>
-                <span className="text-right">누적</span>
-              </div>
+              <div className="min-w-[480px] w-full">
 
-              {categories.map((cat, i) => {
-                const budget = Number(categoryBudget[0][i]) || 0;
-                const yuseopCurrent = Number(categoryCurrent[0][i]) || 0;
-                const gyeonginCurrent = Number(categoryCurrent[1][i]) || 0;
-                const acaCurrent = Number(categoryCurrent[2][i]) || 0;
-                const sum = yuseopCurrent + gyeonginCurrent + acaCurrent;
+                <div className="grid grid-cols-7 text-xs font-medium mb-2">
+                  <span>카테고리</span>
+                  <span className="text-center">예산</span>
+                  <span className="text-center">유섭</span>
+                  <span className="text-center">경인</span>
+                  <span className="text-center">아카</span>
+                  <span className="text-center">합계</span>
+                  <span className="text-center">이전누적</span>
+                </div>
 
-                const isOver = sum > budget && budget !== 0;
+                {categories.map((cat, i) => {
+                  const budget = Number(categoryBudget[0][i]) || 0;
+                  const yuseopCurrent = Number(categoryCurrent[0][i]) || 0;
+                  const gyeonginCurrent = Number(categoryCurrent[1][i]) || 0;
+                  const acaCurrent = Number(categoryCurrent[2][i]) || 0;
+                  const sum = yuseopCurrent + gyeonginCurrent + acaCurrent;
 
-                return (
-                  <div
-                    key={cat}
-                    className={`grid grid-cols-7 items-center gap-2 mb-1 px-1 py-[2px] rounded ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
-                      }`}
-                  >
-                    <span className="text-xs">{cat}</span>
+                  const isOver = sum > budget && budget !== 0;
 
-                    <input
-                      type="text"
-                      value={formatNumber(categoryBudget[0][i])}
-                      onChange={(e) =>
-                        handleCategoryInput(0, i, e.target.value, "budget")
-                      }
-                      className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
-                    />
-
-                    <input
-                      type="text"
-                      value={formatNumber(categoryCurrent[0][i])}
-                      onChange={(e) =>
-                        handleCategoryInput(0, i, e.target.value, "current")
-                      }
-                      className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                  return (
+                    <div
+                      key={cat}
+                      className={`grid grid-cols-7 items-center gap-2 mb-1 px-1 py-[2px] rounded ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
                         }`}
-                    />
-
-                    <input
-                      type="text"
-                      value={formatNumber(categoryCurrent[1][i])}
-                      onChange={(e) =>
-                        handleCategoryInput(1, i, e.target.value, "current")
-                      }
-                      className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
-                        }`}
-                    />
-
-                    <input
-                      type="text"
-                      value={formatNumber(categoryCurrent[2][i])}
-                      onChange={(e) =>
-                        handleCategoryInput(2, i, e.target.value, "current")
-                      }
-                      className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
-                        }`}
-                    />
-
-                    <span
-                      title={categoryMemo[i] || ""}
-                      onClick={() => {
-                        const newMemo = prompt("메모 수정", categoryMemo[i] || "");
-                        if (newMemo !== null) {
-                          const updated = [...categoryMemo];
-                          updated[i] = newMemo;
-                          setCategoryMemo(updated);
-                        }
-                      }}
-                      className={`text-xs text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
-                        } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
                     >
-                      {formatNumber(sum)}
-                    </span>
+                      <span className="text-xs">{cat}</span>
 
-                    <input
-                      type="text"
-                      value={formatNumber(categoryCumulative[i])}
-                      onChange={(e) => {
-                        const num = getNumber(e.target.value);
-                        const updated = [...categoryCumulative];
-                        updated[i] = num;
-                        setCategoryCumulative(updated);
-                      }}
-                      className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
-                    />
-                  </div>
-                );
-              })}
+                      <input
+                        type="text"
+                        value={formatNumber(categoryBudget[0][i])}
+                        onChange={(e) =>
+                          handleCategoryInput(0, i, e.target.value, "budget")
+                        }
+                        className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
+                      />
 
+                      <input
+                        type="text"
+                        value={formatNumber(categoryCurrent[0][i])}
+                        onChange={(e) =>
+                          handleCategoryInput(0, i, e.target.value, "current")
+                        }
+                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                          }`}
+                      />
+
+                      <input
+                        type="text"
+                        value={formatNumber(categoryCurrent[1][i])}
+                        onChange={(e) =>
+                          handleCategoryInput(1, i, e.target.value, "current")
+                        }
+                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                          }`}
+                      />
+
+                      <input
+                        type="text"
+                        value={formatNumber(categoryCurrent[2][i])}
+                        onChange={(e) =>
+                          handleCategoryInput(2, i, e.target.value, "current")
+                        }
+                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                          }`}
+                      />
+
+                      <span
+                        title={categoryMemo[i] || ""}
+                        onClick={() => {
+                          const newMemo = prompt("메모 수정", categoryMemo[i] || "");
+                          if (newMemo !== null) {
+                            const updated = [...categoryMemo];
+                            updated[i] = newMemo;
+                            setCategoryMemo(updated);
+                          }
+                        }}
+                        className={`text-xs text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
+                          } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
+                      >
+                        {formatNumber(sum)}
+                      </span>
+
+                      <input
+                        type="text"
+                        value={formatNumber(categoryCumulative[i])}
+                        onChange={(e) => {
+                          const num = getNumber(e.target.value);
+                          const updated = [...categoryCumulative];
+                          updated[i] = num;
+                          setCategoryCumulative(updated);
+                        }}
+                        className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
+                      />
+                    </div>
+                  );
+                })}
+
+              </div>
             </div>
 
             {/* 저장 버튼 */}
