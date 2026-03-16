@@ -118,7 +118,7 @@ export default function SortableItem({
                   value={item.text}
                   onChange={(e) => onChangeItem(boxId, item.id, e.target.value)}
                   onBlur={() => setEditingItemId(null)}
-                  className="text-sm font-normal bg-transparent border-none outline-none w-full truncate"
+                  className="text-sm font-normal bg-transparent border-none outline-none w-full truncate select-auto"
                   autoFocus
                 />
               ) : (
@@ -144,7 +144,7 @@ export default function SortableItem({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") setEditingCountId(null);
                   }}
-                  className={`w-full text-right bg-transparent outline-none border-none ${textColorClass}`}
+                  className={`w-full text-right bg-transparent outline-none border-none ${textColorClass} select-auto`}
                   autoFocus
                 />
               ) : (
@@ -170,7 +170,7 @@ export default function SortableItem({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") setEditingUnitId(null);
                   }}
-                  className={`w-full text-left bg-transparent outline-none border-none ${textColorClass}`}
+                  className={`w-full text-left bg-transparent outline-none border-none ${textColorClass} select-auto`}
                   autoFocus
                 />
               ) : (
@@ -192,7 +192,7 @@ export default function SortableItem({
                 value={item.text}
                 onChange={(e) => onChangeItem(boxId, item.id, e.target.value)}
                 onBlur={() => setEditingItemId(null)}
-                className="text-sm font-normal bg-transparent border-none outline-none w-full truncate"
+                className="text-sm font-normal bg-transparent border-none outline-none w-full truncate select-auto"
                 autoFocus
               />
             ) : (

@@ -12,16 +12,28 @@ interface LinkData {
 export default function LinkBox() {
   const [showList, setShowList] = useState(() => {
     const saved = localStorage.getItem("linkBox_showList");
-    return saved !== null ? JSON.parse(saved) : true;
+    return saved !== null ? JSON.parse(saved) : false;
   });
 
   const [links, setLinks] = useState<LinkData[]>([]);
   const [newLink, setNewLink] = useState({ title: "", url: "", category: "" });
   const [isAdding, setIsAdding] = useState(false);
 
+  // 그룹별 숨김 상태 관리
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem("linkBox_collapsedGroups");
+    return saved !== null ? JSON.parse(saved) : {};
+  });
+
+  // showList 상태 변경 시 localStorage에 저장
   useEffect(() => {
     localStorage.setItem("linkBox_showList", JSON.stringify(showList));
   }, [showList]);
+
+  // 그룹 숨김 상태 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem("linkBox_collapsedGroups", JSON.stringify(collapsedGroups));
+  }, [collapsedGroups]);
 
   // Firestore에서 링크 데이터 불러오기
   useEffect(() => {
@@ -83,6 +95,14 @@ export default function LinkBox() {
     }
   };
 
+  // 그룹 토글 함수
+  const toggleGroup = (category: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
   const groupedLinks = links.reduce((acc: any, link) => {
     if (!acc[link.category]) {
       acc[link.category] = [];
@@ -109,44 +129,52 @@ export default function LinkBox() {
 
       {/* 내용 */}
       {showList && (
-        <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 p-4">
+        <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400, py-2">
 
           {/* 링크 목록 */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">            {Object.keys(groupedLinks).map((category) => (
-            <div key={category} className="mb-4">
+          <div className="space-y-4">
+            {Object.keys(groupedLinks).map((category) => (
+              <div key={category} className="mb-4">
 
-              {/* 분류 제목 */}
-              <h3 className="text-xs font-semibold mb-2 text-zinc-500">
-                {category}
-              </h3>
-
-              {/* 해당 분류 링크 */}
-              <div className="grid grid-cols-2 gap-2">
-                {groupedLinks[category].map((link: LinkData) => (
-                  <div
-                    key={link.id}
-                    className="group p-2 border border-zinc-200 dark:border-zinc-600 rounded text-xs flex justify-between"
+                {/* 분류 제목 */}
+                <div className="flex items-center gap-1 mb-2">
+                  <h3 
+                    onClick={() => toggleGroup(category)}
+                    className="text-xs font-semibold text-zinc-500 cursor-pointer hover:text-zinc-300 transition"
                   >
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate flex-1"
-                    >
-                      {link.title}
-                    </a>
+                    {category}
+                  </h3>
+                </div>
 
-                    <button
-                      onClick={() => handleDelete(link.id)}
-                      className="text-red-500 ml-2 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity"
+                {/* 해당 분류 링크 */}
+                {!collapsedGroups[category] && (
+                <div className="grid grid-cols-6 gap-2">
+                  {groupedLinks[category].map((link: LinkData) => (
+                    <div
+                      key={link.id}
+                      className="group p-2 border border-zinc-200 dark:border-zinc-600 rounded text-xs flex justify-between"
                     >
-                      x
-                    </button>
-                  </div>
-                ))}
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate flex-1"
+                      >
+                        {link.title}
+                      </a>
+
+                      <button
+                        onClick={() => handleDelete(link.id)}
+                        className="text-red-500 ml-2 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity"
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                )}
               </div>
-            </div>
-          ))}
+            ))}
 
             {links.length === 0 && (
               <div className="text-zinc-400 text-xs text-center py-2">
@@ -164,31 +192,31 @@ export default function LinkBox() {
               + 링크 추가
             </button>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 mt-4">
               <input
                 type="text"
                 placeholder="제목"
                 value={newLink.title}
                 onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800"
+                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 select-auto"
               />
               <input
                 type="url"
                 placeholder="URL (https://...)"
                 value={newLink.url}
                 onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800"
+                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 select-auto"
               />
               <input
                 type="text"
-                placeholder="분류 (예: 공부, 개발)"
+                placeholder="분류"
                 value={newLink.category}
                 onChange={(e) =>
                   setNewLink({ ...newLink, category: e.target.value })
                 }
-                className="w-full px-2 py-1 text-xs border rounded"
+                className="w-full px-2 py-1 text-xs border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 select-auto"
               />
-              <div className="flex gap-2">
+              <div className="flex justify-center gap-2">
                 <button
                   onClick={handleAdd}
                   className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"

@@ -8,7 +8,7 @@ import LinkBox from "./Todo/LinkBox.tsx";
 
 export default function TodoTab() {
   return (
-    <div className="bg-white text-black dark:bg-zinc-900 dark:text-white overflow-x-hidden">
+    <div className="bg-white text-black dark:bg-zinc-900 dark:text-white overflow-x-hidden select-none">
       <div className="mx-auto w-full max-w-screen-2xl px-4 flex flex-col gap-6">
 
         {/* 1행 - 루틴 3열 */}

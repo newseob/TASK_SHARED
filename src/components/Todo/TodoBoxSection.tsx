@@ -177,7 +177,7 @@ function SortableBox({
         </button>
 
         <input
-          className="flex-1 min-w-0 text-blue-700 dark:text-blue-300 bg-transparent outline-none truncate text-xs"
+          className="flex-1 min-w-0 text-blue-700 dark:text-blue-300 bg-transparent outline-none truncate text-xs select-auto"
           value={box.title}
           onChange={(e) => onChangeTitle(box.id, e.target.value)}
         />
@@ -250,7 +250,7 @@ function SortableBox({
 
             <input
               ref={nameRef}
-              className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded"
+              className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded select-auto"
               placeholder="새 항목"
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
@@ -265,7 +265,7 @@ function SortableBox({
               <>
                 <input
                   ref={countRef}
-                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 "
+                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 select-auto"
                   placeholder="수량"
                   value={newCount}
                   onChange={(e) => setNewCount(e.target.value)}
@@ -278,7 +278,7 @@ function SortableBox({
                 />
                 <input
                   ref={unitRef}
-                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 "
+                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 select-auto"
                   placeholder="단위"
                   value={newUnit}
                   onChange={(e) => setNewUnit(e.target.value)}

@@ -405,7 +405,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(0, i, e.target.value, "budget")
                         }
-                        className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
+                        className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs select-auto"
                       />
 
                       <input
@@ -414,7 +414,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(0, i, e.target.value, "current")
                         }
-                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs select-auto ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
 
@@ -424,7 +424,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(1, i, e.target.value, "current")
                         }
-                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs select-auto ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
 
@@ -434,7 +434,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(2, i, e.target.value, "current")
                         }
-                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs select-auto ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
 
@@ -472,7 +472,7 @@ export default function MoneyBox() {
                           updated[i] = value;
                           setCategoryCumulative(updated);
                         }}
-                        className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs"
+                        className="px-2 py-1 text-right bg-transparent border-none outline-none text-xs select-auto"
                       />
                     </div>
                   );
