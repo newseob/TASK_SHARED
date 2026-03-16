@@ -386,7 +386,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(0, i, e.target.value, "budget")
                         }
-                        className="text-base px-2 py-1 text-right bg-transparent border-none outline-none text-xs select-auto"
+                        className="text-base px-2 py-1 text-right bg-transparent border-none outline-none select-auto"
                       />
 
                       {showUsers && (
@@ -396,7 +396,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(0, i, e.target.value, "current")
                         }
-                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs select-auto ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`text-base px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
                     )}
@@ -407,7 +407,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(1, i, e.target.value, "current")
                         }
-                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs select-auto ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`text-base px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
                     )}
@@ -418,7 +418,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(2, i, e.target.value, "current")
                         }
-                        className={`px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded text-xs select-auto ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`text-base px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
                     )}
@@ -433,7 +433,7 @@ export default function MoneyBox() {
                             setCategoryMemo(updated);
                           }
                         }}
-                        className={`text-xs text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
+                        className={`text-base text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
                           } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
                       >
                         {formatNumber(sum)}
@@ -461,7 +461,7 @@ export default function MoneyBox() {
                           updated[i] = value;
                           setCategoryCumulative(updated);
                         }}
-                        className={`text-base px-2 py-1 text-right bg-transparent border-none outline-none text-xs select-auto opacity-50 ${Number(categoryCumulative[i]) < 0 ? "text-red-500" : ""
+                        className={`text-base px-2 py-1 text-right bg-transparent border-none outline-none select-auto opacity-50 ${Number(categoryCumulative[i]) < 0 ? "text-red-500" : ""
                           }`}
                       />
                     </div>
