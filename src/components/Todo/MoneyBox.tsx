@@ -433,7 +433,7 @@ export default function MoneyBox() {
                             setCategoryMemo(updated);
                           }
                         }}
-                        className={`text-base text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
+                        className={`text-xs text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
                           } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
                       >
                         {formatNumber(sum)}
