@@ -130,7 +130,7 @@ export default function RoutineTab() {
                 메모
               </th>
               <th
-                className="border border-zinc-600 x-2 py-1 w-16 cursor-pointer hover:bg-zinc-700"
+                className="border border-zinc-600 px-2 py-1 w-16 cursor-pointer hover:bg-zinc-700"
                 onClick={() => handleSort("lastChecked")}
               >
                 최종확인
