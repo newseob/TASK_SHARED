@@ -217,7 +217,7 @@ export default function SortableItem({
             onRemoveItem(boxId, item.id);
           }
         }}
-        className="ml-2 px-2 text-gray rounded hover:bg-gray-200 transition text-sm opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100"
+        className="ml-1 px-1 text-gray rounded hover:bg-gray-200 transition text-xs opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100"
         title="삭제"
       >
         X

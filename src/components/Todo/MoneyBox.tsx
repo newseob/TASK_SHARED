@@ -323,7 +323,7 @@ export default function MoneyBox() {
       {showList && (
         <div className="mt-2 mb-[80px]">
 
-          <div className="text-sm text-zinc-600 dark:text-zinc-400 p-4 border border-zinc-200 dark:border-zinc-700 rounded space-y-3">
+          <div className="text-sm text-zinc-600 dark:text-zinc-400 rounded space-y-3">
 
             {/* 통계 */}
             <div className="grid grid-cols-2 gap-2 text-xs">

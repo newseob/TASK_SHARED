@@ -8,29 +8,37 @@ import LinkBox from "./Todo/LinkBox.tsx";
 
 export default function TodoTab() {
   return (
-    <div className="bg-white text-black dark:bg-zinc-900 dark:text-white overflow-x-hidden select-none">
-      <div className="mx-auto w-full max-w-screen-2xl px-4 flex flex-col gap-6">
+    <div className="bg-gray-200 text-black dark:bg-black dark:text-white overflow-x-hidden select-none">
+      <div className="mx-auto w-full max-w-screen-2xl px-4 flex flex-col gap-4 py-4">
 
         {/* 1행 - 루틴 3열 */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <TodayRoutine />
-          <CycleRoutine />
-          <OtherRoutine />
+        <section className="bg-white dark:bg-zinc-900 rounded-lg p-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <TodayRoutine />
+            <CycleRoutine />
+            <OtherRoutine />
+          </div>
         </section>
 
         {/* 2행 - Todo */}
         <section className="w-full">
-          <TodoBoxSection />
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-3">
+            <TodoBoxSection />
+          </div>
         </section>
 
         {/* 3행 - 링크 */}
         <section className="w-full">
-          <LinkBox />
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-3">
+            <LinkBox />
+          </div>
         </section>
 
         {/* 4행 - Money */}
         <section className="w-full">
-          <MoneyBox />
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-3">
+            <MoneyBox />
+          </div>
         </section>
 
       </div>
