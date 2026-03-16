@@ -86,7 +86,7 @@ export default function SortableItem({
       {...attributes}
       ref={setNodeRef}
       style={style}
-      className={`p-1 mb-1 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg} ${borderColorClass}`}
+      className={`group p-1 mb-1 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg} ${borderColorClass}`}
     >
       {/* ✅ 왼쪽 체크 버튼 */}
       <button
@@ -210,7 +210,7 @@ export default function SortableItem({
       {/* ✅ 삭제 버튼 */}
       <button
         onClick={() => onRemoveItem(boxId, item.id)}
-        className="ml-2 px-2 text-gray rounded hover:bg-gray-200 transition text-sm"
+        className="ml-2 px-2 text-gray rounded hover:bg-gray-200 transition text-sm opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100"
         title="삭제"
       >
         X

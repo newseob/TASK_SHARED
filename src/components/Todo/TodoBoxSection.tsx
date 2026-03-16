@@ -150,7 +150,7 @@ function SortableBox({
       className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-[40px] min-w-0 break-words [overflow-wrap:anywhere]"
     >
       {/* 제목 + 핸들러 */}
-      <div className="flex items-center gap-1 mb-2">
+      <div className="group flex items-center gap-1 mb-2">
         <button
           {...attributes}
           {...listeners} // ① DnD Kit 리스너 흘려주기
@@ -183,7 +183,7 @@ function SortableBox({
         />
         <button
           onClick={() => onRemoveItem(box.id, "__box__")}
-          className="ml-2 px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0"
+          className="ml-2 px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0 opacity-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100"
           title="소주제 삭제"
         >
           X
@@ -244,7 +244,7 @@ function SortableBox({
           </DndContext>
 
           {/* 새 항목 입력 */}
-          <div className="flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded min-w-0">
+          <div className="group flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded min-w-0 opacity-0 sm:opacity-0 sm:hover:opacity-100 opacity-100 transition-opacity">
             {/* 체크박스 공간 확보용 여백 */}
             <div className="w-5 h-5 mr-2" />
 

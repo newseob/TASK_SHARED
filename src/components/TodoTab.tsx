@@ -4,6 +4,7 @@ import TodoBoxSection from "./Todo/TodoBoxSection.tsx";
 import CycleRoutine from "./Todo/CycleRoutine.tsx";
 import OtherRoutine from "./Todo/OtherRoutine.tsx";
 import MoneyBox from "./Todo/MoneyBox.tsx";
+import LinkBox from "./Todo/LinkBox.tsx";
 
 export default function TodoTab() {
   return (
@@ -22,7 +23,12 @@ export default function TodoTab() {
           <TodoBoxSection />
         </section>
 
-        {/* 3행 - Money */}
+        {/* 3행 - 링크 */}
+        <section className="w-full">
+          <LinkBox />
+        </section>
+
+        {/* 4행 - Money */}
         <section className="w-full">
           <MoneyBox />
         </section>
