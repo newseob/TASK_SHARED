@@ -64,11 +64,13 @@ export default function DateReference() {
     return diffDays - cycle;
   };
 
-  // 주기 0인 항목들에 remaining 계산 추가
-  const preparedZeroCycleItems = zeroCycleItems.map(item => ({
-    ...item,
-    remaining: calculateDays(item.lastChecked, Number(item.cycle)),
-  }));
+  // 주기 0인 항목들에 remaining 계산 추가 및 이름 오름차순 정렬
+  const preparedZeroCycleItems = zeroCycleItems
+    .map(item => ({
+      ...item,
+      remaining: calculateDays(item.lastChecked, Number(item.cycle)),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // ───────────────────────────────
   // 인라인 날짜 수정
@@ -270,13 +272,13 @@ export default function DateReference() {
 
       {showList && (
         // 날짜 참고 박스
-        <div className="space-y-[40px] mt-1 mb-[40px]">
+        <div className="space-y-[40px] mt-1 mb-[40px] opacity-50">
           <section className="bg-transparent p-0 shadow-none">
             <div>
               {/* 주기 0인 항목들 */}
               {preparedZeroCycleItems.length > 0 && (
                 <div className="pt-1">
-                  <div className="grid grid-cols-1 xs:grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-2">
                     {preparedZeroCycleItems.map(item => renderZeroCycleItem(item))}
                   </div>
                 </div>

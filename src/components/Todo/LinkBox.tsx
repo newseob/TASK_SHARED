@@ -33,6 +33,7 @@ function SortableGroup({
   onDelete,
   onDragEnd,
   sensors,
+  onCategoryEdit,
 }: {
   category: string;
   links: LinkData[];
@@ -41,10 +42,39 @@ function SortableGroup({
   onDelete: (id: string) => void;
   onDragEnd: (event: DragEndEvent) => void;
   sensors: any;
+  onCategoryEdit: (oldCategory: string, newCategory: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: category,
   });
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(category);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditValue(category);
+  };
+
+  const handleSave = () => {
+    if (editValue.trim() && editValue !== category) {
+      onCategoryEdit(category, editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditValue(category);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave();
+    } else if (e.key === "Escape") {
+      handleCancel();
+    }
+  };
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -57,16 +87,54 @@ function SortableGroup({
       style={style}
       {...attributes}
       {...listeners}
-      className="mb-4 cursor-move"
+      className="mb-4 cursor-move group"
     >
       {/* 분류 제목 */}
       <div className="flex items-center gap-1 mb-2">
-        <h3
-          onClick={() => toggleGroup(category)}
-          className="text-xs font-semibold text-zinc-500 cursor-pointer hover:text-zinc-300 transition"
-        >
-          {category}
-        </h3>
+        {isEditing ? (
+          <div className="flex items-center gap-1 flex-1">
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSave}
+              className="text-xs font-semibold bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-1 py-0.5 rounded border border-zinc-300 dark:border-zinc-600 outline-none focus:ring-1 focus:ring-blue-500"
+              autoFocus
+            />
+            <button
+              onClick={handleSave}
+              className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+            >
+              ✓
+            </button>
+            <button
+              onClick={handleCancel}
+              className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3
+              onClick={() => toggleGroup(category)}
+              className="text-xs font-semibold text-zinc-500 cursor-pointer hover:text-zinc-300 transition"
+            >
+              {category}
+            </h3>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit();
+              }}
+              className="text-xs text-zinc-400 hover:text-zinc-300 transition ml-1 opacity-0 group-hover:opacity-100"
+              title="그룹명 수정"
+            >
+              ✏️
+            </button>
+          </>
+        )}
       </div>
 
       {/* 해당 분류 링크 */}
@@ -242,6 +310,28 @@ export default function LinkBox() {
     })
   );
 
+  // 카테고리 수정 핸들러
+  const handleCategoryEdit = async (oldCategory: string, newCategory: string) => {
+    if (oldCategory === newCategory) return;
+
+    try {
+      // 모든 링크의 카테고리 업데이트
+      const updatedLinks = links.map(link => 
+        link.category === oldCategory 
+          ? { ...link, category: newCategory }
+          : link
+      );
+
+      // Firestore에 저장
+      const docRef = doc(db, "links", "main");
+      await setDoc(docRef, { links: updatedLinks }, { merge: true });
+      
+      setLinks(updatedLinks);
+    } catch (e) {
+      console.error("[LinkBox] ❌ 카테고리 수정 실패:", e);
+    }
+  };
+
   // 그룹 드래그 종료 핸들러
   const handleGroupDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -346,6 +436,7 @@ export default function LinkBox() {
                     onDelete={handleDelete}
                     onDragEnd={handleDragEnd}
                     sensors={sensors}
+                    onCategoryEdit={handleCategoryEdit}
                   />
                 ))}
               </div>

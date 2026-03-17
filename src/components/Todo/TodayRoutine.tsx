@@ -103,14 +103,12 @@ export default function TodayRoutine() {
     }
   };
 
-  // 전처리: remaining 계산 → D-3 미만(즉, 아직 3일 이상 남은 항목)은 숨김
+  // 전처리: remaining 계산 → 모든 항목 표시 (조건 안되는 항목은 투명도 80%)
   const prepared = items
     .map((item) => ({
       ...item,
       remaining: calculateDays(item.lastChecked, Number(item.cycle)),
-    }))
-    // 🔹 0 이상 = 오늘 또는 주기가 지난 항목만 표시
-    .filter((item) => item.remaining >= 0);
+    }));
 
   // 섹션 분리 및 정렬(remaining 내림차순)
   const dailyItems = prepared
@@ -131,10 +129,12 @@ export default function TodayRoutine() {
         ? "text-zinc-400"
         : "text-gray-400 dark:text-zinc-700";
 
+    const opacityClass = item.remaining < 0 ? "opacity-80" : "";
+
     return (
       <li
         key={item.id}
-        className={`border rounded px-2 py-1 space-y-1 text-sm ${liClass}`}
+        className={`border rounded px-2 py-1 space-y-1 text-sm ${liClass} ${opacityClass}`}
       >
         {/* 상단: 이름 + D±표시 + lastChecked 인라인 달력 */}
         <div className="flex justify-between items-center font-medium">
@@ -143,11 +143,11 @@ export default function TodayRoutine() {
           </div>
           <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrap">
             <span className="font-light">
-              {item.remaining > 0
-                ? `D+${item.remaining}`
-                : item.remaining < 0
-                  ? `D-${Math.abs(item.remaining)}`
-                  : "오늘"}
+              {item.remaining > 0 ? (
+                <span className="text-red-500">D+{item.remaining}</span>
+              ) : (
+                ""
+              )}
             </span>
             <div className="relative w-5 h-5">
               <input

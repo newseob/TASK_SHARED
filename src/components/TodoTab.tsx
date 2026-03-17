@@ -21,11 +21,17 @@ export default function TodoTab() {
         {/* 루틴 */}
         <section className="w-full">
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 gap-3">
               <TodayRoutine />
               <CycleRoutine />
-              <DateReference />
             </div>
+          </div>
+        </section>
+
+        {/* 날짜참고 */}
+        <section className="w-full">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
+            <DateReference />
           </div>
         </section>
 
