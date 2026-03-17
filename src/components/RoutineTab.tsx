@@ -27,7 +27,7 @@ export default function RoutineTab() {
     memo: "",
     cycle: 0,
   });
-  const [sortKey, setSortKey] = useState<SortKey | null>("name");
+  const [sortKey, setSortKey] = useState<SortKey | null>("cycle");
   const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {

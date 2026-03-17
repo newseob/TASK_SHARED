@@ -2,6 +2,20 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
 
 interface RoutineItem {
   id: string;
@@ -110,15 +124,89 @@ export default function TodayRoutine() {
       remaining: calculateDays(item.lastChecked, Number(item.cycle)),
     }));
 
-  // 섹션 분리 및 정렬(remaining 내림차순)
-  const dailyItems = prepared
-    .filter((i) => Number(i.cycle) === 1)
-    .sort((a, b) => b.remaining - a.remaining);
+  // 드래그 순서를 유지하기 위한 상태
+  const [orderedDailyItems, setOrderedDailyItems] = useState<RoutineItem[]>([]);
+
+  // Firestore
+  useEffect(() => {
+    const dailyItems = prepared.filter((i) => Number(i.cycle) === 1);
+
+    setOrderedDailyItems(dailyItems);
+  }, [items]);
+
+  // 섹션 분리 (orderedDailyItems 사용)
+  const dailyItems = orderedDailyItems;
+
+  // 드래그 앤 드롭을 위한 센서 설정
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { delay: 150, distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // 드래그 종료 핸들러
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      const oldIndex = dailyItems.findIndex((item) => item.id === active.id);
+      const newIndex = dailyItems.findIndex((item) => item.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newDailyItems = [...dailyItems];
+        const [moved] = newDailyItems.splice(oldIndex, 1);
+        newDailyItems.splice(newIndex, 0, moved);
+
+        setOrderedDailyItems(newDailyItems);
+
+        // ✅ 핵심: 기존 items 순서를 유지하면서 교체
+        let dailyIndex = 0;
+
+        const updatedItems = items.map((item) => {
+          if (Number(item.cycle) === 1) {
+            return newDailyItems[dailyIndex++];
+          }
+          return item;
+        });
+
+        updateWithHistory(updatedItems);
+      }
+    }
+  };
+
+  // 드래그 가능한 아이템 컴포넌트
+  const SortableItem = ({ item }: { item: RoutineItem & { remaining: number } }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+      transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    // 드래그 중에는 인라인 편집 비활성화
+    const isDragDisabled = isDragging;
+
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        {renderItem(item, isDragDisabled)}
+      </div>
+    );
+  };
 
   // ───────────────────────────────
   // 공통 아이템 렌더러
   // ───────────────────────────────
-  const renderItem = (item: RoutineItem & { remaining: number }) => {
+  const renderItem = (item: RoutineItem & { remaining: number }, isDragDisabled: boolean = false) => {
     const liClass =
       item.remaining >= 0
         ? "bg-zinc-600 text-white border-zinc-700"
@@ -174,6 +262,7 @@ export default function TodayRoutine() {
                     return rest;
                   });
                 }}
+                disabled={isDragDisabled}
               />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -234,38 +323,8 @@ export default function TodayRoutine() {
                   className="relative inline-flex items-center leading-none text-[11px] cursor-pointer"
                   aria-label="마지막 교체 날짜 선택"
                   title="마지막 교체 날짜 선택"
-                  onClick={(e) => {
-                    const input = e.currentTarget.querySelector(
-                      'input[type="date"]'
-                    ) as HTMLInputElement | null;
-                    if (input && (input as any).showPicker) (input as any).showPicker();
-                  }}
                 >
-                  <input
-                    type="date"
-                    className="absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer"
-                    value={tempDates[item.id]?.lastReplaced ?? ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setTempDates((prev) => ({
-                        ...prev,
-                        [item.id]: { ...prev[item.id], lastReplaced: value },
-                      }));
-                    }}
-                    onBlur={() => {
-                      const temp = tempDates[item.id]?.lastReplaced;
-                      if (temp && temp !== item.lastReplaced) {
-                        handleInlineDateChange(item.id, "lastReplaced", temp);
-                      }
-                      setTempDates((prev) => {
-                        const { [item.id]: removed, ...rest } = prev;
-                        return rest;
-                      });
-                    }}
-                  />
-                  <span className="text-zinc-400 dark:text-zinc-400 underline decoration-dotted decoration-1 select-none">
-                    {item.lastReplaced}
-                  </span>
+                  {item.lastReplaced}
                 </span>
               </span>
             ) : (
@@ -298,12 +357,28 @@ export default function TodayRoutine() {
         // 매일 루틴 박스
         <div className="space-y-[40px] mt-2 mb-[40px]">
           <section className="bg-transparent p-0 shadow-none">
-            <ul className="grid grid-cols-1 gap-2 min-w-0">
-              {dailyItems.map(renderItem)}
-            </ul>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={dailyItems.map((item) => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <ul className="grid grid-cols-1 gap-2 min-w-0">
+                  {dailyItems.map((item) => (
+                    <SortableItem
+                      key={item.id}
+                      item={{ ...item, remaining: calculateDays(item.lastChecked, Number(item.cycle)) }}
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
           </section>
         </div>
       )}
     </div>
   );
-}
+};
