@@ -35,17 +35,17 @@ export default function TodoTab() {
           </div>
         </section>
 
-        {/* 링크 */}
-        <section className="w-full">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
-            <LinkBox />
-          </div>
-        </section>
-
         {/* Money */}
         <section className="w-full">
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
             <MoneyBox />
+          </div>
+        </section>
+
+        {/* 링크 */}
+        <section className="w-full">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
+            <LinkBox />
           </div>
         </section>
 
