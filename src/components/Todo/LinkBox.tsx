@@ -15,6 +15,7 @@ import {
   SortableContext,
   useSortable,
   rectSortingStrategy,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
 interface LinkData {
@@ -24,9 +25,27 @@ interface LinkData {
   category: string;
 }
 
-function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: string) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: link.id });
-  
+function SortableGroup({
+  category,
+  links,
+  collapsedGroups,
+  toggleGroup,
+  onDelete,
+  onDragEnd,
+  sensors,
+}: {
+  category: string;
+  links: LinkData[];
+  collapsedGroups: { [key: string]: boolean };
+  toggleGroup: (category: string) => void;
+  onDelete: (id: string) => void;
+  onDragEnd: (event: DragEndEvent) => void;
+  sensors: any;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: category,
+  });
+
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
@@ -36,31 +55,85 @@ function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: s
     <div
       ref={setNodeRef}
       style={style}
-      className="group p-2 bg-zinc-300 dark:bg-zinc-700 dark:text-white rounded text-sm flex justify-between cursor-move"
       {...attributes}
       {...listeners}
+      className="mb-4 cursor-move"
     >
-      <a
-        href={link.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="truncate flex-1"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {link.title}
-      </a>
+      {/* 분류 제목 */}
+      <div className="flex items-center gap-1 mb-2">
+        <h3
+          onClick={() => toggleGroup(category)}
+          className="text-xs font-semibold text-zinc-500 cursor-pointer hover:text-zinc-300 transition"
+        >
+          {category}
+        </h3>
+      </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          if (confirm("정말 이 링크를 삭제할까요?")) {
+      {/* 해당 분류 링크 */}
+      {!collapsedGroups[category] && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
+          <SortableContext
+            items={links.map((link: LinkData) => link.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-6 gap-2">
+              {links.map((link: LinkData) => (
+                <SortableLinkItem
+                  key={link.id}
+                  link={link}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+    </div>
+  );
+}
+
+function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: link.id,
+  });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-zinc-500 dark:bg-zinc-700 rounded p-2 cursor-move hover:shadow-sm transition-shadow group"
+    >
+      <div className="flex justify-between items-center">
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-white hover:underline line-clamp-2 flex-1 mr-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {link.title}
+        </a>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
             onDelete(link.id);
-          }
-        }}
-        className="text-red-500 ml-2 opacity-0 xs:opacity-0 xs:group-hover:opacity-100 opacity-100 transition-opacity"
-      >
-        x
-      </button>
+          }}
+          className="text-white hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
@@ -169,7 +242,39 @@ export default function LinkBox() {
     })
   );
 
-  // 드래그 종료 핸들러
+  // 그룹 드래그 종료 핸들러
+  const handleGroupDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const categories = Object.keys(groupedLinks);
+    const oldIndex = categories.indexOf(active.id as string);
+    const newIndex = categories.indexOf(over.id as string);
+    
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    // 카테고리 순서 변경
+    const newOrder = arrayMove(categories, oldIndex, newIndex);
+    
+    // 링크 데이터 재구성 (새 순서에 따라)
+    const reorderedLinks: LinkData[] = [];
+    newOrder.forEach((category: string) => {
+      reorderedLinks.push(...groupedLinks[category]);
+    });
+    
+    setLinks(reorderedLinks);
+
+    // Firestore에 순서 저장
+    try {
+      const docRef = doc(db, "links", "main");
+      await setDoc(docRef, { links: reorderedLinks }, { merge: true });
+    } catch (e) {
+      console.error("[LinkBox] ❌ 그룹 순서 저장 실패:", e);
+    }
+  };
+
+  // 링크 아이템 드래그 종료 핸들러
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -221,52 +326,36 @@ export default function LinkBox() {
         <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400, py-2">
 
           {/* 링크 목록 */}
-          <div className="space-y-4">
-            {Object.keys(groupedLinks).map((category) => (
-              <div key={category} className="mb-4">
-
-                {/* 분류 제목 */}
-                <div className="flex items-center gap-1 mb-2">
-                  <h3 
-                    onClick={() => toggleGroup(category)}
-                    className="text-xs font-semibold text-zinc-500 cursor-pointer hover:text-zinc-300 transition"
-                  >
-                    {category}
-                  </h3>
-                </div>
-
-                {/* 해당 분류 링크 */}
-                {!collapsedGroups[category] && (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleGroupDragEnd}
+          >
+            <SortableContext
+              items={Object.keys(groupedLinks)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {Object.keys(groupedLinks).map((category) => (
+                  <SortableGroup
+                    key={category}
+                    category={category}
+                    links={groupedLinks[category]}
+                    collapsedGroups={collapsedGroups}
+                    toggleGroup={toggleGroup}
+                    onDelete={handleDelete}
                     onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={groupedLinks[category].map((link: LinkData) => link.id)}
-                      strategy={rectSortingStrategy}
-                    >
-                      <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-6 gap-2">
-                        {groupedLinks[category].map((link: LinkData) => (
-                          <SortableLinkItem
-                            key={link.id}
-                            link={link}
-                            onDelete={handleDelete}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                )}
+                    sensors={sensors}
+                  />
+                ))}
               </div>
-            ))}
-
-            {links.length === 0 && (
-              <div className="text-zinc-400 text-xs text-center py-2">
-                저장된 링크가 없습니다
-              </div>
-            )}
-          </div>
+            </SortableContext>
+          </DndContext>
+          {links.length === 0 && (
+            <div className="text-zinc-400 text-xs text-center py-2">
+              저장된 링크가 없습니다
+            </div>
+          )}
 
           {/* 추가 버튼 */}
           {!isAdding ? (

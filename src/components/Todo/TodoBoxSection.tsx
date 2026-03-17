@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { CSS } from "@dnd-kit/utilities";
+
 import {
   DndContext,
   closestCenter,
@@ -71,7 +73,7 @@ function SortableBox({
   moveBoxDown: (id: string) => void;
   isLastBox: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform } = useSortable({ id: box.id });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: box.id });
   const [collapsed, setCollapsed] = useState(() => {
     // localStorage에서 상태 복원
     const saved = localStorage.getItem(`todoBox_${box.id}_collapsed`);
@@ -142,9 +144,13 @@ function SortableBox({
         setActiveBox(activeBox?.id === box.id ? null : box);
       }}
       style={{
-        ...transform,
-        transition: transform ? 'transform 0.2s ease-out, opacity 0.2s ease-out' : 'none',
-        opacity: isDragging && activeBox?.id === box.id ? 0.5 : 1,
+        transform: CSS.Transform.toString({
+          ...transform,
+          scaleX: 1,
+          scaleY: 1,
+        }),
+        transition,
+        opacity: 1,
         touchAction: isDragging ? "none" : "auto",
       }}
       className="bg-transparent dark:bg-zinc-900 text-black dark:text-white w-full transition-opacity mb-4 min-w-0 break-words [overflow-wrap:anywhere]"
@@ -451,10 +457,10 @@ export default function TodoBoxSection() {
   // 드래그 이벤트 핸들링
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
+      activationConstraint: { delay: 150, tolerance: 5 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
+      activationConstraint: { delay: 150, tolerance: 5 },
     })
   );
   const handleDragStart = (evt: DragStartEvent) => {
@@ -496,25 +502,24 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3">
-            {todoBoxes.map((b, i) => (
-              <SortableBox
-                key={b.id}
-                box={b}
-                activeBox={activeBox}
-                isDragging={isDragging && activeBox?.id === b.id}
-                setActiveBox={setActiveBox}
-                onChangeTitle={changeTitle}
-                onChangeItem={changeItem}
-                onAddItem={addTodoItem}
-                onRemoveItem={removeItem}
-                toggleItemSelection={toggleItemSelection}
-                onChangeItemOrder={updateItemOrder}
-                selectedItemIds={selectedItemIds}
-                moveBoxDown={moveBoxDown}
-                isLastBox={i === todoBoxes.length - 1}
-              />
-            ))}
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 items-start">            {todoBoxes.map((b, i) => (
+            <SortableBox
+              key={b.id}
+              box={b}
+              activeBox={activeBox}
+              isDragging={isDragging && activeBox?.id === b.id}
+              setActiveBox={setActiveBox}
+              onChangeTitle={changeTitle}
+              onChangeItem={changeItem}
+              onAddItem={addTodoItem}
+              onRemoveItem={removeItem}
+              toggleItemSelection={toggleItemSelection}
+              onChangeItemOrder={updateItemOrder}
+              selectedItemIds={selectedItemIds}
+              moveBoxDown={moveBoxDown}
+              isLastBox={i === todoBoxes.length - 1}
+            />
+          ))}
           </div>
           <div className="flex gap-2 mt-2 min-w-0">
             <button
@@ -528,26 +533,6 @@ export default function TodoBoxSection() {
 
           </div>
         </SortableContext>
-
-        <DragOverlay>
-          {activeBox && (
-            <SortableBox
-              box={activeBox}
-              activeBox={activeBox}
-              isDragging={false}
-              setActiveBox={() => { }}
-              onChangeTitle={() => { }}
-              onChangeItem={() => { }}
-              onAddItem={() => { }}
-              onRemoveItem={() => { }}
-              toggleItemSelection={() => { }}
-              onChangeItemOrder={() => { }}
-              selectedItemIds={selectedItemIds}
-              moveBoxDown={() => { }}
-              isLastBox={false}
-            />
-          )}
-        </DragOverlay>
       </DndContext>
     </div>
   );

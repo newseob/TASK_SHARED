@@ -3,10 +3,12 @@ import TodoTab from "./components/TodoTab.tsx";
 import RoutineTab from "./components/RoutineTab.tsx";
 import KyunginTab from "./components/KyunginTab.tsx";
 import YuseopTab from "./components/YuseopTab.tsx";
+import LoginScreen from "./components/LoginScreen.tsx";
 
 function App() {
   const tabs = ["할일", "루틴", "경인", "유섭"];
   const [activeTab, setActiveTab] = useState("할일");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() =>
     localStorage.getItem("theme") === "dark"
@@ -22,6 +24,10 @@ function App() {
       localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="h-screen flex flex-col bg-white text-black dark:bg-zinc-900 dark:text-white">
