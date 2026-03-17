@@ -205,28 +205,7 @@ export default function CycleRoutine() {
               {item.memo}
             </span>
 
-            {/* 1행 오른쪽: 마지막 체크 (주기=1이면 숨김) */}
-            {Number(item.cycle) !== 1 ? (
-              <span className="tabular-nums justify-self-end text-zinc-400 dark:text-zinc-400">
-                {" "}
-                <span className="text-zinc-400 dark:text-zinc-400">
-                  {item.lastChecked || "—"}
-                </span>
-              </span>
-            ) : (
-              <span />
-            )}
-
-            {/* 2행 왼쪽: 주기 (주기=1이면 숨김) */}
-            {Number(item.cycle) !== 1 && Number(item.cycle) !== 0 ? (
-              <span className="text-zinc-400 dark:text-zinc-400">
-                주기: <b className="font-medium">{Number(item.cycle) || 0}일</b>
-              </span>
-            ) : (
-              <span />
-            )}
-
-            {/* 2행 오른쪽: 마지막 교체 (텍스트 클릭 → 날짜 선택) */}
+            {/* 1행 오른쪽: 마지막 교체 (텍스트 클릭 → 날짜 선택) */}
             {item.lastReplaced ? (
               <span className="justify-self-end flex items-center gap-1 text-xs whitespace-nowrap text-zinc-400">
                 <span className="text-[11px]"></span>
