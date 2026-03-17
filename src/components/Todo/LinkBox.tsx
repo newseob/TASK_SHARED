@@ -34,6 +34,7 @@ function SortableGroup({
   onDragEnd,
   sensors,
   onCategoryEdit,
+  onEdit,
 }: {
   category: string;
   links: LinkData[];
@@ -43,6 +44,7 @@ function SortableGroup({
   onDragEnd: (event: DragEndEvent) => void;
   sensors: any;
   onCategoryEdit: (oldCategory: string, newCategory: string) => void;
+  onEdit: (link: LinkData) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: category,
@@ -85,12 +87,11 @@ function SortableGroup({
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="mb-4 cursor-move group"
+
+      className="mb-4"
     >
       {/* 분류 제목 */}
-      <div className="flex items-center gap-1 mb-2">
+      <div className="flex items-center gap-1 mb-2 hover:[&>button]:opacity-100">
         {isEditing ? (
           <div className="flex items-center gap-1 flex-1">
             <input
@@ -118,6 +119,8 @@ function SortableGroup({
         ) : (
           <>
             <h3
+              {...attributes}
+              {...listeners}
               onClick={() => toggleGroup(category)}
               className="text-xs font-semibold text-zinc-500 cursor-pointer hover:text-zinc-300 transition"
             >
@@ -128,10 +131,10 @@ function SortableGroup({
                 e.stopPropagation();
                 handleEdit();
               }}
-              className="text-xs text-zinc-400 hover:text-zinc-300 transition ml-1 opacity-0 group-hover:opacity-100"
+              className="text-xs text-zinc-400 hover:text-zinc-300 transition ml-1 opacity-0 transition"
               title="그룹명 수정"
             >
-              ✏️
+              편집
             </button>
           </>
         )}
@@ -148,13 +151,15 @@ function SortableGroup({
             items={links.map((link: LinkData) => link.id)}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {links.map((link: LinkData) => (
-                <SortableLinkItem
-                  key={link.id}
-                  link={link}
-                  onDelete={onDelete}
-                />
+                <div key={link.id}>
+                  <SortableLinkItem
+                    link={link}
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                  />
+                </div>
               ))}
             </div>
           </SortableContext>
@@ -164,7 +169,11 @@ function SortableGroup({
   );
 }
 
-function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: string) => void }) {
+function SortableLinkItem({ link, onDelete, onEdit }: {
+  link: LinkData;
+  onDelete: (id: string) => void;
+  onEdit: (link: LinkData) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: link.id,
   });
@@ -178,29 +187,58 @@ function SortableLinkItem({ link, onDelete }: { link: LinkData; onDelete: (id: s
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="bg-zinc-500 dark:bg-zinc-700 rounded p-2 cursor-move hover:shadow-sm transition-shadow group"
+      className="bg-zinc-500 dark:bg-zinc-700 rounded p-2 hover:shadow-sm transition-shadow group"
     >
       <div className="flex justify-between items-center">
-        <a
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs font-medium text-white hover:underline line-clamp-2 flex-1 mr-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {link.title}
-        </a>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(link.id);
-          }}
-          className="text-white hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          ×
-        </button>
+        <div className="flex items-center flex-1 mr-2">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-4 h-4 text-white opacity-50 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </div>
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-white hover:underline line-clamp-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {link.title}
+          </a>
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(link);
+            }}
+            className="text-white hover:text-blue-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            title="수정"
+          >
+            편집
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(link.id);
+            }}
+            className="text-white hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            title="삭제"
+          >
+            삭제
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -215,6 +253,7 @@ export default function LinkBox() {
   const [links, setLinks] = useState<LinkData[]>([]);
   const [newLink, setNewLink] = useState({ title: "", url: "", category: "" });
   const [isAdding, setIsAdding] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
 
   // 그룹별 숨김 상태 관리
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
@@ -253,29 +292,62 @@ export default function LinkBox() {
     loadLinks();
   }, []);
 
-  // 링크 추가
+  // 링크 추가 또는 수정
   const handleAdd = async () => {
     if (!newLink.title.trim() || !newLink.url.trim()) return;
 
-    const linkData: LinkData = {
-      id: Date.now().toString(),
-      title: newLink.title.trim(),
-      url: newLink.url.trim(),
-      category: newLink.category.trim() || "기타"
-    };
+    if (editingLinkId) {
+      // 수정 모드
+      const updatedLinks = links.map(link =>
+        link.id === editingLinkId
+          ? { ...link, ...newLink }
+          : link
+      );
 
-    try {
-      const docRef = doc(db, "links", "main");
-      await setDoc(docRef, {
-        links: [...links, linkData]
-      }, { merge: true });
+      try {
+        const docRef = doc(db, "links", "main");
+        await setDoc(docRef, { links: updatedLinks }, { merge: true });
 
-      setLinks([...links, linkData]);
-      setNewLink({ title: "", url: "", category: "" });
-      setIsAdding(false);
-    } catch (e) {
-      console.error("[LinkBox] ❌ Add failed:", e);
+        setLinks(updatedLinks);
+        setNewLink({ title: "", url: "", category: "" });
+        setIsAdding(false);
+        setEditingLinkId(null);
+      } catch (e) {
+        console.error("[LinkBox] ❌ Update failed:", e);
+      }
+    } else {
+      // 추가 모드
+      const linkData: LinkData = {
+        id: Date.now().toString(),
+        title: newLink.title.trim(),
+        url: newLink.url.trim(),
+        category: newLink.category.trim() || "기타"
+      };
+
+      try {
+        const docRef = doc(db, "links", "main");
+        await setDoc(docRef, {
+          links: [...links, linkData]
+        }, { merge: true });
+
+        setLinks([...links, linkData]);
+        setNewLink({ title: "", url: "", category: "" });
+        setIsAdding(false);
+      } catch (e) {
+        console.error("[LinkBox] ❌ Add failed:", e);
+      }
     }
+  };
+
+  // 링크 수정 핸들러
+  const handleEdit = (link: LinkData) => {
+    setNewLink({
+      title: link.title,
+      url: link.url,
+      category: link.category
+    });
+    setIsAdding(true);
+    setEditingLinkId(link.id);
   };
 
   // 링크 삭제
@@ -316,8 +388,8 @@ export default function LinkBox() {
 
     try {
       // 모든 링크의 카테고리 업데이트
-      const updatedLinks = links.map(link => 
-        link.category === oldCategory 
+      const updatedLinks = links.map(link =>
+        link.category === oldCategory
           ? { ...link, category: newCategory }
           : link
       );
@@ -325,7 +397,7 @@ export default function LinkBox() {
       // Firestore에 저장
       const docRef = doc(db, "links", "main");
       await setDoc(docRef, { links: updatedLinks }, { merge: true });
-      
+
       setLinks(updatedLinks);
     } catch (e) {
       console.error("[LinkBox] ❌ 카테고리 수정 실패:", e);
@@ -335,24 +407,24 @@ export default function LinkBox() {
   // 그룹 드래그 종료 핸들러
   const handleGroupDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) return;
 
     const categories = Object.keys(groupedLinks);
     const oldIndex = categories.indexOf(active.id as string);
     const newIndex = categories.indexOf(over.id as string);
-    
+
     if (oldIndex < 0 || newIndex < 0) return;
 
     // 카테고리 순서 변경
     const newOrder = arrayMove(categories, oldIndex, newIndex);
-    
+
     // 링크 데이터 재구성 (새 순서에 따라)
     const reorderedLinks: LinkData[] = [];
     newOrder.forEach((category: string) => {
       reorderedLinks.push(...groupedLinks[category]);
     });
-    
+
     setLinks(reorderedLinks);
 
     // Firestore에 순서 저장
@@ -367,12 +439,12 @@ export default function LinkBox() {
   // 링크 아이템 드래그 종료 핸들러
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) return;
 
     const oldIndex = links.findIndex((link) => link.id === active.id);
     const newIndex = links.findIndex((link) => link.id === over.id);
-    
+
     if (oldIndex < 0 || newIndex < 0) return;
 
     const reorderedLinks = arrayMove(links, oldIndex, newIndex);
@@ -437,6 +509,7 @@ export default function LinkBox() {
                     onDragEnd={handleDragEnd}
                     sensors={sensors}
                     onCategoryEdit={handleCategoryEdit}
+                    onEdit={handleEdit}
                   />
                 ))}
               </div>
@@ -486,12 +559,13 @@ export default function LinkBox() {
                   onClick={handleAdd}
                   className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-600 dark:text-white dark:hover:bg-zinc-500 transition"
                 >
-                  저장
+                  {editingLinkId ? "수정" : "저장"}
                 </button>
                 <button
                   onClick={() => {
                     setIsAdding(false);
                     setNewLink({ title: "", url: "", category: "" });
+                    setEditingLinkId(null);
                   }}
                   className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-600 dark:text-white dark:hover:bg-zinc-500 transition"
                 >
