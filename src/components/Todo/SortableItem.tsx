@@ -99,7 +99,7 @@ export default function SortableItem({
           onToggle(boxId, item.id); // ① 선택 토글
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
-        className={`mr-2 w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors ${isLowCount
+        className={`mr-2 w-3 h-3 rounded-full border flex items-center justify-center text-xs transition-colors ${isLowCount
           ? "bg-gray-100 dark:bg-gray-900 text-red-600 dark:text-red-400 border-red-400"
           : item.status === "blue"
             ? "bg-blue-500 text-white border-blue-500"
