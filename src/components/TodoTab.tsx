@@ -11,6 +11,13 @@ export default function TodoTab() {
     <div className="bg-gray-200 text-black dark:bg-black dark:text-white oveflow-x-hidden select-none">
       <div className="mx-auto w-full max-w-screen-2xl px-1 flex flex-col gap-16 py-4">
 
+        {/* Todo */}
+        <section className="w-full">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
+            <TodoBoxSection />
+          </div>
+        </section>
+
         {/* 루틴 */}
         <section className="w-full">
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
@@ -19,13 +26,6 @@ export default function TodoTab() {
               <CycleRoutine />
               <DateReference />
             </div>
-          </div>
-        </section>
-
-        {/* Todo */}
-        <section className="w-full">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
-            <TodoBoxSection />
           </div>
         </section>
 
