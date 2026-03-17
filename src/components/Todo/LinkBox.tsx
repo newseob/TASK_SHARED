@@ -23,6 +23,8 @@ interface LinkData {
   url: string;
   id: string;
   category: string;
+  transparent?: boolean;
+  opacity?: boolean;
 }
 
 function SortableGroup({
@@ -35,6 +37,7 @@ function SortableGroup({
   sensors,
   onCategoryEdit,
   onEdit,
+  onToggleStyle,
 }: {
   category: string;
   links: LinkData[];
@@ -45,6 +48,7 @@ function SortableGroup({
   sensors: any;
   onCategoryEdit: (oldCategory: string, newCategory: string) => void;
   onEdit: (link: LinkData) => void;
+  onToggleStyle: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: category,
@@ -77,6 +81,8 @@ function SortableGroup({
       handleCancel();
     }
   };
+
+
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -158,6 +164,7 @@ function SortableGroup({
                     link={link}
                     onDelete={onDelete}
                     onEdit={onEdit}
+                    onToggleStyle={onToggleStyle}
                   />
                 </div>
               ))}
@@ -169,10 +176,11 @@ function SortableGroup({
   );
 }
 
-function SortableLinkItem({ link, onDelete, onEdit }: {
+function SortableLinkItem({ link, onDelete, onEdit, onToggleStyle }: {
   link: LinkData;
   onDelete: (id: string) => void;
   onEdit: (link: LinkData) => void;
+  onToggleStyle: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: link.id,
@@ -187,14 +195,16 @@ function SortableLinkItem({ link, onDelete, onEdit }: {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-zinc-500 dark:bg-zinc-700 rounded p-2 hover:shadow-sm transition-shadow group"
+      className={`rounded p-2 transition group hover:bg-zinc-200 dark:hover:bg-zinc-600 bg-white dark:bg-transparent ${
+      link.transparent ? 'opacity-30' : 'opacity-100'
+    }`}
     >
       <div className="flex justify-between items-center">
         <div className="flex items-center flex-1 mr-2">
           <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4 text-white opacity-50 mr-2"
+              className="w-4 h-4 text-black dark:text-white opacity-50 mr-2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -211,7 +221,7 @@ function SortableLinkItem({ link, onDelete, onEdit }: {
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-white hover:underline line-clamp-2"
+            className="text-xs font-medium text-black dark:text-white hover:underline line-clamp-2"
             onClick={(e) => e.stopPropagation()}
           >
             {link.title}
@@ -221,9 +231,19 @@ function SortableLinkItem({ link, onDelete, onEdit }: {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              onToggleStyle(link.id);
+            }}
+            className="text-black dark:text-white hover:text-yellow-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            title="서식 변경"
+          >
+            서식
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               onEdit(link);
             }}
-            className="text-white hover:text-blue-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-black dark:text-white hover:text-blue-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
             title="수정"
           >
             편집
@@ -233,7 +253,7 @@ function SortableLinkItem({ link, onDelete, onEdit }: {
               e.stopPropagation();
               onDelete(link.id);
             }}
-            className="text-white hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-black dark:text-white hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
             title="삭제"
           >
             삭제
@@ -254,6 +274,24 @@ export default function LinkBox() {
   const [newLink, setNewLink] = useState({ title: "", url: "", category: "" });
   const [isAdding, setIsAdding] = useState(false);
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+
+
+  const handleToggleStyle = async (id: string) => {
+    const updatedLinks = links.map(link =>
+      link.id === id
+        ? { ...link, transparent: !link.transparent }
+        : link
+    );
+
+    setLinks(updatedLinks);
+
+    try {
+      const docRef = doc(db, "links", "main");
+      await setDoc(docRef, { links: updatedLinks }, { merge: true });
+    } catch (e) {
+      console.error("[LinkBox] ❌ 스타일 변경 실패:", e);
+    }
+  };
 
   // 그룹별 숨김 상태 관리
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
@@ -510,6 +548,7 @@ export default function LinkBox() {
                     sensors={sensors}
                     onCategoryEdit={handleCategoryEdit}
                     onEdit={handleEdit}
+                    onToggleStyle={handleToggleStyle}
                   />
                 ))}
               </div>
