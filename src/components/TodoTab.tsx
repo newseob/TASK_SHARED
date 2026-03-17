@@ -9,12 +9,12 @@ import DateReference from "./Todo/DateReference.tsx";
 export default function TodoTab() {
   return (
     <div className="bg-gray-200 text-black dark:bg-black dark:text-white oveflow-x-hidden select-none">
-      <div className="mx-auto w-full max-w-screen-2xl px-1 grid grid-cols-1 lg:grid-cols-2 gap-2 py-2">
+      <div className="mx-auto w-full max-w-screen-2xl px-1 flex flex-col gap-2 py-2">
 
         {/* 루틴 */}
         <section className="w-full">
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3">
               <TodayRoutine />
               <CycleRoutine />
               <DateReference />
