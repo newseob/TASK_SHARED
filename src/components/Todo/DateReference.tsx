@@ -1,6 +1,5 @@
-// TodayRoutine.tsx
-
-import { useState, useMemo, useEffect } from "react";
+// DateReference.tsx
+import { useState, useEffect } from 'react';
 import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
 interface RoutineItem {
@@ -13,39 +12,29 @@ interface RoutineItem {
   cycle: number;
 }
 
-export default function TodayRoutine() {
+export default function DateReference() {
   const [showList, setShowList] = useState(() => {
     // localStorage에서 상태 복원
-    const saved = localStorage.getItem('todayRoutine_showList');
+    const saved = localStorage.getItem('dateReference_showList');
     return saved !== null ? JSON.parse(saved) : true;
   });
 
   // 상태 변경 시 localStorage에 저장
   useEffect(() => {
-    localStorage.setItem('todayRoutine_showList', JSON.stringify(showList));
+    localStorage.setItem('dateReference_showList', JSON.stringify(showList));
   }, [showList]);
-
-  // 🔹 빈 배열을 useMemo로 감싸서 "항상 같은 참조"로 유지
-  const defaultData = useMemo<RoutineItem[]>(() => [], []);
-
-  const { items, updateWithHistory } = useFirestoreHistory<RoutineItem>(
+  // 오늘 루틴 데이터 가져오기
+  const { items } = useFirestoreHistory<RoutineItem>(
     "routineItems",
     "config",
-    defaultData,
+    [],
     "items"
   );
 
-  if (!Array.isArray(items)) return null;
+  // 주기가 0인 항목만 필터링
+  const zeroCycleItems = items.filter(item => Number(item.cycle) === 0);
 
-  const [tempDates, setTempDates] = useState<{
-    [id: string]: { lastChecked?: string; lastReplaced?: string };
-  }>({});
-
-  // ───────────────────────────────
-  // 시간/주기 계산 유틸
-  // ───────────────────────────────
-
-  // 오늘 06:00 (로컬)
+  // 오늘 06:00 기준 계산
   const getToday6AM = () => {
     const now = new Date();
     if (now.getHours() < 6) {
@@ -55,24 +44,18 @@ export default function TodayRoutine() {
     return now;
   };
 
-  // "YYYY-MM-DD" → 로컬 기준 해당 날짜의 06:00으로 파싱
-  // 타임스탬프가 포함된 문자열은 기본 Date 파서를 사용
   const parseLocalDateAtSix = (s: string) => {
     if (!s) return null;
-    // 순수 날짜 형태면 로컬 06:00으로 생성
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
       const [y, m, d] = s.split("-").map(Number);
-      return new Date(y, m - 1, d, 6, 0, 0, 0); // ← 로컬 06:00
+      return new Date(y, m - 1, d, 6, 0, 0, 0);
     }
-    // 그 외(ISO 문자열 등)는 기본 파서 (로컬/UTC 혼합 허용)
     const dt = new Date(s);
     return isNaN(dt.getTime()) ? null : dt;
   };
 
-  // 남은일 계산: (오늘06:00 - 마지막체크(해당날짜06:00 기준)) 일수 - 주기
-  // 예) 어제 체크 & 주기 1 → diffDays=1 → remaining=0 → "오늘"
   const calculateDays = (lastChecked: string, cycle: number): number => {
-    if (!lastChecked) return -9999; // 없으면 리스트에서 여유로 보이도록 멀리 보내기(원하면 0으로 변경 가능)
+    if (!lastChecked) return -9999;
     const last = parseLocalDateAtSix(lastChecked);
     if (!last) return -9999;
     const now = getToday6AM();
@@ -81,9 +64,19 @@ export default function TodayRoutine() {
     return diffDays - cycle;
   };
 
+  // 주기 0인 항목들에 remaining 계산 추가
+  const preparedZeroCycleItems = zeroCycleItems.map(item => ({
+    ...item,
+    remaining: calculateDays(item.lastChecked, Number(item.cycle)),
+  }));
+
   // ───────────────────────────────
   // 인라인 날짜 수정
   // ───────────────────────────────
+  const [tempDates, setTempDates] = useState<{
+    [id: string]: { lastChecked?: string; lastReplaced?: string };
+  }>({});
+
   const handleInlineDateChange = async (
     id: string,
     field: "lastChecked" | "lastReplaced",
@@ -93,8 +86,7 @@ export default function TodayRoutine() {
       item.id === id ? { ...item, [field]: value } : item
     );
 
-    updateWithHistory(updated);
-
+    // updateWithHistory가 없으므로 직접 업데이트 로직 필요
     if ((window as any).externalRoutineHistory?.push) {
       (window as any).externalRoutineHistory.push({
         boxes: updated,
@@ -103,24 +95,10 @@ export default function TodayRoutine() {
     }
   };
 
-  // 전처리: remaining 계산 → D-3 미만(즉, 아직 3일 이상 남은 항목)은 숨김
-  const prepared = items
-    .map((item) => ({
-      ...item,
-      remaining: calculateDays(item.lastChecked, Number(item.cycle)),
-    }))
-    // 🔹 0 이상 = 오늘 또는 주기가 지난 항목만 표시
-    .filter((item) => item.remaining >= 0);
-
-  // 섹션 분리 및 정렬(remaining 내림차순)
-  const dailyItems = prepared
-    .filter((i) => Number(i.cycle) === 1)
-    .sort((a, b) => b.remaining - a.remaining);
-
   // ───────────────────────────────
   // 공통 아이템 렌더러
   // ───────────────────────────────
-  const renderItem = (item: RoutineItem & { remaining: number }) => {
+  const renderZeroCycleItem = (item: RoutineItem & { remaining: number }) => {
     const liClass =
       item.remaining >= 0
         ? "bg-zinc-600 text-white border-zinc-700"
@@ -134,8 +112,8 @@ export default function TodayRoutine() {
     return (
       <li
         key={item.id}
-        className={`border rounded px-2 py-1 space-y-1 text-sm ${liClass}`}
-      >
+        className={`list-none border rounded px-2 py-1 space-y-1 text-sm ${liClass}`}
+              >
         {/* 상단: 이름 + D±표시 + lastChecked 인라인 달력 */}
         <div className="flex justify-between items-center font-medium">
           <div className="flex items-center space-x-2 font-bold text-sm">
@@ -206,16 +184,12 @@ export default function TodayRoutine() {
             </span>
 
             {/* 1행 오른쪽: 마지막 체크 (주기=1이면 숨김) */}
-            {Number(item.cycle) !== 1 ? (
-              <span className="tabular-nums justify-self-end text-zinc-400 dark:text-zinc-400">
-                {" "}
-                <span className="text-zinc-400 dark:text-zinc-400">
-                  {item.lastChecked || "—"}
-                </span>
+            <span className="tabular-nums justify-self-end text-zinc-400 dark:text-zinc-400">
+              {" "}
+              <span className="text-zinc-400 dark:text-zinc-400">
+                {item.lastChecked || "—"}
               </span>
-            ) : (
-              <span />
-            )}
+            </span>
 
             {/* 2행 왼쪽: 주기 (주기=1이면 숨김) */}
             {Number(item.cycle) !== 1 && Number(item.cycle) !== 0 ? (
@@ -229,7 +203,6 @@ export default function TodayRoutine() {
             {/* 2행 오른쪽: 마지막 교체 (텍스트 클릭 → 날짜 선택) */}
             {item.lastReplaced ? (
               <span className="justify-self-end flex items-center gap-1 text-xs whitespace-nowrap text-zinc-400">
-                <span className="text-[11px]"></span>
                 <span
                   className="relative inline-flex items-center leading-none text-[11px] cursor-pointer"
                   aria-label="마지막 교체 날짜 선택"
@@ -249,7 +222,10 @@ export default function TodayRoutine() {
                       const value = e.target.value;
                       setTempDates((prev) => ({
                         ...prev,
-                        [item.id]: { ...prev[item.id], lastReplaced: value },
+                        [item.id]: {
+                          ...prev[item.id],
+                          lastReplaced: value,
+                        },
                       }));
                     }}
                     onBlur={() => {
@@ -263,9 +239,7 @@ export default function TodayRoutine() {
                       });
                     }}
                   />
-                  <span className="text-zinc-400 dark:text-zinc-400 underline decoration-dotted decoration-1 select-none">
-                    {item.lastReplaced}
-                  </span>
+                  {item.lastReplaced || "—"}
                 </span>
               </span>
             ) : (
@@ -290,17 +264,24 @@ export default function TodayRoutine() {
           {showList ? "▽" : "▷"}
         </button>
         <h2 className="flex-1 min-w-0 text-blue-600 dark:text-blue-300 bg-transparent outline-none truncate text-xs">
-          매일 루틴
+          날짜 참고
         </h2>
       </div>
 
       {showList && (
-        // 매일 루틴 박스
-        <div className="space-y-[40px] mt-2 mb-[40px]">
+        // 날짜 참고 박스
+        <div className="space-y-[40px] mt-1 mb-[40px]">
           <section className="bg-transparent p-0 shadow-none">
-            <ul className="grid grid-cols-1 gap-2 min-w-0">
-              {dailyItems.map(renderItem)}
-            </ul>
+            <div>
+              {/* 주기 0인 항목들 */}
+              {preparedZeroCycleItems.length > 0 && (
+                <div className="pt-1">
+                  <div className="grid grid-cols-1 xs:grid-cols-1 gap-2">
+                    {preparedZeroCycleItems.map(item => renderZeroCycleItem(item))}
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
         </div>
       )}
