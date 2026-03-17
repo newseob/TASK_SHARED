@@ -246,7 +246,7 @@ export default function LinkBox() {
                       items={groupedLinks[category].map((link: LinkData) => link.id)}
                       strategy={rectSortingStrategy}
                     >
-                      <div className="grid grid-cols-2 xs:grid-cols-4 lg:grid-cols-6 gap-2">
+                      <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-6 gap-2">
                         {groupedLinks[category].map((link: LinkData) => (
                           <SortableLinkItem
                             key={link.id}
