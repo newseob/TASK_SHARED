@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
@@ -29,6 +29,9 @@ export default function RoutineTab() {
   });
   const [sortKey, setSortKey] = useState<SortKey | null>("cycle");
   const [sortAsc, setSortAsc] = useState(true);
+  
+  // 파일 입력을 위한 ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(ref, (snap) => {
@@ -41,6 +44,64 @@ export default function RoutineTab() {
 
   const saveItems = async (updated: RoutineItem[]) => {
     await setDoc(ref, { items: updated }, { merge: true });
+  };
+
+  // JSON 내보내기 함수
+  const handleExportJSON = () => {
+    const dataStr = JSON.stringify(items, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `routine_items_${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  // JSON 가져오기 함수
+  const handleImportJSON = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 파일 선택 처리 함수
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedItems = JSON.parse(e.target?.result as string) as RoutineItem[];
+        
+        // 유효성 검사
+        if (!Array.isArray(importedItems)) {
+          alert('유효한 JSON 파일이 아닙니다.');
+          return;
+        }
+
+        // 필수 필드 확인
+        const isValid = importedItems.every(item => 
+          item.id && 
+          item.name && 
+          typeof item.cycle === 'number'
+        );
+
+        if (!isValid) {
+          alert('JSON 파일의 형식이 올바르지 않습니다.');
+          return;
+        }
+
+        // 확인 후 저장
+        const confirm = window.confirm(`${importedItems.length}개의 항목을 가져오시겠습니까? 기존 데이터가 대체됩니다.`);
+        if (confirm) {
+          saveItems(importedItems);
+        }
+      } catch (error) {
+        alert('JSON 파일을 파싱하는 중 오류가 발생했습니다.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleDelete = async (id: string) => {
@@ -106,6 +167,15 @@ export default function RoutineTab() {
 
   const sortedItems = [...items].sort((a, b) => {
     if (!sortKey) return 0;
+    
+    // 주기 필드는 숫자로 정렬
+    if (sortKey === "cycle") {
+      const valA = Number(a[sortKey]) || 0;
+      const valB = Number(b[sortKey]) || 0;
+      return sortAsc ? valA - valB : valB - valA;
+    }
+    
+    // 나머지 필드는 문자열로 정렬
     const valA = a[sortKey]?.toString() || "";
     const valB = b[sortKey]?.toString() || "";
     return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -292,6 +362,29 @@ export default function RoutineTab() {
           </tbody>
         </table>
       </div>
+      
+      {/* JSON 저장 및 불러오기 버튼 */}
+      <div className="mt-4 flex gap-2">
+        <button
+          onClick={handleExportJSON}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+        >
+          JSON 저장
+        </button>
+        <button
+          onClick={handleImportJSON}
+          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+        >
+          JSON 불러오기
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+      </div>
     </div>
   );
-}
+};
