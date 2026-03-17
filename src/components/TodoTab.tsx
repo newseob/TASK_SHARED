@@ -9,7 +9,7 @@ import DateReference from "./Todo/DateReference.tsx";
 export default function TodoTab() {
   return (
     <div className="bg-gray-200 text-black dark:bg-black dark:text-white overflow-x-hidden select-none">
-      <div className="mx-auto w-full max-w-screen-lg px-0 py-4 grid gap-2 grid-cols-1 xs:grid-cols-3">
+      <div className="mx-auto w-full max-w-screen-lg px-0 py-4 grid gap-2 grid-cols-1 xs:grid-cols-2">
 
 
         {/* 루틴 */}
@@ -19,6 +19,7 @@ export default function TodoTab() {
               <TodayRoutine />
               <DateReference />
               <CycleRoutine />
+              <LinkBox />
             </div>
           </div>
         </section>
@@ -32,15 +33,8 @@ export default function TodoTab() {
           </div>
         </section>
 
-        {/* 링크 */}
-        <section className="w-full">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
-            <LinkBox />
-          </div>
-        </section>
-
         {/* Money */}
-        <section className="w-full col-span-3">
+        <section className="w-full col-span-2">
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-1">
             <MoneyBox />
           </div>
