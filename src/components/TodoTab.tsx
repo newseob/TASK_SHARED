@@ -9,7 +9,7 @@ import DateReference from "./Todo/DateReference.tsx";
 export default function TodoTab() {
   return (
     <div className="bg-gray-200 text-black dark:bg-black dark:text-white oveflow-x-hidden select-none">
-      <div className="mx-auto w-full max-w-screen-2xl px-1 flex flex-col gap-2 py-2">
+      <div className="mx-auto w-full max-w-screen-2xl px-1 flex flex-col gap-16 py-4">
 
         {/* 루틴 */}
         <section className="w-full">
