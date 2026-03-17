@@ -233,7 +233,7 @@ function SortableLinkItem({ link, onDelete, onEdit, onToggleStyle }: {
               e.stopPropagation();
               onToggleStyle(link.id);
             }}
-            className="text-black dark:text-white hover:text-yellow-300 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-black dark:text-white hover:text-yellow-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
             title="서식 변경"
           >
             🔳
@@ -243,7 +243,7 @@ function SortableLinkItem({ link, onDelete, onEdit, onToggleStyle }: {
               e.stopPropagation();
               onEdit(link);
             }}
-            className="text-black dark:text-white hover:text-blue-300 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-black dark:text-white hover:text-blue-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
             title="수정"
           >
             ✏️
@@ -253,7 +253,7 @@ function SortableLinkItem({ link, onDelete, onEdit, onToggleStyle }: {
               e.stopPropagation();
               onDelete(link.id);
             }}
-            className="text-black dark:text-white hover:text-red-300 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-black dark:text-white hover:text-red-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
             title="삭제"
           >
             ❌
