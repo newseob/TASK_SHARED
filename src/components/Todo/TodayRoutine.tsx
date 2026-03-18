@@ -23,6 +23,8 @@ interface RoutineItem {
   name: string;
   lastChecked: string;
   lastReplaced: string;
+  originalLastChecked?: string;
+  prevLastChecked?: string;
   memo: string;
   cycle: number;
 }
@@ -33,6 +35,24 @@ export default function TodayRoutine() {
     const saved = localStorage.getItem('todayRoutine_showList');
     return saved !== null ? JSON.parse(saved) : true;
   });
+
+  const getTodayStringAtSix = () => {
+    const now = new Date();
+    if (now.getHours() < 6) {
+      now.setDate(now.getDate() - 1);
+    }
+    now.setHours(6, 0, 0, 0);
+    return now.toISOString();
+  };
+
+  const isChecked = (item: RoutineItem) => {
+    if (!item.lastChecked) return false;
+
+    const today = getTodayStringAtSix();
+
+    return parseLocalDateAtSix(item.lastChecked)?.getTime() ===
+      parseLocalDateAtSix(today)?.getTime();
+  };
 
   // 상태 변경 시 localStorage에 저장
   useEffect(() => {
@@ -50,14 +70,6 @@ export default function TodayRoutine() {
   );
 
   if (!Array.isArray(items)) return null;
-
-  const [tempDates, setTempDates] = useState<{
-    [id: string]: { lastChecked?: string; lastReplaced?: string };
-  }>({});
-
-  // ───────────────────────────────
-  // 시간/주기 계산 유틸
-  // ───────────────────────────────
 
   // 오늘 06:00 (로컬)
   const getToday6AM = () => {
@@ -93,28 +105,6 @@ export default function TodayRoutine() {
     const diffMs = now.getTime() - last.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     return diffDays - cycle;
-  };
-
-  // ───────────────────────────────
-  // 인라인 날짜 수정
-  // ───────────────────────────────
-  const handleInlineDateChange = async (
-    id: string,
-    field: "lastChecked" | "lastReplaced",
-    value: string
-  ) => {
-    const updated = items.map((item) =>
-      item.id === id ? { ...item, [field]: value } : item
-    );
-
-    updateWithHistory(updated);
-
-    if ((window as any).externalRoutineHistory?.push) {
-      (window as any).externalRoutineHistory.push({
-        boxes: updated,
-        lastCheckedDate: "",
-      });
-    }
   };
 
   // 전처리: remaining 계산 → 모든 항목 표시 (조건 안되는 항목은 투명도 80%)
@@ -176,7 +166,7 @@ export default function TodayRoutine() {
     }
   };
 
-  // 드래그 가능한 아이템 컴포넌트
+  // 아이템 컴포넌트
   const SortableItem = ({ item }: { item: RoutineItem & { remaining: number } }) => {
     const {
       attributes,
@@ -184,21 +174,17 @@ export default function TodayRoutine() {
       setNodeRef,
       transform,
       transition,
-      isDragging,
     } = useSortable({ id: item.id });
 
     const style = {
       transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
       transition,
-      opacity: isDragging ? 0.5 : 1,
+      opacity: transform ? 0.8 : 1,
     };
-
-    // 드래그 중에는 인라인 편집 비활성화
-    const isDragDisabled = isDragging;
 
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        {renderItem(item, isDragDisabled)}
+        {renderItem(item)}
       </div>
     );
   };
@@ -206,7 +192,7 @@ export default function TodayRoutine() {
   // ───────────────────────────────
   // 공통 아이템 렌더러
   // ───────────────────────────────
-  const renderItem = (item: RoutineItem & { remaining: number }, isDragDisabled: boolean = false) => {
+  const renderItem = (item: RoutineItem & { remaining: number }) => {
     const liClass =
       item.remaining >= 0
         ? "bg-zinc-600 text-white border-zinc-700"
@@ -238,46 +224,48 @@ export default function TodayRoutine() {
               )}
             </span>
             <div className="relative w-5 h-5">
-              <input
-                type="date"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                value={tempDates[item.id]?.lastChecked ?? ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setTempDates((prev) => ({
-                    ...prev,
-                    [item.id]: {
-                      ...prev[item.id],
-                      lastChecked: value,
-                    },
-                  }));
-                }}
-                onBlur={() => {
-                  const temp = tempDates[item.id]?.lastChecked;
-                  if (temp && temp !== item.lastChecked) {
-                    handleInlineDateChange(item.id, "lastChecked", temp);
+              <button
+                onClick={() => {
+                  const checked = isChecked(item);
+
+                  if (!checked) {
+                    const today = getToday6AM();
+                    const y = today.getFullYear();
+                    const m = String(today.getMonth() + 1).padStart(2, "0");
+                    const d = String(today.getDate()).padStart(2, "0");
+                    const dateString = `${y}-${m}-${d}`;
+
+                    const updated = items.map((it) =>
+                      it.id === item.id
+                        ? {
+                          ...it,
+                          originalLastChecked: it.lastChecked, // 🔥 기존값 저장
+                          lastChecked: dateString,             // 🔥 오늘로 변경
+                        }
+                        : it
+                    );
+
+                    updateWithHistory(updated);
+
+                  } else {
+                    const updated = items.map((it) =>
+                      it.id === item.id
+                        ? {
+                          ...it,
+                          lastChecked: it.originalLastChecked ?? "",
+                          originalLastChecked: undefined,
+                        }
+                        : it
+                    );
+
+                    updateWithHistory(updated);
                   }
-                  setTempDates((prev) => {
-                    const { [item.id]: removed, ...rest } = prev;
-                    return rest;
-                  });
                 }}
-                disabled={isDragDisabled}
-              />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5 text-zinc-400 pointer-events-none"
-                fill="none"
-                viewBox="0 -6 36 36"
-                stroke="currentColor"
+                disabled={false}
+                className="w-5 h-5 flex items-center justify-center"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+                {isChecked(item) ? "☑" : "☐"}
+              </button>
             </div>
           </span>
         </div>

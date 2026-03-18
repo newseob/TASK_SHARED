@@ -535,7 +535,7 @@ export default function LinkBox() {
               items={Object.keys(groupedLinks)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
                 {Object.keys(groupedLinks).map((category) => (
                   <SortableGroup
                     key={category}
