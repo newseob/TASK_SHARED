@@ -204,7 +204,7 @@ function SortableLinkItem({ link, onDelete, onEdit, onToggleStyle }: {
           <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4 text-black dark:text-white opacity-50 mr-2"
+              className="w-3 h-3 text-black dark:text-white opacity-50 mr-2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -547,7 +547,7 @@ export default function LinkBox() {
               items={Object.keys(groupedLinks)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-1 gap-4">
                 {Object.keys(groupedLinks).map((category) => (
                   <SortableGroup
                     key={category}
