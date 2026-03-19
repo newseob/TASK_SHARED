@@ -390,17 +390,6 @@ export default function LinkBox() {
 
   // 링크 삭제
   const handleDelete = async (id: string) => {
-    // 삭제할 링크 정보 찾기
-    const linkToDelete = links.find(link => link.id === id);
-    if (!linkToDelete) return;
-
-    // 경고창 표시
-    const confirmDelete = window.confirm(
-      `정말로 "${linkToDelete.title}" 링크를 삭제하시겠습니까?\n\n삭제된 링크는 복구할 수 없습니다.`
-    );
-
-    if (!confirmDelete) return; // 사용자가 취소한 경우
-
     try {
       const docRef = doc(db, "links", "main");
       await setDoc(docRef, {
@@ -408,7 +397,6 @@ export default function LinkBox() {
       }, { merge: true });
 
       setLinks(links.filter(link => link.id !== id));
-      console.log("[LinkBox] ✅ 링크 삭제 완료:", linkToDelete.title);
     } catch (e) {
       console.error("[LinkBox] ❌ Delete failed:", e);
     }
