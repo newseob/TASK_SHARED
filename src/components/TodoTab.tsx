@@ -87,10 +87,10 @@ export default function TodoTab() {
 
   return (
     <div className="bg-gray-200 text-black dark:bg-black dark:text-white overflow-x-hidden select-none">
-      <div className="mx-auto w-full max-w-screen-lg px-1 flex flex-col gap-4 py-1">
-
+      <div className="mx-auto w-full max-w-screen-lg px-1 flex flex-col gap-3 py-1">
+  
         {/* 🔥 3개 박스 (순서 변경됨) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-1 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
           {order.map((key) => (
             <div key={key}>
               {renderBox(key)}
