@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFirestoreHistory } from "./hooks/useFirestoreHistory";
 
 type DietNote = {
   id: string;
@@ -63,7 +64,7 @@ function createNewNote(): DietNote {
   };
 }
 
-function loadNotes(): DietNote[] {
+function loadLegacyNotes(): DietNote[] {
   if (typeof window === "undefined") {
     return [];
   }
@@ -101,11 +102,21 @@ function loadNotes(): DietNote[] {
 
 export default function DietBox() {
   const contentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const hasMigratedLegacyNotesRef = useRef(false);
+  const defaultNotes = useMemo<DietNote[]>(() => [], []);
   const [showList, setShowList] = useState(() => {
     const saved = localStorage.getItem(SHOW_KEY);
     return saved !== null ? JSON.parse(saved) : false;
   });
-  const [notes, setNotes] = useState<DietNote[]>(() => loadNotes());
+  const {
+    items: notes,
+    updateWithHistory: updateNotesWithHistory,
+  } = useFirestoreHistory<DietNote>(
+    "sharedData",
+    "main",
+    defaultNotes,
+    "dietNotes"
+  );
   const [searchText, setSearchText] = useState("");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(() => {
@@ -120,10 +131,6 @@ export default function DietBox() {
   useEffect(() => {
     localStorage.setItem(SHOW_KEY, JSON.stringify(showList));
   }, [showList]);
-
-  useEffect(() => {
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-  }, [notes]);
 
   useEffect(() => {
     if (selectedId) {
@@ -170,6 +177,28 @@ export default function DietBox() {
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [draft.content, selectedId]);
 
+  useEffect(() => {
+    if (hasMigratedLegacyNotesRef.current) {
+      return;
+    }
+
+    if (notes.length > 0) {
+      hasMigratedLegacyNotesRef.current = true;
+      return;
+    }
+
+    const legacyNotes = loadLegacyNotes();
+
+    if (legacyNotes.length === 0) {
+      hasMigratedLegacyNotesRef.current = true;
+      return;
+    }
+
+    hasMigratedLegacyNotesRef.current = true;
+    updateNotesWithHistory(legacyNotes);
+    localStorage.removeItem(NOTES_KEY);
+  }, [notes, updateNotesWithHistory]);
+
   const filteredNotes = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
 
@@ -196,7 +225,7 @@ export default function DietBox() {
   const handleCreate = () => {
     const nextNote = createNewNote();
 
-    setNotes((current) => [nextNote, ...current]);
+    updateNotesWithHistory([nextNote, ...notes]);
     setSelectedId(nextNote.id);
     setSearchText("");
   };
@@ -206,8 +235,8 @@ export default function DietBox() {
       return;
     }
 
-    setNotes((current) =>
-      current.map((note) =>
+    updateNotesWithHistory(
+      notes.map((note) =>
         note.id === selectedId
           ? {
               ...note,
@@ -225,8 +254,8 @@ export default function DietBox() {
       return;
     }
 
-    setNotes((current) =>
-      current
+    updateNotesWithHistory(
+      notes
         .map((note) =>
           note.id === id
             ? {
@@ -252,7 +281,7 @@ export default function DietBox() {
     }
 
     const nextNotes = notes.filter((note) => note.id !== selectedId);
-    setNotes(nextNotes);
+    updateNotesWithHistory(nextNotes);
     setSelectedId(nextNotes[0]?.id ?? null);
   };
 
@@ -264,7 +293,7 @@ export default function DietBox() {
     }
 
     const nextNotes = notes.filter((note) => note.id !== id);
-    setNotes(nextNotes);
+    updateNotesWithHistory(nextNotes);
 
     if (selectedId === id) {
       setSelectedId(nextNotes[0]?.id ?? null);
