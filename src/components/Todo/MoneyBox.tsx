@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useGlobalUndoScope } from "../../hooks/useGlobalUndoScope";
 
 interface MoneyData {
   categoryBudget: string[];
@@ -23,6 +24,26 @@ interface MoneyData {
       current: string[];
     };
   };
+}
+
+interface MoneySnapshot {
+  budget: string[][];
+  current: string[][];
+  memo: string[];
+  cumulative: string[];
+}
+
+function cloneMoneySnapshot(snapshot: MoneySnapshot): MoneySnapshot {
+  return {
+    budget: snapshot.budget.map((row) => [...row]),
+    current: snapshot.current.map((row) => [...row]),
+    memo: [...snapshot.memo],
+    cumulative: [...snapshot.cumulative],
+  };
+}
+
+function isSameMoneySnapshot(left: MoneySnapshot, right: MoneySnapshot) {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 export default function MoneyBox() {
@@ -75,6 +96,10 @@ export default function MoneyBox() {
   const [categoryCumulative, setCategoryCumulative] = useState<string[]>(
     Array(categories.length).fill("")
   );
+  const [history, setHistory] = useState<MoneySnapshot[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const historyRef = useRef<MoneySnapshot[]>([]);
+  const historyIndexRef = useRef(-1);
 
   // 초기 데이터 상태 저장 (변경 감지용)
   const [initialData, setInitialData] = useState<{
@@ -83,6 +108,54 @@ export default function MoneyBox() {
     memo: string[];
     cumulative: string[];
   } | null>(null);
+
+  useEffect(() => {
+    historyRef.current = history;
+    historyIndexRef.current = historyIndex;
+  }, [history, historyIndex]);
+
+  const applySnapshot = (snapshot: MoneySnapshot) => {
+    const cloned = cloneMoneySnapshot(snapshot);
+    setCategoryBudget(cloned.budget);
+    setCategoryCurrent(cloned.current);
+    setCategoryMemo(cloned.memo);
+    setCategoryCumulative(cloned.cumulative);
+  };
+
+  const setHistoryState = (nextHistory: MoneySnapshot[], nextIndex: number) => {
+    historyRef.current = nextHistory;
+    historyIndexRef.current = nextIndex;
+    setHistory(nextHistory);
+    setHistoryIndex(nextIndex);
+  };
+
+  const applyMoneyChange = (snapshot: MoneySnapshot) => {
+    const cloned = cloneMoneySnapshot(snapshot);
+    const currentSnapshot = historyRef.current[historyIndexRef.current];
+
+    applySnapshot(cloned);
+
+    if (!currentSnapshot || !isSameMoneySnapshot(currentSnapshot, cloned)) {
+      const nextHistory = [...historyRef.current.slice(0, historyIndexRef.current + 1), cloned];
+      setHistoryState(nextHistory, nextHistory.length - 1);
+      touch();
+    }
+  };
+
+  const undoMoney = () => {
+    const nextIndex = historyIndexRef.current - 1;
+    if (nextIndex < 0) return;
+
+    const snapshot = cloneMoneySnapshot(historyRef.current[nextIndex]);
+    applySnapshot(snapshot);
+    setHistoryIndex(nextIndex);
+    historyIndexRef.current = nextIndex;
+  };
+
+  const { touch } = useGlobalUndoScope({
+    canUndo: () => historyIndexRef.current > 0,
+    undo: undoMoney,
+  });
 
   // 데이터 변경 감지
   const hasChanges = initialData ? (
@@ -141,10 +214,7 @@ export default function MoneyBox() {
             loadedCumulative = Array(categories.length).fill("");
           }
 
-          setCategoryCumulative(loadedCumulative);
-
           if (data.memo) {
-            setCategoryMemo(data.memo);
             loadedMemo = data.memo;
           } else {
             loadedMemo = Array(categories.length).fill("");
@@ -181,16 +251,18 @@ export default function MoneyBox() {
             loadedCurrent = Array(3).fill(null).map(() => Array(categories.length).fill(""));
           }
 
-          setCategoryBudget(loadedBudget);
-          setCategoryCurrent(loadedCurrent);
-
-          // 초기 데이터 상태 저장
-          setInitialData({
+          const loadedSnapshot: MoneySnapshot = {
             budget: loadedBudget,
             current: loadedCurrent,
             memo: loadedMemo,
-            cumulative: loadedCumulative
-          });
+            cumulative: loadedCumulative,
+          };
+
+          applySnapshot(loadedSnapshot);
+          setHistoryState([cloneMoneySnapshot(loadedSnapshot)], 0);
+
+          // 초기 데이터 상태 저장
+          setInitialData(cloneMoneySnapshot(loadedSnapshot));
         } else {
           console.log("[MoneyBox] ❗ Document not found → creating with default");
           const defaultBudget = Array(3).fill(null).map(() => Array(categories.length).fill(""));
@@ -219,12 +291,16 @@ export default function MoneyBox() {
           console.log("[MoneyBox] 🟢 Created money data");
 
           // 초기 데이터 상태 저장
-          setInitialData({
+          const defaultSnapshot: MoneySnapshot = {
             budget: defaultBudget,
             current: defaultCurrent,
             memo: defaultMemo,
-            cumulative: defaultCumulative
-          });
+            cumulative: defaultCumulative,
+          };
+
+          applySnapshot(defaultSnapshot);
+          setHistoryState([cloneMoneySnapshot(defaultSnapshot)], 0);
+          setInitialData(cloneMoneySnapshot(defaultSnapshot));
         }
         hasLoadedInitially.current = true;
       } catch (e) {
@@ -247,11 +323,21 @@ export default function MoneyBox() {
     if (type === "budget") {
       const updated = categoryBudget.map((row) => [...row]);
       updated[userIndex][categoryIndex] = num;
-      setCategoryBudget(updated);
+      applyMoneyChange({
+        budget: updated,
+        current: categoryCurrent,
+        memo: categoryMemo,
+        cumulative: categoryCumulative,
+      });
     } else {
       const updated = categoryCurrent.map((row) => [...row]);
       updated[userIndex][categoryIndex] = num;
-      setCategoryCurrent(updated);
+      applyMoneyChange({
+        budget: categoryBudget,
+        current: updated,
+        memo: categoryMemo,
+        cumulative: categoryCumulative,
+      });
     }
   };
 
@@ -281,12 +367,14 @@ export default function MoneyBox() {
       console.log("[MoneyBox] ✅ Save complete");
 
       // 저장 후 초기 데이터 상태 업데이트
-      setInitialData({
-        budget: categoryBudget,
-        current: categoryCurrent,
-        memo: categoryMemo,
-        cumulative: categoryCumulative
-      });
+      setInitialData(
+        cloneMoneySnapshot({
+          budget: categoryBudget,
+          current: categoryCurrent,
+          memo: categoryMemo,
+          cumulative: categoryCumulative,
+        })
+      );
     } catch (err) {
       console.error("[MoneyBox] ❌ Save failed:", err);
     }
@@ -430,7 +518,12 @@ export default function MoneyBox() {
                           if (newMemo !== null) {
                             const updated = [...categoryMemo];
                             updated[i] = newMemo;
-                            setCategoryMemo(updated);
+                            applyMoneyChange({
+                              budget: categoryBudget,
+                              current: categoryCurrent,
+                              memo: updated,
+                              cumulative: categoryCumulative,
+                            });
                           }
                         }}
                         className={`text-base text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
@@ -459,7 +552,12 @@ export default function MoneyBox() {
 
                           const updated = [...categoryCumulative];
                           updated[i] = value;
-                          setCategoryCumulative(updated);
+                          applyMoneyChange({
+                            budget: categoryBudget,
+                            current: categoryCurrent,
+                            memo: categoryMemo,
+                            cumulative: updated,
+                          });
                         }}
                         className={`text-base px-2 py-1 text-right bg-transparent border-none outline-none select-auto opacity-50 ${Number(categoryCumulative[i]) < 0 ? "text-red-500" : ""
                           }`}

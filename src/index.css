@@ -7,6 +7,13 @@ html, body {
   color: white;
 }
 
+html, body, #root {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 /* 기본: 스크롤바 숨김 처리 */
 *:not(.show-scrollbar)::-webkit-scrollbar {
   display: none;
