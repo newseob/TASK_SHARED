@@ -19,12 +19,12 @@ const NOTES_KEY = "dietBox_notes_v1";
 const SELECTED_KEY = "dietBox_selectedId_v1";
 const COLLAPSED_ICON = "\u25B7";
 const EXPANDED_ICON = "\u25BD";
-const BOX_TITLE = "\uC2DD\uB2E8";
+const BOX_TITLE = "\uBA54\uBAA8";
 const SEARCH_PLACEHOLDER = "\uAC80\uC0C9";
 const EMPTY_TITLE = "\uC81C\uBAA9 \uC5C6\uC74C";
 const EMPTY_LIST = "\uBAA9\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4";
 const EMPTY_SEARCH = "\uAC80\uC0C9 \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4";
-const NEW_RECIPE = "+ \uC0C8 \uB808\uC2DC\uD53C";
+const NEW_RECIPE = "+ \uC0C8 \uBA54\uBAA8";
 const TITLE_PLACEHOLDER = "\uC81C\uBAA9";
 const CONTENT_PLACEHOLDER = "\uB0B4\uC6A9";
 const SAVE_LABEL = "\uC800\uC7A5";
@@ -41,8 +41,8 @@ const PIN_BUTTON_STYLE = {
 } as const;
 
 const LIST_VIEWPORT_STYLE = {
-  height: "240px",
-  maxHeight: "240px",
+  height: "120px",
+  maxHeight: "120px",
   overflowY: "auto",
   overscrollBehavior: "contain",
 } as const;

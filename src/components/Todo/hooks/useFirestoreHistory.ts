@@ -208,6 +208,10 @@ export function useFirestoreHistory<T>(
     setItems(snapshot);
     setHistoryState(nextHistory, nextIndex);
     touch();
+
+    if (hasLoadedInitiallyRef.current && !isUndoingRef.current) {
+      void persistItems(snapshot);
+    }
   };
 
   const toggleItemSelection = (boxId: string, itemId: string) => {
