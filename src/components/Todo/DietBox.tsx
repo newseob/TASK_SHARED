@@ -359,11 +359,20 @@ export default function DietBox() {
   };
 
   return (
-    <div className="w-full rounded bg-transparent shadow-none transition-opacity">
+    <div 
+      className="w-full rounded bg-transparent shadow-none transition-opacity"
+      onClick={() => {
+        setSelectedId(null);
+        setEmptyDraft(createEmptyDraft());
+      }}
+    >
       <div className="mt-[3px] flex items-center justify-between">
         <button
           className="mx-1 text-xs text-zinc-400 hover:text-white"
-          onClick={() => setShowList((prev) => !prev)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowList((prev) => !prev);
+          }}
         >
           {showList ? EXPANDED_ICON : COLLAPSED_ICON}
         </button>
@@ -387,7 +396,10 @@ export default function DietBox() {
 
               <button
                 type="button"
-                onClick={handleCreate}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCreate();
+                }}
                 className="shrink-0 rounded bg-transparent px-2 py-1 text-xs text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
                 {NEW_RECIPE}
@@ -397,10 +409,6 @@ export default function DietBox() {
             <div
               className="mt-4 h-[120px] max-h-[120px] w-full pr-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={LIST_VIEWPORT_STYLE}
-              onClick={() => {
-                setSelectedId(null);
-                setEmptyDraft(createEmptyDraft());
-              }}
             >
               {filteredNotes.length === 0 ? (
                 <div className="rounded border border-dashed border-zinc-300 px-2 py-6 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
