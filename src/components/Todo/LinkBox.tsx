@@ -196,10 +196,11 @@ function SortableLinkItem({
                 event.stopPropagation();
                 onToggleStyle(link.id);
               }}
-              className="text-xs text-black opacity-100 transition-opacity hover:text-yellow-300 md:opacity-0 md:group-hover:opacity-100 dark:text-white"
-              title="스타일 변경"
+              className="text-xs text-black opacity-100 transition-opacity hover:text-yellow-300 xs:opacity-0 xs:group-hover:opacity-100 dark:text-white"
+              title="transparent"
+              aria-label="transparent"
             >
-              투명
+              {"\u25FC\uFE0F"}
             </button>
             <button
               type="button"
@@ -207,10 +208,11 @@ function SortableLinkItem({
                 event.stopPropagation();
                 onEdit(link);
               }}
-              className="text-xs text-black opacity-100 transition-opacity hover:text-blue-300 md:opacity-0 md:group-hover:opacity-100 dark:text-white"
-              title="수정"
+              className="text-xs text-black opacity-100 transition-opacity hover:text-blue-300 xs:opacity-0 xs:group-hover:opacity-100 dark:text-white"
+              title="edit"
+              aria-label="edit"
             >
-              수정
+              {"\u270F\uFE0F"}
             </button>
             <button
               type="button"
@@ -218,10 +220,11 @@ function SortableLinkItem({
                 event.stopPropagation();
                 onDelete(link.id);
               }}
-              className="text-xs text-black opacity-100 transition-opacity hover:text-red-300 md:opacity-0 md:group-hover:opacity-100 dark:text-white"
-              title="삭제"
+              className="text-xs text-black opacity-100 transition-opacity hover:text-red-300 xs:opacity-0 xs:group-hover:opacity-100 dark:text-white"
+              title="delete"
+              aria-label="delete"
             >
-              삭제
+              {"\uD83D\uDDD1\uFE0F"}
             </button>
           </div>
         </div>

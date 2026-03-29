@@ -14,6 +14,11 @@ type DietDraft = {
   content: string;
 };
 
+type TitleEditDraft = {
+  id: string;
+  value: string;
+};
+
 const SHOW_KEY = "dietBox_showList";
 const NOTES_KEY = "dietBox_notes_v1";
 const SELECTED_KEY = "dietBox_selectedId_v1";
@@ -30,21 +35,23 @@ const CONTENT_PLACEHOLDER = "\uB0B4\uC6A9";
 const SAVE_LABEL = "\uC800\uC7A5";
 const DELETE_LABEL = "\uC0AD\uC81C";
 const SELECT_NOTE = "\uBAA9\uB85D\uC5D0\uC11C \uD56D\uBAA9\uC744 \uC120\uD0DD\uD558\uC138\uC694";
-const PIN_LABEL = "\uACE0\uC815";
+const PIN_LABEL = "\uD83D\uDCCC";
+const EDIT_LABEL = "\u270F\uFE0F";
+const DELETE_ICON = "\uD83D\uDDD1\uFE0F";
 const PINNED_MARK = "\u2611";
 const DELETE_CONFIRM = "\uC774 \uB808\uC2DC\uD53C\uB97C \uC0AD\uC81C\uD560\uAE4C\uC694?";
 
 const PIN_BUTTON_STYLE = {
-  width: "44px",
-  minWidth: "44px",
-  maxWidth: "44px",
+  width: "24px",
+  minWidth: "24px",
+  maxWidth: "24px",
 } as const;
 
 const LIST_VIEWPORT_STYLE = {
-  height: "120px",
-  maxHeight: "120px",
   overflowY: "auto",
   overscrollBehavior: "contain",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
 } as const;
 
 function createEmptyDraft(): DietDraft {
@@ -119,6 +126,7 @@ export default function DietBox() {
   );
   const [searchText, setSearchText] = useState("");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<TitleEditDraft | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     if (typeof window === "undefined") {
       return null;
@@ -300,6 +308,40 @@ export default function DietBox() {
     }
   };
 
+  const handleStartTitleEdit = (note: DietNote) => {
+    setSelectedId(note.id);
+    setEditingTitle({
+      id: note.id,
+      value: note.title,
+    });
+  };
+
+  const handleCommitTitleEdit = () => {
+    if (!editingTitle) {
+      return;
+    }
+
+    const nextTitle = editingTitle.value.trim();
+
+    if (!nextTitle) {
+      setEditingTitle(null);
+      return;
+    }
+
+    updateNotesWithHistory(
+      notes.map((note) =>
+        note.id === editingTitle.id
+          ? {
+              ...note,
+              title: nextTitle,
+              updatedAt: Date.now(),
+            }
+          : note
+      )
+    );
+    setEditingTitle(null);
+  };
+
   return (
     <div className="w-full rounded bg-transparent shadow-none transition-opacity">
       <div className="mt-[3px] flex items-center justify-between">
@@ -316,20 +358,28 @@ export default function DietBox() {
       </div>
 
       {showList && (
-        <div className="mt-2 grid grid-cols-1 items-start gap-3">
-          <section className="flex min-h-0 flex-col px-0.5 py-2">
-            <div className="flex w-full items-center">
+        <div className="mt-2 grid grid-cols-1 items-start gap-0.5 xs:grid-cols-2 md:grid-cols-1">
+          <section className="flex min-h-0 flex-col px-0.5 py-1">
+            <div className="flex w-full items-center gap-2">
               <input
                 type="text"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder={SEARCH_PLACEHOLDER}
-                className="w-full min-w-0 rounded border border-zinc-300 bg-white px-2 py-1 text-xs text-black outline-none select-auto dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-xs text-black outline-none select-auto dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
               />
+
+              <button
+                type="button"
+                onClick={handleCreate}
+                className="shrink-0 rounded bg-transparent px-2 py-1 text-xs text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                {NEW_RECIPE}
+              </button>
             </div>
 
             <div
-              className="show-scrollbar mt-4 w-full pr-1"
+              className="mt-4 h-[42px] max-h-[42px] w-full pr-1 [-ms-overflow-style:none] [scrollbar-width:none] xs:h-[300px] xs:max-h-[300px] md:h-[42px] md:max-h-[42px] [&::-webkit-scrollbar]:hidden"
               style={LIST_VIEWPORT_STYLE}
             >
               {filteredNotes.length === 0 ? (
@@ -337,12 +387,13 @@ export default function DietBox() {
                   {notes.length === 0 ? EMPTY_LIST : EMPTY_SEARCH}
                 </div>
               ) : (
-                <div className="grid w-full auto-rows-fr grid-cols-1 gap-2 xs:grid-cols-2 md:grid-cols-1">
+                <div className="grid w-full auto-rows-fr grid-cols-1 gap-2">
                   {filteredNotes.map((note) => {
                     const isHovered = note.id === hoveredId;
-                    const itemClassName = isHovered
-                      ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                      : "bg-zinc-100/70 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300";
+                    const isEditingTitle = editingTitle?.id === note.id;
+                     const itemClassName = isHovered
+                       ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                       : "bg-transparent text-zinc-700 dark:text-zinc-300";
 
                     return (
                       <div
@@ -355,33 +406,70 @@ export default function DietBox() {
                         }
                         className={`group flex min-w-0 items-center gap-2 rounded px-1 py-3 transition ${itemClassName}`}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setSelectedId(note.id)}
-                          className="block min-w-0 flex-1 text-left"
-                        >
-                          <div className="flex min-w-0 items-center gap-2">
-                            {note.pinned ? (
-                              <span className="shrink-0 text-[11px] leading-none text-blue-600 dark:text-blue-300">
-                                {PINNED_MARK}
-                              </span>
-                            ) : null}
-                            <span className="block min-w-0 flex-1 truncate whitespace-nowrap text-sm font-semibold leading-none">
-                              {note.title.trim() || EMPTY_TITLE}
-                            </span>
+                        {isEditingTitle ? (
+                          <div className="block min-w-0 flex-1 text-left">
+                            <div className="flex min-w-0 items-center gap-2">
+                              {note.pinned ? (
+                                <span className="shrink-0 text-[11px] leading-none text-blue-600 dark:text-blue-300">
+                                  {PINNED_MARK}
+                                </span>
+                              ) : null}
+                              <input
+                                type="text"
+                                value={editingTitle.value}
+                                onChange={(event) =>
+                                  setEditingTitle((current) =>
+                                    current
+                                      ? { ...current, value: event.target.value }
+                                      : current
+                                  )
+                                }
+                                onBlur={handleCommitTitleEdit}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    handleCommitTitleEdit();
+                                  } else if (event.key === "Escape") {
+                                    event.preventDefault();
+                                    setEditingTitle(null);
+                                  }
+                                }}
+                                className="min-w-0 flex-1 rounded border border-zinc-300 bg-white px-1 py-0.5 text-sm font-semibold text-black outline-none select-auto dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                                autoFocus
+                              />
+                            </div>
                           </div>
-                        </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedId(note.id)}
+                            className="block min-w-0 flex-1 text-left"
+                          >
+                            <div className="flex min-w-0 items-center gap-2">
+                              {note.pinned ? (
+                                <span className="shrink-0 text-[11px] leading-none text-blue-600 dark:text-blue-300">
+                                  {PINNED_MARK}
+                                </span>
+                              ) : null}
+                              <span className="block min-w-0 flex-1 truncate whitespace-nowrap text-sm font-semibold leading-none">
+                                {note.title.trim() || EMPTY_TITLE}
+                              </span>
+                            </div>
+                          </button>
+                        )}
 
-                        <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                        <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition xs:opacity-0 xs:group-hover:opacity-100">
                           <button
                             type="button"
                             onClick={() => handleTogglePinned(note.id)}
                             style={PIN_BUTTON_STYLE}
-                            className={`inline-flex h-5 shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded text-[11px] leading-none transition ${
+                            className={`inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded text-[12px] leading-none transition ${
                               note.pinned
                                 ? "bg-blue-600 text-white hover:bg-blue-700"
                                 : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                             }`}
+                            aria-label="pin"
+                            title="pin"
                           >
                             <span className="block whitespace-nowrap leading-none">
                               {PIN_LABEL}
@@ -390,12 +478,27 @@ export default function DietBox() {
 
                           <button
                             type="button"
-                            onClick={() => handleDeleteNote(note.id)}
+                            onClick={() => handleStartTitleEdit(note)}
                             style={PIN_BUTTON_STYLE}
-                            className="inline-flex h-5 shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded bg-zinc-200 text-[11px] leading-none text-zinc-700 transition hover:bg-red-200 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-900/40 dark:hover:text-red-300"
+                            className="inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-200 text-[12px] leading-none text-zinc-700 transition hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                            aria-label="edit title"
+                            title="edit title"
                           >
                             <span className="block whitespace-nowrap leading-none">
-                              {DELETE_LABEL}
+                              {EDIT_LABEL}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNote(note.id)}
+                            style={PIN_BUTTON_STYLE}
+                            className="inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-200 text-[12px] leading-none text-zinc-700 transition hover:bg-red-200 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-900/40 dark:hover:text-red-300"
+                            aria-label="delete"
+                            title="delete"
+                          >
+                            <span className="block whitespace-nowrap leading-none">
+                              {DELETE_ICON}
                             </span>
                           </button>
                         </div>
@@ -405,40 +508,22 @@ export default function DietBox() {
                 </div>
               )}
             </div>
-
-            <div className="flex justify-center pt-4">
-              <button
-                type="button"
-                onClick={handleCreate}
-                className="rounded bg-transparent px-3 py-1 text-xs text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-              >
-                {NEW_RECIPE}
-              </button>
-            </div>
           </section>
 
-          <section className="px-0.5 py-2">
+          <section className="px-0.5 py-1">
             {selectedNote ? (
               <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  value={draft.title}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, title: event.target.value }))
-                  }
-                  placeholder={TITLE_PLACEHOLDER}
-                  className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm text-black outline-none select-auto dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
-                />
-
-                <textarea
-                  ref={contentTextareaRef}
-                  value={draft.content}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, content: event.target.value }))
-                  }
-                  placeholder={CONTENT_PLACEHOLDER}
-                  className="resize-none overflow-hidden rounded border border-zinc-300 bg-white px-2 py-2 text-sm text-black outline-none select-auto dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
-                />
+                <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                  <textarea
+                    ref={contentTextareaRef}
+                    value={draft.content}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, content: event.target.value }))
+                    }
+                    placeholder={CONTENT_PLACEHOLDER}
+                    className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
+                  />
+                </div>
 
                 <div className="flex items-center justify-center gap-2">
                   <button

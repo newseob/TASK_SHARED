@@ -133,7 +133,7 @@ export default function TodoTab() {
             onClick={() => setIsEditMode((prev) => !prev)}
             className="rounded-lg px-4 py-2 text-black dark:text-white"
           >
-            {isEditMode ? "순서 닫기" : "순서 수정"}
+            {isEditMode ? "\uC21C\uC11C \uB2EB\uAE30" : "\uC21C\uC11C \uC218\uC815"}
           </button>
         </div>
 
@@ -145,9 +145,9 @@ export default function TodoTab() {
                 className="flex items-center justify-between rounded bg-gray-100 p-2 dark:bg-zinc-800"
               >
                 <span>
-                  {key === "todo" && "Todo"}
-                  {key === "routine" && "루틴"}
-                  {key === "diet" && "식단"}
+                  {key === "todo" && "\uD560\uC77C"}
+                  {key === "routine" && "\uB8E8\uD2F4"}
+                  {key === "diet" && "\uBA54\uBAA8"}
                 </span>
 
                 <div className="flex gap-2">
@@ -156,7 +156,7 @@ export default function TodoTab() {
                     disabled={index === 0}
                     className="rounded bg-gray-300 px-2 py-1 disabled:opacity-30 dark:bg-zinc-700"
                   >
-                    \u25B2
+                    {"\uC704"}
                   </button>
 
                   <button
@@ -164,7 +164,7 @@ export default function TodoTab() {
                     disabled={index === order.length - 1}
                     className="rounded bg-gray-300 px-2 py-1 disabled:opacity-30 dark:bg-zinc-700"
                   >
-                    \u25BC
+                    {"\uC544\uB798"}
                   </button>
                 </div>
               </div>
