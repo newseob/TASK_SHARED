@@ -132,15 +132,8 @@ export default function DietBox() {
   const [searchText, setSearchText] = useState("");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<TitleEditDraft | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    return localStorage.getItem(SELECTED_KEY);
-  });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DietDraft>(createEmptyDraft());
-  const [emptyDraft, setEmptyDraft] = useState<DietDraft>(createEmptyDraft());
   const recipeTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -157,14 +150,6 @@ export default function DietBox() {
   }, [selectedId]);
 
   useEffect(() => {
-    // Don't auto-select first note when user explicitly deselected
-    if (selectedId === null) return;
-    
-    if (!selectedId && notes.length > 0) {
-      setSelectedId(notes[0].id);
-      return;
-    }
-
     if (selectedId && !notes.some((note) => note.id === selectedId)) {
       setSelectedId(notes[0]?.id ?? null);
     }
@@ -174,7 +159,7 @@ export default function DietBox() {
     const selectedNote = notes.find((note) => note.id === selectedId);
 
     if (!selectedNote) {
-      // Don't update draft when no note is selected
+      setDraft(createEmptyDraft());
       return;
     }
 
@@ -271,6 +256,8 @@ export default function DietBox() {
           : note
       )
     );
+
+    alert("저장되었습니다!");
   };
 
   const handleTogglePinned = (id: string) => {
@@ -359,20 +346,11 @@ export default function DietBox() {
   };
 
   return (
-    <div 
-      className="w-full rounded bg-transparent shadow-none transition-opacity"
-      onClick={() => {
-        setSelectedId(null);
-        setEmptyDraft(createEmptyDraft());
-      }}
-    >
+    <div className="w-full rounded bg-transparent shadow-none transition-opacity">
       <div className="mt-[3px] flex items-center justify-between">
         <button
           className="mx-1 text-xs text-zinc-400 hover:text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowList((prev) => !prev);
-          }}
+          onClick={() => setShowList((prev) => !prev)}
         >
           {showList ? EXPANDED_ICON : COLLAPSED_ICON}
         </button>
@@ -396,10 +374,7 @@ export default function DietBox() {
 
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCreate();
-                }}
+                onClick={handleCreate}
                 className="shrink-0 rounded bg-transparent px-2 py-1 text-xs text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
                 {NEW_RECIPE}
@@ -432,10 +407,6 @@ export default function DietBox() {
                             current === note.id ? null : current
                           )
                         }
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedId(note.id);
-                        }}
                         className={`group flex min-w-0 items-center gap-2 rounded px-1 py-1 transition ${itemClassName}`}
                       >
                         {isEditingTitle ? (
@@ -546,19 +517,15 @@ export default function DietBox() {
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">재료</h3>
             </div>
-            {true ? (
+            {selectedNote ? (
               <div className="flex flex-col gap-2">
                 <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
                   <textarea
                     ref={contentTextareaRef}
-                    value={selectedNote ? draft.content : emptyDraft.content}
-                    onChange={(event) => {
-                      if (selectedNote) {
-                        setDraft((prev) => ({ ...prev, content: event.target.value }));
-                      } else {
-                        setEmptyDraft((prev) => ({ ...prev, content: event.target.value }));
-                      }
-                    }}
+                    value={draft.content}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, content: event.target.value }))
+                    }
                     placeholder={CONTENT_PLACEHOLDER}
                     className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
                   />
@@ -571,14 +538,10 @@ export default function DietBox() {
                 <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
                   <textarea
                     ref={recipeTextareaRef}
-                    value={selectedNote ? draft.recipe : emptyDraft.recipe}
-                    onChange={(event) => {
-                      if (selectedNote) {
-                        setDraft((prev) => ({ ...prev, recipe: event.target.value }));
-                      } else {
-                        setEmptyDraft((prev) => ({ ...prev, recipe: event.target.value }));
-                      }
-                    }}
+                    value={draft.recipe}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, recipe: event.target.value }))
+                    }
                     placeholder={RECIPE_PLACEHOLDER}
                     className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
                   />
