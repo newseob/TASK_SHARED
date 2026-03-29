@@ -196,7 +196,7 @@ function SortableLinkItem({
                 event.stopPropagation();
                 onToggleStyle(link.id);
               }}
-              className="text-xs text-black opacity-0 transition-opacity hover:text-yellow-300 group-hover:opacity-100 dark:text-white"
+              className="text-xs text-black opacity-100 transition-opacity hover:text-yellow-300 md:opacity-0 md:group-hover:opacity-100 dark:text-white"
               title="스타일 변경"
             >
               투명
@@ -207,7 +207,7 @@ function SortableLinkItem({
                 event.stopPropagation();
                 onEdit(link);
               }}
-              className="text-xs text-black opacity-0 transition-opacity hover:text-blue-300 group-hover:opacity-100 dark:text-white"
+              className="text-xs text-black opacity-100 transition-opacity hover:text-blue-300 md:opacity-0 md:group-hover:opacity-100 dark:text-white"
               title="수정"
             >
               수정
@@ -218,7 +218,7 @@ function SortableLinkItem({
                 event.stopPropagation();
                 onDelete(link.id);
               }}
-              className="text-xs text-black opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100 dark:text-white"
+              className="text-xs text-black opacity-100 transition-opacity hover:text-red-300 md:opacity-0 md:group-hover:opacity-100 dark:text-white"
               title="삭제"
             >
               삭제
