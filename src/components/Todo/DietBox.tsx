@@ -382,7 +382,7 @@ export default function DietBox() {
             </div>
 
             <div
-              className="mt-4 h-[120px] max-h-[120px] w-full pr-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="mt-4 h-[120px] max-h-[120px] w-full pr-1 border border-zinc-300 dark:border-zinc-700 rounded px-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={LIST_VIEWPORT_STYLE}
             >
               {filteredNotes.length === 0 ? (
@@ -514,11 +514,26 @@ export default function DietBox() {
           </section>
 
           <section className="px-0.5 py-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">재료</h3>
-            </div>
             {selectedNote ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 border border-zinc-300 dark:border-zinc-700 rounded p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">제목</h3>
+                </div>
+                <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800 mb-3">
+                  <input
+                    type="text"
+                    value={draft.title}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, title: event.target.value }))
+                    }
+                    placeholder={TITLE_PLACEHOLDER}
+                    className="w-full bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">재료</h3>
+                </div>
                 <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
                   <textarea
                     ref={contentTextareaRef}
@@ -566,7 +581,7 @@ export default function DietBox() {
                 </div>
               </div>
             ) : (
-              <div className="grid min-h-[220px] place-items-center text-center text-xs text-zinc-400 dark:text-zinc-500">
+              <div className="rounded border border-dashed border-zinc-300 px-2 py-6 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
                 {SELECT_NOTE}
               </div>
             )}
