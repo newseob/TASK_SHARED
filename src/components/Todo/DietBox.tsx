@@ -140,6 +140,7 @@ export default function DietBox() {
     return localStorage.getItem(SELECTED_KEY);
   });
   const [draft, setDraft] = useState<DietDraft>(createEmptyDraft());
+  const [emptyDraft, setEmptyDraft] = useState<DietDraft>(createEmptyDraft());
   const recipeTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -156,6 +157,9 @@ export default function DietBox() {
   }, [selectedId]);
 
   useEffect(() => {
+    // Don't auto-select first note when user explicitly deselected
+    if (selectedId === null) return;
+    
     if (!selectedId && notes.length > 0) {
       setSelectedId(notes[0].id);
       return;
@@ -170,7 +174,7 @@ export default function DietBox() {
     const selectedNote = notes.find((note) => note.id === selectedId);
 
     if (!selectedNote) {
-      setDraft(createEmptyDraft());
+      // Don't update draft when no note is selected
       return;
     }
 
@@ -393,6 +397,10 @@ export default function DietBox() {
             <div
               className="mt-4 h-[120px] max-h-[120px] w-full pr-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={LIST_VIEWPORT_STYLE}
+              onClick={() => {
+                setSelectedId(null);
+                setEmptyDraft(createEmptyDraft());
+              }}
             >
               {filteredNotes.length === 0 ? (
                 <div className="rounded border border-dashed border-zinc-300 px-2 py-6 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
@@ -416,6 +424,10 @@ export default function DietBox() {
                             current === note.id ? null : current
                           )
                         }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedId(note.id);
+                        }}
                         className={`group flex min-w-0 items-center gap-2 rounded px-1 py-1 transition ${itemClassName}`}
                       >
                         {isEditingTitle ? (
@@ -526,15 +538,19 @@ export default function DietBox() {
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">재료</h3>
             </div>
-            {selectedNote ? (
+            {true ? (
               <div className="flex flex-col gap-2">
                 <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
                   <textarea
                     ref={contentTextareaRef}
-                    value={draft.content}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, content: event.target.value }))
-                    }
+                    value={selectedNote ? draft.content : emptyDraft.content}
+                    onChange={(event) => {
+                      if (selectedNote) {
+                        setDraft((prev) => ({ ...prev, content: event.target.value }));
+                      } else {
+                        setEmptyDraft((prev) => ({ ...prev, content: event.target.value }));
+                      }
+                    }}
                     placeholder={CONTENT_PLACEHOLDER}
                     className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
                   />
@@ -547,10 +563,14 @@ export default function DietBox() {
                 <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
                   <textarea
                     ref={recipeTextareaRef}
-                    value={draft.recipe}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, recipe: event.target.value }))
-                    }
+                    value={selectedNote ? draft.recipe : emptyDraft.recipe}
+                    onChange={(event) => {
+                      if (selectedNote) {
+                        setDraft((prev) => ({ ...prev, recipe: event.target.value }));
+                      } else {
+                        setEmptyDraft((prev) => ({ ...prev, recipe: event.target.value }));
+                      }
+                    }}
                     placeholder={RECIPE_PLACEHOLDER}
                     className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
                   />
