@@ -5,6 +5,7 @@ type DietNote = {
   id: string;
   title: string;
   content: string;
+  recipe: string;
   updatedAt: number;
   pinned: boolean;
 };
@@ -12,6 +13,7 @@ type DietNote = {
 type DietDraft = {
   title: string;
   content: string;
+  recipe: string;
 };
 
 type TitleEditDraft = {
@@ -32,6 +34,7 @@ const EMPTY_SEARCH = "\uAC80\uC0C9 \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4";
 const NEW_RECIPE = "+ \uC0C8 \uBA54\uBAA8";
 const TITLE_PLACEHOLDER = "\uC81C\uBAA9";
 const CONTENT_PLACEHOLDER = "\uB0B4\uC6A9";
+const RECIPE_PLACEHOLDER = "레시피";
 const SAVE_LABEL = "\uC800\uC7A5";
 const DELETE_LABEL = "\uC0AD\uC81C";
 const SELECT_NOTE = "\uBAA9\uB85D\uC5D0\uC11C \uD56D\uBAA9\uC744 \uC120\uD0DD\uD558\uC138\uC694";
@@ -58,6 +61,7 @@ function createEmptyDraft(): DietDraft {
   return {
     title: "",
     content: "",
+    recipe: "",
   };
 }
 
@@ -66,6 +70,7 @@ function createNewNote(): DietNote {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: "",
     content: "",
+    recipe: "",
     updatedAt: Date.now(),
     pinned: false,
   };
@@ -135,6 +140,7 @@ export default function DietBox() {
     return localStorage.getItem(SELECTED_KEY);
   });
   const [draft, setDraft] = useState<DietDraft>(createEmptyDraft());
+  const recipeTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     localStorage.setItem(SHOW_KEY, JSON.stringify(showList));
@@ -171,19 +177,24 @@ export default function DietBox() {
     setDraft({
       title: selectedNote.title,
       content: selectedNote.content,
+      recipe: selectedNote.recipe,
     });
   }, [notes, selectedId]);
 
   useEffect(() => {
     const textarea = contentTextareaRef.current;
+    const recipeTextarea = recipeTextareaRef.current;
 
-    if (!textarea) {
-      return;
+    if (textarea) {
+      textarea.style.height = "0px";
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
-
-    textarea.style.height = "0px";
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }, [draft.content, selectedId]);
+    
+    if (recipeTextarea) {
+      recipeTextarea.style.height = "0px";
+      recipeTextarea.style.height = `${recipeTextarea.scrollHeight}px`;
+    }
+  }, [draft.content, draft.recipe, selectedId]);
 
   useEffect(() => {
     if (hasMigratedLegacyNotesRef.current) {
@@ -250,6 +261,7 @@ export default function DietBox() {
               ...note,
               title: draft.title.trim(),
               content: draft.content,
+              recipe: draft.recipe,
               updatedAt: Date.now(),
             }
           : note
@@ -358,7 +370,7 @@ export default function DietBox() {
       </div>
 
       {showList && (
-        <div className="mt-2 grid grid-cols-1 items-start gap-0.5 xs:grid-cols-2 md:grid-cols-1">
+        <div className="mt-2 grid grid-cols-1 items-start gap-0.5">
           <section className="flex min-h-0 flex-col px-0.5 py-1">
             <div className="flex w-full items-center gap-2">
               <input
@@ -379,7 +391,7 @@ export default function DietBox() {
             </div>
 
             <div
-              className="mt-4 h-[42px] max-h-[42px] w-full pr-1 [-ms-overflow-style:none] [scrollbar-width:none] xs:h-[300px] xs:max-h-[300px] md:h-[42px] md:max-h-[42px] [&::-webkit-scrollbar]:hidden"
+              className="mt-4 h-[120px] max-h-[120px] w-full pr-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={LIST_VIEWPORT_STYLE}
             >
               {filteredNotes.length === 0 ? (
@@ -387,7 +399,7 @@ export default function DietBox() {
                   {notes.length === 0 ? EMPTY_LIST : EMPTY_SEARCH}
                 </div>
               ) : (
-                <div className="grid w-full auto-rows-fr grid-cols-1 gap-2">
+                <div className="grid w-full auto-rows-fr grid-cols-1 gap-1">
                   {filteredNotes.map((note) => {
                     const isHovered = note.id === hoveredId;
                     const isEditingTitle = editingTitle?.id === note.id;
@@ -404,7 +416,7 @@ export default function DietBox() {
                             current === note.id ? null : current
                           )
                         }
-                        className={`group flex min-w-0 items-center gap-2 rounded px-1 py-3 transition ${itemClassName}`}
+                        className={`group flex min-w-0 items-center gap-2 rounded px-1 py-1 transition ${itemClassName}`}
                       >
                         {isEditingTitle ? (
                           <div className="block min-w-0 flex-1 text-left">
@@ -511,6 +523,9 @@ export default function DietBox() {
           </section>
 
           <section className="px-0.5 py-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">재료</h3>
+            </div>
             {selectedNote ? (
               <div className="flex flex-col gap-2">
                 <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
@@ -521,6 +536,22 @@ export default function DietBox() {
                       setDraft((prev) => ({ ...prev, content: event.target.value }))
                     }
                     placeholder={CONTENT_PLACEHOLDER}
+                    className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">레시피</h3>
+                </div>
+
+                <div className="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                  <textarea
+                    ref={recipeTextareaRef}
+                    value={draft.recipe}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, recipe: event.target.value }))
+                    }
+                    placeholder={RECIPE_PLACEHOLDER}
                     className="w-full resize-none overflow-hidden bg-transparent px-0 py-0 text-sm text-black outline-none select-auto dark:text-white"
                   />
                 </div>

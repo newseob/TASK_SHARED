@@ -278,7 +278,7 @@ export default function DateReference() {
               {/* 주기 0인 항목들 */}
               {preparedZeroCycleItems.length > 0 && (
                 <div className="pt-1">
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 gap-2">
                     {preparedZeroCycleItems.map(item => renderZeroCycleItem(item))}
                   </div>
                 </div>
