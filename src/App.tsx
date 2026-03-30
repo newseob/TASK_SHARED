@@ -4,6 +4,7 @@ import RoutineTab from "./components/RoutineTab.tsx";
 import KyunginTab from "./components/KyunginTab.tsx";
 import YuseopTab from "./components/YuseopTab.tsx";
 import LoginScreen from "./components/LoginScreen.tsx";
+import DataManager from "./components/DataManager.tsx";
 
 type TabId = "todo" | "routine" | "kyungin" | "yuseop";
 
@@ -20,6 +21,11 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("theme") === "dark"
   );
+
+  const handleDataLoad = (data: any) => {
+    // 데이터를 불러온 후 페이지 새로고침
+    window.location.reload();
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -66,6 +72,8 @@ function App() {
             </button>
           ))}
         </div>
+
+        <DataManager onSave={() => {}} onLoad={handleDataLoad} />
 
         <button
           onClick={() => setIsDarkMode((prev) => !prev)}
