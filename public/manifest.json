@@ -1,0 +1,19 @@
+{
+  "name": "공유할일 - Task Shared",
+  "short_name": "공유할일",
+  "description": "할일, 루틴, 메모를 공유하고 관리하는 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
