@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- Background Circle -->
-  <circle cx="50" cy="50" r="45" fill="#3B82F6"/>
+  <!-- Background Rounded Square -->
+  <rect x="2" y="2" width="96" height="96" rx="20" fill="#3B82F6"/>
   
   <!-- Grid Layout: 2x2 -->
   <!-- Top Left: List Icon -->
