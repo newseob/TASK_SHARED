@@ -4,16 +4,14 @@
   "version": "0.0.0",
   "identifier": "com.taskshared.desktop",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
+    "devUrl": "https://task-shared.vercel.app"
   },
   "app": {
     "windows": [
       {
         "label": "main",
         "title": "공유할일",
+        "url": "https://task-shared.vercel.app",
         "width": 1280,
         "height": 820,
         "minWidth": 250,

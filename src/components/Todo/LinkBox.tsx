@@ -149,17 +149,17 @@ function SortableLinkItem({
   return (
     <div ref={setNodeRef} style={style}>
       <div
-        className={`group rounded p-2 transition hover:bg-zinc-200 dark:hover:bg-zinc-600 ${
+        className={`group rounded px-1.5 py-0.5 transition hover:bg-zinc-200 dark:hover:bg-zinc-600 ${
           link.transparent ? "opacity-30" : "opacity-100"
         } bg-white dark:bg-transparent`}
       >
         <div className="flex items-center justify-between">
-          <div className="mr-2 flex flex-1 items-center">
+          <div className="mr-1 flex flex-1 items-center">
             <button
               type="button"
               {...attributes}
               {...listeners}
-              className="mr-2 cursor-grab active:cursor-grabbing"
+              className="mr-1 cursor-grab active:cursor-grabbing"
               aria-label={`${link.title} 드래그`}
             >
               <svg
@@ -182,14 +182,14 @@ function SortableLinkItem({
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="line-clamp-2 text-sm font-medium text-black hover:underline dark:text-white"
+              className="line-clamp-1 text-xs font-medium leading-tight text-black hover:underline dark:text-white"
               onClick={(event) => event.stopPropagation()}
             >
               {link.title}
             </a>
           </div>
 
-          <div className="flex items-center gap-px">
+          <div className="flex items-center gap-0">
             <button
               type="button"
               onClick={(event) => {
@@ -373,7 +373,7 @@ function SortableGroup({
             items={links.map((link) => link.id)}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-1">
               {links.map((link) => (
                 <SortableLinkItem
                   key={link.id}
