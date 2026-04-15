@@ -189,7 +189,7 @@ function SortableLinkItem({
             </a>
           </div>
 
-          <div className="flex gap-1">
+          <div className="flex items-center gap-px">
             <button
               type="button"
               onClick={(event) => {

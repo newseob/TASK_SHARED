@@ -1,0 +1,13 @@
+[package]
+name = "task_shared_desktop"
+version = "0.0.0"
+description = "Windows desktop wrapper for the TASK_SHARED web app"
+authors = ["Codex"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+

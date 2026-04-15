@@ -44,12 +44,6 @@ const DELETE_ICON = "\uD83D\uDDD1\uFE0F";
 const PINNED_MARK = "\u2611";
 const DELETE_CONFIRM = "\uC774 \uB808\uC2DC\uD53C\uB97C \uC0AD\uC81C\uD560\uAE4C\uC694?";
 
-const PIN_BUTTON_STYLE = {
-  width: "24px",
-  minWidth: "24px",
-  maxWidth: "24px",
-} as const;
-
 const LIST_VIEWPORT_STYLE = {
   overflowY: "auto",
   overscrollBehavior: "contain",
@@ -461,15 +455,14 @@ export default function DietBox() {
                           </button>
                         )}
 
-                        <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition xs:opacity-0 xs:group-hover:opacity-100">
+                        <div className="flex shrink-0 items-center gap-px opacity-100 transition xs:opacity-0 xs:group-hover:opacity-100">
                           <button
                             type="button"
                             onClick={() => handleTogglePinned(note.id)}
-                            style={PIN_BUTTON_STYLE}
-                            className={`inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded text-[12px] leading-none transition ${
+                            className={`inline-flex shrink-0 items-center justify-center overflow-hidden px-0 py-0 text-[12px] leading-none transition ${
                               note.pinned
-                                ? "bg-blue-600 text-white hover:bg-blue-700"
-                                : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                ? "text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
+                                : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                             }`}
                             aria-label="pin"
                             title="pin"
@@ -482,8 +475,7 @@ export default function DietBox() {
                           <button
                             type="button"
                             onClick={() => handleStartTitleEdit(note)}
-                            style={PIN_BUTTON_STYLE}
-                            className="inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-200 text-[12px] leading-none text-zinc-700 transition hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                            className="inline-flex shrink-0 items-center justify-center overflow-hidden px-0 py-0 text-[12px] leading-none text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                             aria-label="edit title"
                             title="edit title"
                           >
@@ -495,8 +487,7 @@ export default function DietBox() {
                           <button
                             type="button"
                             onClick={() => handleDeleteNote(note.id)}
-                            style={PIN_BUTTON_STYLE}
-                            className="inline-flex h-5 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-200 text-[12px] leading-none text-zinc-700 transition hover:bg-red-200 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-900/40 dark:hover:text-red-300"
+                            className="inline-flex shrink-0 items-center justify-center overflow-hidden px-0 py-0 text-[12px] leading-none text-zinc-500 transition hover:text-red-700 dark:text-zinc-400 dark:hover:text-red-300"
                             aria-label="delete"
                             title="delete"
                           >

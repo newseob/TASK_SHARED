@@ -393,6 +393,11 @@ export default function MoneyBox() {
     return sum + yuseop + gyeongin + aca;
   }, 0);
 
+  const categoryGridClass = showUsers
+    ? "grid-cols-[minmax(74px,1.3fr)_repeat(6,minmax(64px,1fr))]"
+    : "grid-cols-[minmax(74px,1.3fr)_repeat(3,minmax(64px,1fr))]";
+  const categoryMinWidthClass = showUsers ? "min-w-[380px]" : "min-w-[224px]";
+
   return (
     <div className="rounded shadow-none bg-transparent w-full transition-opacity">
 
@@ -416,7 +421,7 @@ export default function MoneyBox() {
           <div className="text-sm text-zinc-600 dark:text-zinc-400 rounded space-y-3">
 
             {/* 통계 */}
-            <div className="grid grid-cols-2 gap-2 text-base">
+            <div className="grid grid-cols-2 gap-2 text-base max-[500px]:grid-cols-1">
 
               {/* 1행 */}
               <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
@@ -431,11 +436,11 @@ export default function MoneyBox() {
             </div>
 
             {/* 카테고리 표 */}
-            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
+            <div className="show-scrollbar moneybox-scrollbar pt-4 border-t border-zinc-200 dark:border-zinc-700 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
 
-              <div className="text-base min-w-[480px] w-full">
+              <div className={`text-sm w-full ${categoryMinWidthClass}`}>
 
-                <div className={`grid ${showUsers ? 'grid-cols-7' : 'grid-cols-4'} text- font-medium mb-2`}>
+                <div className={`grid ${categoryGridClass} gap-1.5 font-medium mb-2 text-[12px]`}>
                   <span>카테고리</span>
                   <span className="text-center">예산</span>
                   {showUsers && (
@@ -463,10 +468,10 @@ export default function MoneyBox() {
                   return (
                     <div
                       key={cat}
-                      className={`grid ${showUsers ? 'grid-cols-7' : 'grid-cols-4'} gap-2 items-center ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
+                      className={`grid ${categoryGridClass} gap-1.5 items-center ${isOver ? "bg-red-100 dark:bg-red-900/40" : ""
                         }`}
                     >
-                      <span className="text-base">{cat}</span>
+                      <span className="text-[12px] xs:text-sm">{cat}</span>
 
                       <input
                         type="text"
@@ -474,7 +479,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(0, i, e.target.value, "budget")
                         }
-                        className="text-base px-2 py-1 text-right bg-transparent border-none outline-none select-auto"
+                        className="text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border-none outline-none select-auto min-w-0"
                       />
 
                       {showUsers && (
@@ -484,7 +489,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(0, i, e.target.value, "current")
                         }
-                        className={`text-base px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto min-w-0 ${yuseopCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
                     )}
@@ -495,7 +500,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(1, i, e.target.value, "current")
                         }
-                        className={`text-base px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto min-w-0 ${gyeonginCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
                     )}
@@ -506,7 +511,7 @@ export default function MoneyBox() {
                         onChange={(e) =>
                           handleCategoryInput(2, i, e.target.value, "current")
                         }
-                        className={`text-base px-2 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
+                        className={`text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border border-zinc-300 dark:border-zinc-600 rounded select-auto min-w-0 ${acaCurrent > budget && budget !== 0 ? "text-red-500 border-red-400" : ""
                           }`}
                       />
                     )}
@@ -526,7 +531,7 @@ export default function MoneyBox() {
                             });
                           }
                         }}
-                        className={`text-base text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
+                        className={`text-[12px] xs:text-sm text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
                           } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
                       >
                         {formatNumber(sum)}
@@ -559,7 +564,7 @@ export default function MoneyBox() {
                             cumulative: updated,
                           });
                         }}
-                        className={`text-base px-2 py-1 text-right bg-transparent border-none outline-none select-auto opacity-50 ${Number(categoryCumulative[i]) < 0 ? "text-red-500" : ""
+                        className={`text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border-none outline-none select-auto opacity-50 min-w-0 ${Number(categoryCumulative[i]) < 0 ? "text-red-500" : ""
                           }`}
                       />
                     </div>

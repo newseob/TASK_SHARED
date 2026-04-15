@@ -34,6 +34,33 @@ html, body, #root {
   scrollbar-width: auto;
 }
 
+.moneybox-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+
+.moneybox-scrollbar::-webkit-scrollbar {
+  display: block;
+  height: 8px;
+}
+
+.moneybox-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d4d4d8;
+  border-radius: 9999px;
+}
+
+.moneybox-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark .moneybox-scrollbar {
+  scrollbar-color: #52525b transparent;
+}
+
+.dark .moneybox-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #52525b;
+}
+
 
 .tiptap [style*="font-size"] {
   font-size: inherit;
