@@ -19,7 +19,6 @@ export default function DataManager({ onSave, onLoad }: DataManagerProps) {
       // 실제 사용되는 Firestore 경로
       const collections = [
         { name: "todoBoxes", collection: "sharedData", docId: "main" },
-        { name: "dietNotes", collection: "sharedData", docId: "main" },
         { name: "routineItems", collection: "routineItems", docId: "config" },
         { name: "moneyData", collection: "moneyData", docId: "main" },
         { name: "kyunginMemo", collection: "memos", docId: "kyunginMemo" },
@@ -76,7 +75,6 @@ export default function DataManager({ onSave, onLoad }: DataManagerProps) {
           // Firestore 데이터 직접 복원
           const collections = [
             { name: "todoBoxes", collection: "sharedData", docId: "main" },
-            { name: "dietNotes", collection: "sharedData", docId: "main" },
             { name: "routineItems", collection: "routineItems", docId: "config" },
             { name: "moneyData", collection: "moneyData", docId: "main" },
             { name: "kyunginMemo", collection: "memos", docId: "kyunginMemo" },
