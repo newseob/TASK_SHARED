@@ -165,6 +165,20 @@ export default function RoutineTab() {
     return "bg-white dark:bg-zinc-800";
   };
 
+  const getDateInputClass = (value?: string) =>
+    `w-full p-1 rounded focus:outline-none ${
+      value
+        ? "bg-white dark:bg-zinc-700 text-black dark:text-white"
+        : "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300"
+    }`;
+
+  const getInlineDateInputClass = (value?: string) =>
+    `w-full border-none p-1 focus:outline-none ${
+      value
+        ? "bg-transparent"
+        : "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300 rounded"
+    }`;
+
   const sortedItems = [...items].sort((a, b) => {
     if (!sortKey) return 0;
     
@@ -244,7 +258,7 @@ export default function RoutineTab() {
               <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="date"
-                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
+                  className={getDateInputClass(newItem.lastChecked)}
                   value={newItem.lastChecked}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -257,7 +271,7 @@ export default function RoutineTab() {
               <td className="border border-zinc-600 px-2 py-4">
                 <input
                   type="date"
-                  className="w-full p-1 bg-white dark:bg-zinc-700 text-black dark:text-white rounded"
+                  className={getDateInputClass(newItem.lastReplaced)}
                   value={newItem.lastReplaced}
                   onChange={(e) =>
                     setNewItem((prev) => ({
@@ -320,7 +334,7 @@ export default function RoutineTab() {
                   <td className="border border-zinc-600 px-2 py-1">
                     <input
                       type="date"
-                      className="w-full border-none bg-transparent p-1 focus:outline-none"
+                      className={getInlineDateInputClass(item.lastChecked)}
                       value={item.lastChecked}
                       onChange={(e) =>
                         handleInlineChange(item.id, "lastChecked", e.target.value)
@@ -330,7 +344,7 @@ export default function RoutineTab() {
                   <td className="border border-zinc-600 px-2 py-1">
                     <input
                       type="date"
-                      className="w-full border-none bg-transparent p-1 focus:outline-none"
+                      className={getInlineDateInputClass(item.lastReplaced)}
                       value={item.lastReplaced}
                       onChange={(e) =>
                         handleInlineChange(item.id, "lastReplaced", e.target.value)

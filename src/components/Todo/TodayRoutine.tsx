@@ -19,6 +19,7 @@ import {
 
 interface RoutineItem {
   id: string;
+  type?: "task" | "section";
   category: string;
   name: string;
   lastChecked: string;
@@ -28,6 +29,61 @@ interface RoutineItem {
   memo: string;
   cycle: number;
 }
+
+const DAILY_SECTION_ITEMS: RoutineItem[] = [
+  {
+    id: "daily-section-morning",
+    type: "section",
+    category: "",
+    name: "아침",
+    lastChecked: "",
+    lastReplaced: "",
+    memo: "",
+    cycle: 1,
+  },
+  {
+    id: "daily-section-lunch",
+    type: "section",
+    category: "",
+    name: "점심",
+    lastChecked: "",
+    lastReplaced: "",
+    memo: "",
+    cycle: 1,
+  },
+  {
+    id: "daily-section-evening",
+    type: "section",
+    category: "",
+    name: "저녁",
+    lastChecked: "",
+    lastReplaced: "",
+    memo: "",
+    cycle: 1,
+  },
+  {
+    id: "daily-section-routine",
+    type: "section",
+    category: "",
+    name: "루틴",
+    lastChecked: "",
+    lastReplaced: "",
+    memo: "",
+    cycle: 1,
+  },
+  {
+    id: "daily-section-etc",
+    type: "section",
+    category: "",
+    name: "기타",
+    lastChecked: "",
+    lastReplaced: "",
+    memo: "",
+    cycle: 1,
+  },
+];
+
+const isDailySection = (item: RoutineItem) => item.type === "section";
 
 export default function TodayRoutine() {
   const [showList, setShowList] = useState(() => {
@@ -98,8 +154,10 @@ export default function TodayRoutine() {
   // 남은일 계산: (오늘06:00 - 마지막체크(해당날짜06:00 기준)) 일수 - 주기
   // 예) 어제 체크 & 주기 1 → diffDays=1 → remaining=0 → "오늘"
   const calculateDays = (lastChecked: string, cycle: number): number => {
+    if (!lastChecked) return 0;
     if (!lastChecked) return -9999; // 없으면 리스트에서 여유로 보이도록 멀리 보내기(원하면 0으로 변경 가능)
     const last = parseLocalDateAtSix(lastChecked);
+    if (!last) return 0;
     if (!last) return -9999;
     const now = getToday6AM();
     const diffMs = now.getTime() - last.getTime();
@@ -119,6 +177,38 @@ export default function TodayRoutine() {
 
   // Firestore
   useEffect(() => {
+    const existingSectionIds = new Set(
+      items.filter(isDailySection).map((item) => item.id)
+    );
+    const missingSections = DAILY_SECTION_ITEMS.filter(
+      (section) => !existingSectionIds.has(section.id)
+    );
+
+    if (missingSections.length > 0) {
+      const firstDailyIndex = items.findIndex((item) => Number(item.cycle) === 1);
+      const insertIndex = firstDailyIndex === -1 ? items.length : firstDailyIndex;
+      const updatedItems = [
+        ...items.slice(0, insertIndex),
+        ...missingSections,
+        ...items.slice(insertIndex),
+      ];
+
+      updateWithHistory(updatedItems);
+      return;
+    }
+
+    const normalizedItems = items.map((item) => {
+      const defaultSection = DAILY_SECTION_ITEMS.find((section) => section.id === item.id);
+      return defaultSection && item.name !== defaultSection.name
+        ? { ...item, name: defaultSection.name }
+        : item;
+    });
+
+    if (JSON.stringify(normalizedItems) !== JSON.stringify(items)) {
+      updateWithHistory(normalizedItems);
+      return;
+    }
+
     const dailyItems = prepared.filter((i) => Number(i.cycle) === 1);
 
     setOrderedDailyItems(dailyItems);
@@ -166,7 +256,52 @@ export default function TodayRoutine() {
     }
   };
 
+  const handleRenameItem = (item: RoutineItem) => {
+    const nextName = window.prompt("이름 수정", item.name)?.trim();
+    if (!nextName || nextName === item.name) return;
+
+    const updated = items.map((it) =>
+      it.id === item.id
+        ? {
+          ...it,
+          name: nextName,
+        }
+        : it
+    );
+
+    updateWithHistory(updated);
+  };
+
   // 아이템 컴포넌트
+  const handleAddDailyItem = () => {
+    const name = window.prompt("매일 루틴 추가")?.trim();
+    if (!name) return;
+
+    const newItem: RoutineItem = {
+      id: crypto.randomUUID(),
+      type: "task",
+      category: "",
+      name,
+      lastChecked: "",
+      lastReplaced: "",
+      memo: "",
+      cycle: 1,
+    };
+
+    const lastDailyIndex = items.reduce(
+      (lastIndex, item, index) => Number(item.cycle) === 1 ? index : lastIndex,
+      -1
+    );
+    const insertIndex = lastDailyIndex === -1 ? items.length : lastDailyIndex + 1;
+    const updated = [
+      ...items.slice(0, insertIndex),
+      newItem,
+      ...items.slice(insertIndex),
+    ];
+
+    updateWithHistory(updated);
+  };
+
   const SortableItem = ({ item }: { item: RoutineItem & { remaining: number } }) => {
     const {
       attributes,
@@ -193,6 +328,17 @@ export default function TodayRoutine() {
   // 공통 아이템 렌더러
   // ───────────────────────────────
   const renderItem = (item: RoutineItem & { remaining: number }) => {
+    if (isDailySection(item)) {
+      return (
+        <li
+          key={item.id}
+          className="mt-4 px-1 py-1 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400"
+        >
+          {item.name}
+        </li>
+      );
+    }
+
     const liClass =
       item.remaining >= 0
         ? "bg-zinc-600 text-white border-zinc-700"
@@ -223,7 +369,20 @@ export default function TodayRoutine() {
                 ""
               )}
             </span>
-            <div className="relative w-5 h-5">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleRenameItem(item);
+                }}
+                onPointerDown={(event) => event.stopPropagation()}
+                className="text-[10px] font-normal text-zinc-400 hover:text-blue-500 dark:text-zinc-500 dark:hover:text-blue-300"
+                aria-label={`${item.name} 이름 수정`}
+                title="이름 수정"
+              >
+                수정
+              </button>
               <button
                 onClick={() => {
                   const checked = isChecked(item);
@@ -364,6 +523,13 @@ export default function TodayRoutine() {
                 </ul>
               </SortableContext>
             </DndContext>
+            <button
+              type="button"
+              onClick={handleAddDailyItem}
+              className="mt-3 w-full rounded border border-dashed border-zinc-300 px-2 py-2 text-xs font-medium text-zinc-500 transition hover:border-blue-400 hover:text-blue-500 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-blue-400 dark:hover:text-blue-300"
+            >
+              + 추가
+            </button>
           </section>
         </div>
       )}
