@@ -20,6 +20,7 @@ export default function DataManager({ onSave, onLoad }: DataManagerProps) {
       const collections = [
         { name: "todoBoxes", collection: "sharedData", docId: "main" },
         { name: "routineItems", collection: "routineItems", docId: "config" },
+        { name: "timetableData", collection: "timetableData", docId: "main" },
         { name: "moneyData", collection: "moneyData", docId: "main" },
         { name: "kyunginMemo", collection: "memos", docId: "kyunginMemo" },
         { name: "yuseopMemo", collection: "memos", docId: "YuseopMemo" }
@@ -76,6 +77,7 @@ export default function DataManager({ onSave, onLoad }: DataManagerProps) {
           const collections = [
             { name: "todoBoxes", collection: "sharedData", docId: "main" },
             { name: "routineItems", collection: "routineItems", docId: "config" },
+            { name: "timetableData", collection: "timetableData", docId: "main" },
             { name: "moneyData", collection: "moneyData", docId: "main" },
             { name: "kyunginMemo", collection: "memos", docId: "kyunginMemo" },
             { name: "yuseopMemo", collection: "memos", docId: "YuseopMemo" }

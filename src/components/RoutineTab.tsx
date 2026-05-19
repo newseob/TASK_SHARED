@@ -6,6 +6,9 @@ interface RoutineItem {
   id: string;
   category: string;
   name: string;
+  time?: string;
+  startTime?: string;
+  endTime?: string;
   lastChecked: string;
   lastReplaced: string;
   memo: string;
@@ -22,6 +25,9 @@ export default function RoutineTab() {
     id: "",
     category: "",
     name: "",
+    time: "",
+    startTime: "",
+    endTime: "",
     lastChecked: "",
     lastReplaced: "",
     memo: "",
@@ -141,6 +147,9 @@ export default function RoutineTab() {
       id,
       category: newItem.category || "",
       name: newItem.name || "",
+      time: newItem.time || "",
+      startTime: newItem.startTime || "",
+      endTime: newItem.endTime || "",
       memo: newItem.memo || "",
       lastChecked: newItem.lastChecked || "",
       lastReplaced: newItem.lastReplaced || "",
@@ -154,6 +163,9 @@ export default function RoutineTab() {
       id: "",
       category: "",
       name: "",
+      time: "",
+      startTime: "",
+      endTime: "",
       memo: "",
       lastChecked: "",
       lastReplaced: "",

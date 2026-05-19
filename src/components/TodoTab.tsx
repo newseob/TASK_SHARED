@@ -7,10 +7,12 @@ import CycleRoutine from "./Todo/CycleRoutine.tsx";
 import MoneyBox from "./Todo/MoneyBox.tsx";
 import LinkBox from "./Todo/LinkBox.tsx";
 import DateReference from "./Todo/DateReference.tsx";
+import Timetable from "./Todo/Timetable.tsx";
 
-type TodoSectionId = "todo" | "routine" | "money" | "link";
+type TodoSectionId = "todo" | "routine" | "money" | "link" | "timetable";
 
 const TODO_SECTIONS: Array<{ id: TodoSectionId; label: string }> = [
+  { id: "timetable", label: "🗓️" },
   { id: "todo", label: "✅" },
   { id: "routine", label: "🔁" },
   { id: "money", label: "💰" },
@@ -22,7 +24,7 @@ export default function TodoTab() {
     const saved = localStorage.getItem("todoTab_activeSection");
     return TODO_SECTIONS.some((section) => section.id === saved)
       ? (saved as TodoSectionId)
-      : "todo";
+      : "timetable";
   });
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export default function TodoTab() {
   return (
     <div className="select-none overflow-x-hidden bg-gray-200 text-black dark:bg-black dark:text-white">
       <div className="fixed left-0 right-0 top-0 z-30 border-b border-zinc-300 bg-gray-200 px-1 py-1 dark:border-zinc-800 dark:bg-black">
-        <div className="mx-auto grid w-full max-w-screen-lg grid-cols-4 gap-1 rounded-md bg-white p-1 shadow-sm dark:bg-zinc-900">
+        <div className="mx-auto grid w-full max-w-screen-lg grid-cols-5 gap-1 rounded-md bg-white p-1 shadow-sm dark:bg-zinc-900">
           {TODO_SECTIONS.map((section) => (
             <button
               key={section.id}
@@ -85,6 +87,12 @@ export default function TodoTab() {
             <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
               <LinkBox />
             </div>
+          </section>
+        )}
+
+        {activeSection === "timetable" && (
+          <section className="w-full">
+            <Timetable />
           </section>
         )}
       </div>
