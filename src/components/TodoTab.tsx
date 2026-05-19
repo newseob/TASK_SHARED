@@ -11,10 +11,10 @@ import DateReference from "./Todo/DateReference.tsx";
 type TodoSectionId = "todo" | "routine" | "money" | "link";
 
 const TODO_SECTIONS: Array<{ id: TodoSectionId; label: string }> = [
-  { id: "todo", label: "투두" },
-  { id: "routine", label: "루틴" },
-  { id: "money", label: "머니" },
-  { id: "link", label: "링크" },
+  { id: "todo", label: "✅" },
+  { id: "routine", label: "🔁" },
+  { id: "money", label: "💰" },
+  { id: "link", label: "🔗" },
 ];
 
 export default function TodoTab() {
