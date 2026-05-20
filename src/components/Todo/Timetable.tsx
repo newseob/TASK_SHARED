@@ -36,13 +36,8 @@ const DEFAULT_SCHEDULES: ScheduleItem[] = [];
 const DEFAULT_ITEM_COLOR = "#27272a";
 const ACTIVE_ITEM_COLOR = "#7a3f16";
 const TIME_DIVIDERS = [
-  { time: "07:00", label: "아침" },
-  { time: "11:00", label: "오전" },
-  { time: "12:00", label: "점심" },
-  { time: "14:00", label: "오후" },
-  { time: "19:00", label: "저녁" },
-  { time: "21:00", label: "루틴" },
-  { time: "23:00", label: "" },
+  { time: "12:00", label: "" },
+  { time: "19:00", label: "" },
 ];
 
 const PERSON_LABELS: Record<TimetablePerson, string> = {
@@ -360,7 +355,7 @@ export default function Timetable() {
           <div className="h-px flex-1 bg-white/18" />
         </div>
       ) : (
-        <div className="h-px bg-white/18" />
+        <div className="h-3" />
       )}
     </div>
   );

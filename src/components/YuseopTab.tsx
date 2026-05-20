@@ -86,11 +86,11 @@ export default function YuseopTab() {
   return (
     <div className="w-full h-full flex flex-col bg-white text-black dark:bg-zinc-900 dark:text-white">
       {/* 상단 메뉴 고정 */}
-      <div className="sticky top-0 z-10 bg-gray-100 dark:bg-zinc-800 py-2 border-b border-gray-300 dark:border-zinc-700">
-        <div className="flex gap-4 items-center px-1">
+      <div className="sticky top-0 z-10 bg-gray-100 dark:bg-zinc-800 py-1 border-b border-gray-300 dark:border-zinc-700">
+        <div className="flex gap-1 items-center px-1">
           <button
             onClick={setBold}
-            className="px-3 py-1 text-sm bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
+            className="px-1.5 py-0.5 text-[11px] bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
             title="굵게"
           >
             굵게
@@ -99,10 +99,10 @@ export default function YuseopTab() {
           <select
             onChange={(e) => setColor(e.target.value)}
             defaultValue=""
-            className="px-3 py-1 text-sm bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
+            className="px-1.5 py-0.5 text-[11px] bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
           >
-            <option value="" disabled>색상 선택</option>
-            <option value="default">기본</option> {/* ✅ 자동 색상 */}
+            <option value="" disabled>색상</option>
+            <option value="default">기본</option>
             <option value="red">빨강</option>
             <option value="blue">파랑</option>
             <option value="green">초록</option>
@@ -111,13 +111,13 @@ export default function YuseopTab() {
           <select
             onChange={(e) => setFontSize(e.target.value)}
             defaultValue=""
-            className="px-3 py-1 text-sm bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
+            className="px-1.5 py-0.5 text-[11px] bg-gray-200 dark:bg-zinc-700 text-black dark:text-white border border-gray-300 dark:border-zinc-600 rounded font-semibold hover:bg-gray-300 dark:hover:bg-zinc-600"
           >
-            <option value="" disabled>글자 크기</option>
-            <option value="14px">작게</option>
-            <option value="18px">중간</option>
-            <option value="24px">크게</option>
-            <option value="32px">매우 크게</option>
+            <option value="" disabled>크기</option>
+            <option value="14px">소</option>
+            <option value="18px">중</option>
+            <option value="24px">대</option>
+            <option value="32px">특대</option>
           </select>
 
         </div>
