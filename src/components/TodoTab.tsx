@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import TodayRoutine from "./Todo/TodayRoutine.tsx";
 import TodoBoxSection from "./Todo/TodoBoxSection.tsx";
 import CycleRoutine from "./Todo/CycleRoutine.tsx";
 import MoneyBox from "./Todo/MoneyBox.tsx";
@@ -63,11 +62,10 @@ export default function TodoTab() {
 
         {activeSection === "routine" && (
           <section className="w-full">
-            <div className="grid h-full grid-cols-1 gap-4 rounded-lg bg-white p-1 xs:grid-cols-2 md:grid-cols-3 dark:bg-zinc-900">
-              <TodayRoutine />
+            <div className="grid h-full grid-cols-1 gap-4 rounded-lg bg-white p-1 md:grid-cols-2 dark:bg-zinc-900">
               <CycleRoutine />
 
-              <div className="xs:col-span-2 md:col-span-1">
+              <div>
                 <DateReference />
               </div>
             </div>

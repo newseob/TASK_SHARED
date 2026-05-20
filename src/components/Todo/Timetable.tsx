@@ -11,6 +11,13 @@ interface ScheduleItem {
   fill: string;
 }
 
+interface TimetableCheckedItem {
+  id: string;
+  person: TimetablePerson;
+  itemId: string;
+  dayKey: string;
+}
+
 type ScheduleFormMode = "manual-add" | "edit";
 type TimetablePerson = "kyungin" | "yuseop";
 
@@ -26,24 +33,17 @@ interface ScheduleFormState {
 }
 
 const DEFAULT_SCHEDULES: ScheduleItem[] = [];
-
-const TIMETABLE_COLORS = [
-  "#2a2444",
-  "#17342d",
-  "#3a241b",
-  "#202b4a",
-  "#3a1d2a",
-  "#3a3018",
-  "#243447",
-  "#2f2f35",
-  "#21372b",
-  "#3b2634",
+const DEFAULT_ITEM_COLOR = "#27272a";
+const ACTIVE_ITEM_COLOR = "#7a3f16";
+const TIME_DIVIDERS = [
+  { time: "07:00", label: "아침" },
+  { time: "11:00", label: "오전" },
+  { time: "12:00", label: "점심" },
+  { time: "14:00", label: "오후" },
+  { time: "19:00", label: "저녁" },
+  { time: "21:00", label: "루틴" },
+  { time: "23:00", label: "" },
 ];
-
-const TIMETABLE_COLOR_OPTIONS = TIMETABLE_COLORS.map((color, index) => ({
-  color,
-  label: `색상 ${index + 1}`,
-}));
 
 const PERSON_LABELS: Record<TimetablePerson, string> = {
   kyungin: "경인",
@@ -57,6 +57,11 @@ function minutesFromDay(time: string) {
 
 function isValidTime(value: string) {
   return /^\d{2}:\d{2}$/.test(value);
+}
+
+function getCurrentMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
 }
 
 function getTimetableDayKey() {
@@ -73,6 +78,7 @@ function getTimetableDayKey() {
 
 export default function Timetable() {
   const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
   const {
     items: kyunginManualSchedules,
     updateWithHistory: updateKyunginManualSchedules,
@@ -91,28 +97,16 @@ export default function Timetable() {
     DEFAULT_SCHEDULES,
     "yuseopManualSchedules"
   );
-  const [checkedItems, setCheckedItems] = useState<
-    Record<TimetablePerson, Record<string, boolean>>
-  >(() => {
-    try {
-      const savedDayKey = localStorage.getItem("timetable_checkedItems_dayKey");
-      if (savedDayKey !== getTimetableDayKey()) {
-        localStorage.setItem("timetable_checkedItems_dayKey", getTimetableDayKey());
-        localStorage.removeItem("timetable_checkedItems_kyungin");
-        localStorage.removeItem("timetable_checkedItems_yuseop");
-        return { kyungin: {}, yuseop: {} };
-      }
-
-      const kyungin = localStorage.getItem("timetable_checkedItems_kyungin");
-      const yuseop = localStorage.getItem("timetable_checkedItems_yuseop");
-      return {
-        kyungin: kyungin ? JSON.parse(kyungin) : {},
-        yuseop: yuseop ? JSON.parse(yuseop) : {},
-      };
-    } catch {
-      return { kyungin: {}, yuseop: {} };
-    }
-  });
+  const {
+    items: checkedRecords,
+    updateWithHistory: updateCheckedRecords,
+  } = useFirestoreHistory<TimetableCheckedItem>(
+    "timetableData",
+    "main",
+    [],
+    "checkedItems"
+  );
+  const [currentMinutes, setCurrentMinutes] = useState(getCurrentMinutes);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormState | null>(null);
 
   const clearLongPressTimer = () => {
@@ -122,35 +116,32 @@ export default function Timetable() {
   };
 
   useEffect(() => {
-    localStorage.setItem("timetable_checkedItems_dayKey", getTimetableDayKey());
-    localStorage.setItem(
-      "timetable_checkedItems_kyungin",
-      JSON.stringify(checkedItems.kyungin)
-    );
-    localStorage.setItem(
-      "timetable_checkedItems_yuseop",
-      JSON.stringify(checkedItems.yuseop)
-    );
-  }, [checkedItems]);
-
-  useEffect(() => {
     const resetCheckedItemsIfDayChanged = () => {
       const currentDayKey = getTimetableDayKey();
-      const savedDayKey = localStorage.getItem("timetable_checkedItems_dayKey");
+      const hasExpiredRecords = checkedRecords.some(
+        (record) => record.dayKey !== currentDayKey
+      );
 
-      if (savedDayKey === currentDayKey) return;
-
-      localStorage.setItem("timetable_checkedItems_dayKey", currentDayKey);
-      setCheckedItems({ kyungin: {}, yuseop: {} });
+      if (hasExpiredRecords) {
+        updateCheckedRecords([]);
+      }
     };
 
     resetCheckedItemsIfDayChanged();
     const intervalId = window.setInterval(resetCheckedItemsIfDayChanged, 60 * 1000);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [checkedRecords]);
 
   useEffect(() => clearLongPressTimer, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentMinutes(getCurrentMinutes());
+    }, 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const timetableColumns = [
     {
@@ -170,6 +161,13 @@ export default function Timetable() {
   const getColumnData = (person: TimetablePerson) =>
     person === "kyungin" ? timetableColumns[0] : timetableColumns[1];
 
+  const currentDayKey = getTimetableDayKey();
+  const checkedItemIds = new Set(
+    checkedRecords
+      .filter((record) => record.dayKey === currentDayKey)
+      .map((record) => `${record.person}:${record.itemId}`)
+  );
+
   const handleAddSchedule = (person: TimetablePerson) => {
     setScheduleForm({
       person,
@@ -177,7 +175,7 @@ export default function Timetable() {
       title: "",
       start: "09:00",
       end: "10:00",
-      fill: TIMETABLE_COLORS[0],
+      fill: DEFAULT_ITEM_COLOR,
     });
   };
 
@@ -196,20 +194,62 @@ export default function Timetable() {
 
   const handleScheduleLongPressStart = (person: TimetablePerson, item: ScheduleItem) => {
     clearLongPressTimer();
+    longPressTriggeredRef.current = false;
     longPressTimerRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
       handleEditSchedule(person, item);
       longPressTimerRef.current = null;
     }, 600);
+  };
+
+  const toggleScheduleChecked = (person: TimetablePerson, item: ScheduleItem) => {
+    const checked = checkedItemIds.has(`${person}:${item.id}`);
+
+    if (checked) {
+      updateCheckedRecords(
+        checkedRecords.filter(
+          (record) =>
+            !(
+              record.person === person &&
+              record.itemId === item.id &&
+              record.dayKey === currentDayKey
+            )
+        )
+      );
+      return;
+    }
+
+    updateCheckedRecords([
+      ...checkedRecords.filter(
+        (record) => !(record.person === person && record.itemId === item.id)
+      ),
+      {
+        id: `${person}-${item.id}-${currentDayKey}`,
+        person,
+        itemId: item.id,
+        dayKey: currentDayKey,
+      },
+    ]);
+  };
+
+  const handleScheduleClick = (person: TimetablePerson, item: ScheduleItem) => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
+    toggleScheduleChecked(person, item);
   };
 
   const handleDeleteSchedule = (person: TimetablePerson, item: ScheduleItem) => {
     const confirmed = window.confirm(`${item.title} 일정을 삭제할까요?`);
     if (!confirmed) return;
 
-    setCheckedItems((prev) => {
-      const { [item.id]: removed, ...rest } = prev[person];
-      return { ...prev, [person]: rest };
-    });
+    updateCheckedRecords(
+      checkedRecords.filter(
+        (record) => !(record.person === person && record.itemId === item.id)
+      )
+    );
 
     const { schedules, updateSchedules } = getColumnData(person);
     updateSchedules(schedules.filter((schedule) => schedule.id !== item.id));
@@ -247,7 +287,7 @@ export default function Timetable() {
         title,
         category: "",
         accent: "#a891ff",
-        fill: scheduleForm.fill,
+        fill: DEFAULT_ITEM_COLOR,
       };
 
       updateSchedules([...schedules, newSchedule]);
@@ -264,7 +304,7 @@ export default function Timetable() {
                 title,
                 start,
                 end,
-                fill: scheduleForm.fill,
+                fill: DEFAULT_ITEM_COLOR,
               }
             : item
         )
@@ -284,7 +324,7 @@ export default function Timetable() {
       end: scheduleForm.end,
       category: "",
       accent: "#a891ff",
-      fill: scheduleForm.fill,
+      fill: DEFAULT_ITEM_COLOR,
     });
     setScheduleForm(null);
   };
@@ -296,21 +336,53 @@ export default function Timetable() {
       )
     )
   ).sort((a, b) => a.localeCompare(b));
+  const timelineEntries = [
+    ...TIME_DIVIDERS.map((divider) => ({
+      type: "divider" as const,
+      key: `divider-${divider.time}`,
+      minutes: minutesFromDay(divider.time),
+      label: divider.label,
+    })),
+    ...groupedStartTimes.map((startTime) => ({
+      type: "row" as const,
+      key: `row-${startTime}`,
+      minutes: minutesFromDay(startTime),
+      startTime,
+    })),
+  ].sort((a, b) => a.minutes - b.minutes || (a.type === "divider" ? -1 : 1));
+
+  const renderTimeDivider = (key: string, label: string) => (
+    <div key={key} className="px-1 py-3">
+      {label ? (
+        <div className="flex items-center gap-2">
+          <div className="h-px flex-1 bg-white/18" />
+          <span className="shrink-0 text-[11px] font-black text-zinc-400">{label}</span>
+          <div className="h-px flex-1 bg-white/18" />
+        </div>
+      ) : (
+        <div className="h-px bg-white/18" />
+      )}
+    </div>
+  );
 
   const renderScheduleCard = (person: TimetablePerson, item: ScheduleItem) => {
-    const checked = Boolean(checkedItems[person][item.id]);
+    const checked = checkedItemIds.has(`${person}:${item.id}`);
+    const isCurrentItem =
+      minutesFromDay(item.start) <= currentMinutes &&
+      currentMinutes < minutesFromDay(item.end);
 
     return (
       <article
         key={item.id}
-        className={`grid min-h-[54px] grid-cols-[minmax(0,1fr)_auto] content-center items-center gap-x-1.5 gap-y-1 overflow-hidden rounded-lg border border-white/10 px-2.5 py-2 shadow-[0_14px_32px_rgba(0,0,0,0.28)] transition-opacity ${
+        className={`grid min-h-[54px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-2.5 py-2 shadow-[0_14px_32px_rgba(0,0,0,0.28)] transition-opacity ${
           checked ? "opacity-45" : "opacity-100"
         }`}
-        style={{ background: item.fill }}
+        style={{ background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }}
         onPointerDown={() => handleScheduleLongPressStart(person, item)}
         onPointerUp={clearLongPressTimer}
         onPointerCancel={clearLongPressTimer}
         onPointerLeave={clearLongPressTimer}
+        onClick={() => handleScheduleClick(person, item)}
       >
         <div className="min-w-0">
           <strong
@@ -321,26 +393,7 @@ export default function Timetable() {
             {item.title}
           </strong>
         </div>
-        <div className="col-start-2 row-span-2 row-start-1 flex flex-col items-center justify-center gap-0.5">
-          <input
-            type="checkbox"
-            checked={checked}
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onChange={() => {
-              setCheckedItems((prev) => ({
-                ...prev,
-                [person]: {
-                  ...prev[person],
-                  [item.id]: !prev[person][item.id],
-                },
-              }));
-            }}
-            className="h-3 w-3 accent-white"
-            aria-label={`${item.title} 완료`}
-          />
-        </div>
-        <span className="col-start-1 text-[11px] font-bold text-white/70">
+        <span className="col-start-1 text-[11px] font-bold text-zinc-400">
           {item.start} - {item.end}
         </span>
       </article>
@@ -370,21 +423,36 @@ export default function Timetable() {
       </div>
 
       <div className="space-y-1 px-1 pt-1">
-        {groupedStartTimes.map((startTime) => (
-          <div key={startTime} className="grid grid-cols-2 gap-1">
-            {timetableColumns.map((column) => {
-              const rowItems = column.schedules
-                .filter((item) => item.start === startTime)
-                .sort((a, b) => a.end.localeCompare(b.end) || a.title.localeCompare(b.title));
+        {timelineEntries.map((entry) => {
+          if (entry.type === "divider") {
+            return renderTimeDivider(entry.key, entry.label);
+          }
 
-              return (
-                <div key={column.id} className="min-h-[54px] space-y-1 p-1">
-                  {rowItems.map((item) => renderScheduleCard(column.id, item))}
-                </div>
-              );
-            })}
+          return (
+            <div key={entry.key}>
+              <div className="grid grid-cols-2 gap-1">
+                {timetableColumns.map((column) => {
+                  const rowItems = column.schedules
+                    .filter((item) => item.start === entry.startTime)
+                    .sort((a, b) => a.end.localeCompare(b.end) || a.title.localeCompare(b.title));
+
+                  return (
+                    <div key={column.id} className="min-h-[54px] space-y-1 p-1">
+                      {rowItems.map((item) => renderScheduleCard(column.id, item))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        {groupedStartTimes.length === 0 ? (
+          <div className="grid grid-cols-2 gap-1">
+            {timetableColumns.map((column) => (
+              <div key={column.id} className="min-h-[54px] p-1" />
+            ))}
           </div>
-        ))}
+        ) : null}
       </div>
 
       {scheduleForm && (
@@ -445,34 +513,6 @@ export default function Timetable() {
                   />
                 </label>
               </div>
-            </div>
-            <div className="mt-4 grid grid-cols-5 gap-2">
-              {TIMETABLE_COLOR_OPTIONS.map((option) => {
-                const selected =
-                  option.color.toLowerCase() === scheduleForm.fill.toLowerCase();
-
-                return (
-                  <button
-                    key={option.color}
-                    type="button"
-                    onClick={() =>
-                      setScheduleForm((prev) =>
-                        prev ? { ...prev, fill: option.color } : prev
-                      )
-                    }
-                    className={`h-12 rounded border text-[10px] font-bold text-white shadow-inner transition ${
-                      selected
-                        ? "border-white ring-2 ring-white/70"
-                        : "border-white/10 hover:border-white/60"
-                    }`}
-                    style={{ background: option.color }}
-                    aria-label={option.label}
-                    title={option.color}
-                  >
-                    {option.label.replace("색상 ", "")}
-                  </button>
-                );
-              })}
             </div>
             <div className="mt-4 flex justify-between gap-2">
               <div>

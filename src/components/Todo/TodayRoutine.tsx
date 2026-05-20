@@ -30,59 +30,6 @@ interface RoutineItem {
   cycle: number;
 }
 
-const DAILY_SECTION_ITEMS: RoutineItem[] = [
-  {
-    id: "daily-section-morning",
-    type: "section",
-    category: "",
-    name: "아침",
-    lastChecked: "",
-    lastReplaced: "",
-    memo: "",
-    cycle: 1,
-  },
-  {
-    id: "daily-section-lunch",
-    type: "section",
-    category: "",
-    name: "점심",
-    lastChecked: "",
-    lastReplaced: "",
-    memo: "",
-    cycle: 1,
-  },
-  {
-    id: "daily-section-evening",
-    type: "section",
-    category: "",
-    name: "저녁",
-    lastChecked: "",
-    lastReplaced: "",
-    memo: "",
-    cycle: 1,
-  },
-  {
-    id: "daily-section-routine",
-    type: "section",
-    category: "",
-    name: "루틴",
-    lastChecked: "",
-    lastReplaced: "",
-    memo: "",
-    cycle: 1,
-  },
-  {
-    id: "daily-section-etc",
-    type: "section",
-    category: "",
-    name: "기타",
-    lastChecked: "",
-    lastReplaced: "",
-    memo: "",
-    cycle: 1,
-  },
-];
-
 const isDailySection = (item: RoutineItem) => item.type === "section";
 
 export default function TodayRoutine() {
@@ -177,35 +124,10 @@ export default function TodayRoutine() {
 
   // Firestore
   useEffect(() => {
-    const existingSectionIds = new Set(
-      items.filter(isDailySection).map((item) => item.id)
-    );
-    const missingSections = DAILY_SECTION_ITEMS.filter(
-      (section) => !existingSectionIds.has(section.id)
-    );
+    const withoutSections = items.filter((item) => !isDailySection(item));
 
-    if (missingSections.length > 0) {
-      const firstDailyIndex = items.findIndex((item) => Number(item.cycle) === 1);
-      const insertIndex = firstDailyIndex === -1 ? items.length : firstDailyIndex;
-      const updatedItems = [
-        ...items.slice(0, insertIndex),
-        ...missingSections,
-        ...items.slice(insertIndex),
-      ];
-
-      updateWithHistory(updatedItems);
-      return;
-    }
-
-    const normalizedItems = items.map((item) => {
-      const defaultSection = DAILY_SECTION_ITEMS.find((section) => section.id === item.id);
-      return defaultSection && item.name !== defaultSection.name
-        ? { ...item, name: defaultSection.name }
-        : item;
-    });
-
-    if (JSON.stringify(normalizedItems) !== JSON.stringify(items)) {
-      updateWithHistory(normalizedItems);
+    if (withoutSections.length !== items.length) {
+      updateWithHistory(withoutSections);
       return;
     }
 
@@ -328,17 +250,6 @@ export default function TodayRoutine() {
   // 공통 아이템 렌더러
   // ───────────────────────────────
   const renderItem = (item: RoutineItem & { remaining: number }) => {
-    if (isDailySection(item)) {
-      return (
-        <li
-          key={item.id}
-          className="mt-4 px-1 py-1 text-center text-[11px] font-semibold text-zinc-500 dark:text-zinc-400"
-        >
-          {item.name}
-        </li>
-      );
-    }
-
     const liClass =
       item.remaining >= 0
         ? "bg-zinc-600 text-white border-zinc-700"
