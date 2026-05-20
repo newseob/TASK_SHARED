@@ -419,6 +419,7 @@ export default function Timetable() {
     const cardStyle = isRoutine
       ? { background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }
       : undefined;
+    const titleColorClass = !isRoutine && isCurrentItem ? "text-[#f4a261]" : "text-[#f6f7f8]";
 
     return (
       <article
@@ -433,11 +434,9 @@ export default function Timetable() {
       >
         <div className="min-w-0">
           <strong
-            className={`block truncate leading-tight text-[#f6f7f8] ${
+            className={`block truncate leading-tight ${titleColorClass} ${
               isRoutine ? "text-sm" : "text-xs font-semibold"
-            } ${checked && isRoutine ? "line-through" : ""} ${
-              !isRoutine && isCurrentItem ? "text-[#f4a261]" : ""
-            }`}
+            } ${checked && isRoutine ? "line-through" : ""}`}
           >
             {item.title}
           </strong>
