@@ -9,6 +9,7 @@ interface ScheduleItem {
   category: string;
   accent: string;
   fill: string;
+  kind?: ScheduleKind;
 }
 
 interface TimetableCheckedItem {
@@ -19,6 +20,7 @@ interface TimetableCheckedItem {
 }
 
 type ScheduleFormMode = "manual-add" | "edit";
+type ScheduleKind = "routine" | "event";
 type TimetablePerson = "kyungin" | "yuseop";
 
 interface ScheduleFormState {
@@ -28,6 +30,7 @@ interface ScheduleFormState {
   start: string;
   end: string;
   fill: string;
+  kind: ScheduleKind;
   scheduleId?: string;
   canDelete?: boolean;
 }
@@ -52,6 +55,10 @@ function minutesFromDay(time: string) {
 
 function isValidTime(value: string) {
   return /^\d{2}:\d{2}$/.test(value);
+}
+
+function getScheduleKind(item: ScheduleItem): ScheduleKind {
+  return item.kind ?? "routine";
 }
 
 function getCurrentMinutes() {
@@ -172,6 +179,7 @@ export default function Timetable() {
       start: "09:00",
       end: "10:00",
       fill: DEFAULT_ITEM_COLOR,
+      kind: "routine",
     });
   };
 
@@ -183,6 +191,7 @@ export default function Timetable() {
       start: item.start,
       end: item.end,
       fill: item.fill,
+      kind: getScheduleKind(item),
       scheduleId: item.id,
       canDelete: true,
     });
@@ -199,6 +208,8 @@ export default function Timetable() {
   };
 
   const toggleScheduleChecked = (person: TimetablePerson, item: ScheduleItem) => {
+    if (getScheduleKind(item) !== "routine") return;
+
     const checked = checkedItemIds.has(`${person}:${item.id}`);
 
     if (checked) {
@@ -257,6 +268,7 @@ export default function Timetable() {
     const title = scheduleForm.title.trim();
     const start = scheduleForm.start;
     const end = scheduleForm.end;
+    const kind = scheduleForm.kind;
 
     if (!title) {
       alert("이름을 입력해주세요.");
@@ -284,6 +296,7 @@ export default function Timetable() {
         category: "",
         accent: "#a891ff",
         fill: DEFAULT_ITEM_COLOR,
+        kind,
       };
 
       updateSchedules([...schedules, newSchedule]);
@@ -301,6 +314,7 @@ export default function Timetable() {
                 start,
                 end,
                 fill: DEFAULT_ITEM_COLOR,
+                kind,
               }
             : item
         )
@@ -321,6 +335,7 @@ export default function Timetable() {
       category: "",
       accent: "#a891ff",
       fill: DEFAULT_ITEM_COLOR,
+      kind: scheduleForm.kind,
     });
     setScheduleForm(null);
   };
@@ -390,18 +405,26 @@ export default function Timetable() {
   );
 
   const renderScheduleCard = (person: TimetablePerson, item: ScheduleItem) => {
+    const kind = getScheduleKind(item);
+    const isRoutine = kind === "routine";
     const checked = checkedItemIds.has(`${person}:${item.id}`);
     const isCurrentItem =
       minutesFromDay(item.start) <= currentMinutes &&
       currentMinutes < minutesFromDay(item.end);
+    const cardClassName = isRoutine
+      ? `grid min-h-[54px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-2.5 py-2 shadow-[0_14px_32px_rgba(0,0,0,0.28)] transition-opacity ${
+          checked ? "opacity-45" : "opacity-100"
+        }`
+      : "grid min-h-[54px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-2.5 py-2 transition-opacity";
+    const cardStyle = isRoutine
+      ? { background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }
+      : undefined;
 
     return (
       <article
         key={item.id}
-        className={`grid min-h-[54px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-2.5 py-2 shadow-[0_14px_32px_rgba(0,0,0,0.28)] transition-opacity ${
-          checked ? "opacity-45" : "opacity-100"
-        }`}
-        style={{ background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }}
+        className={cardClassName}
+        style={cardStyle}
         onPointerDown={() => handleScheduleLongPressStart(person, item)}
         onPointerUp={clearLongPressTimer}
         onPointerCancel={clearLongPressTimer}
@@ -410,14 +433,16 @@ export default function Timetable() {
       >
         <div className="min-w-0">
           <strong
-            className={`block truncate text-sm leading-tight text-[#f6f7f8] ${
-              checked ? "line-through" : ""
+            className={`block truncate leading-tight text-[#f6f7f8] ${
+              isRoutine ? "text-sm" : "text-xs font-semibold"
+            } ${checked && isRoutine ? "line-through" : ""} ${
+              !isRoutine && isCurrentItem ? "text-[#f4a261]" : ""
             }`}
           >
             {item.title}
           </strong>
         </div>
-        <span className="col-start-1 text-[11px] font-bold text-zinc-400">
+        <span className={`${isRoutine ? "text-[11px]" : "text-[10px]"} col-start-1 font-bold text-zinc-400`}>
           {item.start} - {item.end}
         </span>
       </article>
@@ -519,6 +544,29 @@ export default function Timetable() {
                   }
                 />
               </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: "routine" as const, label: "루틴" },
+                  { value: "event" as const, label: "일정" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setScheduleForm((prev) =>
+                        prev ? { ...prev, kind: option.value } : prev
+                      )
+                    }
+                    className={`rounded border px-2 py-2 text-xs font-bold transition ${
+                      scheduleForm.kind === option.value
+                        ? "border-[#a891ff] bg-[#a891ff] text-white"
+                        : "border-[#2b3036] bg-[#101214] text-[#a4abb3] hover:text-white"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="block text-xs font-bold text-[#a4abb3]">
                   시작시간
