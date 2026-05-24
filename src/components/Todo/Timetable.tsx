@@ -370,8 +370,14 @@ export default function Timetable() {
       )
     )
   ).sort((a, b) => a.localeCompare(b));
+  const groupedStartMinutes = groupedStartTimes.map(minutesFromDay);
+  const firstStartMinute = Math.min(...groupedStartMinutes);
+  const lastStartMinute = Math.max(...groupedStartMinutes);
   const timelineEntries = [
-    ...TIME_DIVIDERS.map((divider) => ({
+    ...TIME_DIVIDERS.filter((divider) => {
+      const dividerMinute = minutesFromDay(divider.time);
+      return dividerMinute > firstStartMinute && dividerMinute < lastStartMinute;
+    }).map((divider) => ({
       type: "divider" as const,
       key: `divider-${divider.time}`,
       minutes: minutesFromDay(divider.time),
@@ -448,11 +454,11 @@ export default function Timetable() {
       className="mx-auto w-full max-w-[1280px] py-2 text-white [--hour-height:86px] max-[520px]:[--hour-height:78px]"
       aria-label="하루 시간표"
     >
-      <div className="sticky top-0 z-20 bg-gray-200 px-1 py-2 dark:bg-black">
+      <div className="sticky top-0 z-20 bg-white px-1 pb-1 pt-1 dark:bg-zinc-900">
         <div className="mx-auto grid w-full max-w-[1280px] grid-cols-2 gap-2">
           {timetableColumns.map((column) => (
             <div key={column.id} className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-black text-[#f1f3f4]">{column.label}</h3>
+              <h3 className="text-sm font-black text-zinc-900 dark:text-[#f1f3f4]">{column.label}</h3>
               <button
                 type="button"
                 onClick={() => handleAddSchedule(column.id)}
@@ -465,7 +471,7 @@ export default function Timetable() {
         </div>
       </div>
 
-      <div className="space-y-1 px-1 pt-1">
+      <div className="space-y-1 px-1 pt-0">
         {timelineEntries.map((entry) => {
           if (entry.type === "divider") {
             return renderTimeDivider(entry.key, entry.label);
@@ -486,7 +492,7 @@ export default function Timetable() {
                   return (
                     <div
                       key={column.id}
-                      className={`${rowItems.length > 0 ? "min-h-[54px]" : ""} space-y-1 p-1`}
+                      className={`${rowItems.length > 0 ? "min-h-[54px]" : ""} space-y-1 px-1 pb-1 pt-0`}
                     >
                       {rowItems.map((item) => renderScheduleCard(column.id, item))}
                     </div>

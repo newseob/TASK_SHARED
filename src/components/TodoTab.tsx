@@ -17,7 +17,9 @@ export default function TodoTab() {
         </section>
 
         <section className="w-full">
-          <Timetable />
+          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <Timetable />
+          </div>
         </section>
 
         <section className="w-full">
