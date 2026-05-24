@@ -83,7 +83,6 @@ function getTimetableDayKey() {
 export default function Timetable() {
   const longPressTimerRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
-  const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const {
     items: kyunginManualSchedules,
     updateWithHistory: updateKyunginManualSchedules,
@@ -386,35 +385,6 @@ export default function Timetable() {
     })),
   ].sort((a, b) => a.minutes - b.minutes || (a.type === "divider" ? -1 : 1));
 
-  const rowEntries = timelineEntries.filter((entry) => entry.type === "row");
-  const activeRowEntry = rowEntries.find((entry) =>
-    timetableColumns.some((column) =>
-      column.schedules.some(
-        (item) =>
-          shouldShowSchedule(column.id, item) &&
-          item.start === entry.startTime &&
-          minutesFromDay(item.start) <= currentMinutes &&
-          currentMinutes < minutesFromDay(item.end)
-      )
-    )
-  );
-  const nextRowEntry = rowEntries.find((entry) => entry.minutes >= currentMinutes);
-  const autoScrollTargetKey =
-    activeRowEntry?.key ?? nextRowEntry?.key ?? rowEntries[rowEntries.length - 1]?.key;
-
-  useEffect(() => {
-    if (!autoScrollTargetKey) return;
-
-    const target = rowRefs.current.get(autoScrollTargetKey);
-    if (!target) return;
-
-    const timeoutId = window.setTimeout(() => {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 80);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [autoScrollTargetKey, currentMinutes]);
-
   const renderTimeDivider = (key: string, label: string) => (
     <div key={key} className="px-1 py-3">
       {label ? (
@@ -502,17 +472,7 @@ export default function Timetable() {
           }
 
           return (
-            <div
-              key={entry.key}
-              ref={(node) => {
-                if (node) {
-                  rowRefs.current.set(entry.key, node);
-                } else {
-                  rowRefs.current.delete(entry.key);
-                }
-              }}
-              className="scroll-mt-24"
-            >
+            <div key={entry.key}>
               <div className="grid grid-cols-2 gap-1">
                 {timetableColumns.map((column) => {
                   const rowItems = column.schedules
