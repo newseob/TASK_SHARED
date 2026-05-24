@@ -17,6 +17,7 @@ interface TimetableCheckedItem {
   person: TimetablePerson;
   itemId: string;
   dayKey: string;
+  checkedAt?: number;
 }
 
 type ScheduleFormMode = "manual-add" | "edit";
@@ -38,6 +39,7 @@ interface ScheduleFormState {
 const DEFAULT_SCHEDULES: ScheduleItem[] = [];
 const DEFAULT_ITEM_COLOR = "#27272a";
 const ACTIVE_ITEM_COLOR = "#7a3f16";
+const CHECKED_HIDE_DELAY_MS = 10 * 1000;
 const TIME_DIVIDERS = [
   { time: "12:00", label: "" },
   { time: "19:00", label: "" },
@@ -110,6 +112,7 @@ export default function Timetable() {
     "checkedItems"
   );
   const [currentMinutes, setCurrentMinutes] = useState(getCurrentMinutes);
+  const [nowMs, setNowMs] = useState(Date.now);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormState | null>(null);
 
   const clearLongPressTimer = () => {
@@ -146,6 +149,14 @@ export default function Timetable() {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const timetableColumns = [
     {
       id: "kyungin" as const,
@@ -165,11 +176,21 @@ export default function Timetable() {
     person === "kyungin" ? timetableColumns[0] : timetableColumns[1];
 
   const currentDayKey = getTimetableDayKey();
-  const checkedItemIds = new Set(
+  const checkedRecordByItemKey = new Map(
     checkedRecords
       .filter((record) => record.dayKey === currentDayKey)
-      .map((record) => `${record.person}:${record.itemId}`)
+      .map((record) => [`${record.person}:${record.itemId}`, record])
   );
+  const checkedItemIds = new Set(checkedRecordByItemKey.keys());
+
+  const shouldShowSchedule = (person: TimetablePerson, item: ScheduleItem) => {
+    if (getScheduleKind(item) !== "routine") return true;
+
+    const checkedRecord = checkedRecordByItemKey.get(`${person}:${item.id}`);
+    if (!checkedRecord) return true;
+
+    return nowMs - (checkedRecord.checkedAt ?? 0) < CHECKED_HIDE_DELAY_MS;
+  };
 
   const handleAddSchedule = (person: TimetablePerson) => {
     setScheduleForm({
@@ -235,6 +256,7 @@ export default function Timetable() {
         person,
         itemId: item.id,
         dayKey: currentDayKey,
+        checkedAt: Date.now(),
       },
     ]);
   };
@@ -343,7 +365,9 @@ export default function Timetable() {
   const groupedStartTimes = Array.from(
     new Set(
       timetableColumns.flatMap((column) =>
-        column.schedules.map((schedule) => schedule.start)
+        column.schedules
+          .filter((schedule) => shouldShowSchedule(column.id, schedule))
+          .map((schedule) => schedule.start)
       )
     )
   ).sort((a, b) => a.localeCompare(b));
@@ -367,6 +391,7 @@ export default function Timetable() {
     timetableColumns.some((column) =>
       column.schedules.some(
         (item) =>
+          shouldShowSchedule(column.id, item) &&
           item.start === entry.startTime &&
           minutesFromDay(item.start) <= currentMinutes &&
           currentMinutes < minutesFromDay(item.end)
@@ -450,10 +475,10 @@ export default function Timetable() {
 
   return (
     <div
-      className="mx-auto w-full max-w-[1280px] py-3 pt-14 text-white [--hour-height:86px] max-[520px]:[--hour-height:78px]"
+      className="mx-auto w-full max-w-[1280px] py-2 text-white [--hour-height:86px] max-[520px]:[--hour-height:78px]"
       aria-label="하루 시간표"
     >
-      <div className="fixed left-0 right-0 top-11 z-40 bg-gray-200 px-1 py-2 dark:bg-black">
+      <div className="sticky top-0 z-20 bg-gray-200 px-1 py-2 dark:bg-black">
         <div className="mx-auto grid w-full max-w-[1280px] grid-cols-2 gap-2">
           {timetableColumns.map((column) => (
             <div key={column.id} className="flex items-center justify-between px-1">
@@ -491,11 +516,18 @@ export default function Timetable() {
               <div className="grid grid-cols-2 gap-1">
                 {timetableColumns.map((column) => {
                   const rowItems = column.schedules
-                    .filter((item) => item.start === entry.startTime)
+                    .filter(
+                      (item) =>
+                        item.start === entry.startTime &&
+                        shouldShowSchedule(column.id, item)
+                    )
                     .sort((a, b) => a.end.localeCompare(b.end) || a.title.localeCompare(b.title));
 
                   return (
-                    <div key={column.id} className="min-h-[54px] space-y-1 p-1">
+                    <div
+                      key={column.id}
+                      className={`${rowItems.length > 0 ? "min-h-[54px]" : ""} space-y-1 p-1`}
+                    >
                       {rowItems.map((item) => renderScheduleCard(column.id, item))}
                     </div>
                   );
@@ -504,13 +536,6 @@ export default function Timetable() {
             </div>
           );
         })}
-        {groupedStartTimes.length === 0 ? (
-          <div className="grid grid-cols-2 gap-1">
-            {timetableColumns.map((column) => (
-              <div key={column.id} className="min-h-[54px] p-1" />
-            ))}
-          </div>
-        ) : null}
       </div>
 
       {scheduleForm && (
