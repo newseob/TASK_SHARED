@@ -7,7 +7,7 @@ interface TodoItem {
   text: string;
   count?: string;
   unit?: string;
-  status?: string;
+  status?: "none" | "gray" | "blue" | "red";
 }
 
 export default function SortableItem({
@@ -61,7 +61,9 @@ export default function SortableItem({
         ? "bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-100"
         : item.status === "red"
           ? "bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-100"
-          : "bg-white dark:bg-zinc-900 text-gray-800 dark:text-white";
+          : item.status === "gray"
+            ? "border-zinc-700 bg-zinc-600 text-white"
+            : "bg-white dark:bg-zinc-900 text-gray-800 dark:text-white";
 
   const borderColorClass = "border-none";
 
@@ -72,11 +74,19 @@ export default function SortableItem({
         ? "text-blue-300"
         : item.status === "red"
           ? "text-red-400"
-          : "text-zind-500";
+          : item.status === "gray"
+            ? "text-zinc-200"
+            : "text-zind-500";
 
   const handleToggleStatus = () => {
     const nextStatus =
-      item.status === "none" ? "red" : item.status === "red" ? "blue" : "none";
+      !item.status || item.status === "none"
+        ? "gray"
+        : item.status === "gray"
+          ? "red"
+          : item.status === "red"
+            ? "blue"
+            : "none";
 
     onChangeItem(boxId, item.id, nextStatus, "status");
   };
@@ -105,7 +115,9 @@ export default function SortableItem({
             ? "bg-blue-500 text-white border-blue-500"
             : item.status === "red"
               ? "bg-red-500 text-white border-red-500"
-              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-400 border-gray-400 dark:border-gray-500"
+              : item.status === "gray"
+                ? "bg-zinc-300 text-zinc-900 border-zinc-200 dark:bg-zinc-400 dark:text-zinc-950 dark:border-zinc-300"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-400 border-gray-400 dark:border-gray-500"
           }`}
       ></button>
 

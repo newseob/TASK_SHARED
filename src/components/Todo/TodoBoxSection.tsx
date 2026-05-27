@@ -31,7 +31,7 @@ interface TodoItem {
   text: string;
   count?: string;
   unit?: string;
-  status?: "none" | "blue" | "red"; // ← 새 상태 필드
+  status?: "none" | "gray" | "blue" | "red"; // ← 새 상태 필드
 }
 
 interface TodoBox {

@@ -418,20 +418,23 @@ export default function Timetable() {
       minutesFromDay(item.start) <= currentMinutes &&
       currentMinutes < minutesFromDay(item.end);
     const cardClassName = isRoutine
-      ? `grid min-h-[32px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-1.5 py-1 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-opacity ${
+      ? `grid min-h-[32px] cursor-pointer content-center items-center gap-y-0.5 overflow-hidden rounded border px-1.5 py-0.5 text-sm transition-opacity ${
+          isCurrentItem
+            ? "border-[#7a3f16] bg-[#7a3f16] text-white"
+            : "border-zinc-700 bg-zinc-600 text-white"
+        } ${
           checked ? "opacity-45" : "opacity-100"
         }`
-      : "grid min-h-[32px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-1.5 py-1 transition-opacity";
-    const cardStyle = isRoutine
-      ? { background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }
-      : undefined;
-    const titleColorClass = !isRoutine && isCurrentItem ? "text-[#f4a261]" : "text-[#f6f7f8]";
+      : `grid min-h-[32px] cursor-pointer content-center items-center gap-y-0.5 overflow-hidden rounded border px-1.5 py-0.5 text-sm transition-opacity ${
+          isCurrentItem
+            ? "border-[#7a3f16] bg-[#7a3f16] text-white"
+            : "border-zinc-200 bg-white text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+        }`;
 
     return (
       <article
         key={item.id}
         className={cardClassName}
-        style={cardStyle}
         onPointerDown={() => handleScheduleLongPressStart(person, item)}
         onPointerUp={clearLongPressTimer}
         onPointerCancel={clearLongPressTimer}
@@ -440,9 +443,9 @@ export default function Timetable() {
       >
         <div className="min-w-0">
           <strong
-            className={`block truncate leading-tight ${titleColorClass} ${
-              isRoutine ? "text-sm" : "text-xs font-semibold"
-            } ${checked && isRoutine ? "line-through" : ""}`}
+            className={`block truncate leading-tight text-sm font-bold ${
+              checked && isRoutine ? "line-through" : ""
+            }`}
           >
             {item.title}
           </strong>

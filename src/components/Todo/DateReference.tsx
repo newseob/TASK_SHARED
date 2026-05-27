@@ -103,8 +103,8 @@ export default function DateReference() {
   const renderZeroCycleItem = (item: RoutineItem & { remaining: number }) => {
     const liClass =
       item.remaining >= 0
-        ? "bg-zinc-600 text-white border-zinc-700"
-        : "bg-white dark:bg-zinc-900 text-zinc-400 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700";
+        ? "bg-transparent text-zinc-700 dark:text-zinc-200 border-transparent"
+        : "bg-transparent text-zinc-400 dark:text-zinc-500 border-transparent";
 
     const memoClass =
       item.remaining >= 0
