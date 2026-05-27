@@ -113,12 +113,20 @@ export default function Timetable() {
   const [currentMinutes, setCurrentMinutes] = useState(getCurrentMinutes);
   const [nowMs, setNowMs] = useState(Date.now);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormState | null>(null);
+  const [showList, setShowList] = useState(() => {
+    const saved = localStorage.getItem("timetable_showList");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current === null) return;
     window.clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = null;
   };
+
+  useEffect(() => {
+    localStorage.setItem("timetable_showList", JSON.stringify(showList));
+  }, [showList]);
 
   useEffect(() => {
     const resetCheckedItemsIfDayChanged = () => {
@@ -413,10 +421,10 @@ export default function Timetable() {
       minutesFromDay(item.start) <= currentMinutes &&
       currentMinutes < minutesFromDay(item.end);
     const cardClassName = isRoutine
-      ? `grid min-h-[54px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-2.5 py-2 shadow-[0_14px_32px_rgba(0,0,0,0.28)] transition-opacity ${
+      ? `grid min-h-[38px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-1.5 py-1.5 shadow-[0_10px_24px_rgba(0,0,0,0.22)] transition-opacity ${
           checked ? "opacity-45" : "opacity-100"
         }`
-      : "grid min-h-[54px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-2.5 py-2 transition-opacity";
+      : "grid min-h-[38px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-1.5 py-1.5 transition-opacity";
     const cardStyle = isRoutine
       ? { background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }
       : undefined;
@@ -442,9 +450,6 @@ export default function Timetable() {
             {item.title}
           </strong>
         </div>
-        <span className={`${isRoutine ? "text-[11px]" : "text-[10px]"} col-start-1 font-bold text-zinc-400`}>
-          {item.start} - {item.end}
-        </span>
       </article>
     );
   };
@@ -454,55 +459,71 @@ export default function Timetable() {
       className="mx-auto w-full max-w-[1280px] py-2 text-white [--hour-height:86px] max-[520px]:[--hour-height:78px]"
       aria-label="하루 시간표"
     >
-      <div className="sticky top-0 z-20 bg-white px-1 pb-1 pt-1 dark:bg-zinc-900">
-        <div className="mx-auto grid w-full max-w-[1280px] grid-cols-2 gap-2">
-          {timetableColumns.map((column) => (
-            <div key={column.id} className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-black text-zinc-900 dark:text-[#f1f3f4]">{column.label}</h3>
-              <button
-                type="button"
-                onClick={() => handleAddSchedule(column.id)}
-                className="rounded border border-[#2b3036] bg-[#101214] px-2.5 py-1.5 text-xs font-bold text-[#f1f3f4] transition hover:border-[#a891ff]"
-              >
-                + 추가
-              </button>
-            </div>
-          ))}
-        </div>
+      <div className="flex items-center justify-between mt-[3px]">
+        <button
+          type="button"
+          className="mx-1 text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+          onClick={() => setShowList(!showList)}
+          aria-label={showList ? "접기" : "펼치기"}
+          title={showList ? "접기" : "펼치기"}
+        >
+          {showList ? "▽" : "▷"}
+        </button>
+
+        <h2 className="flex-1 truncate text-xs text-blue-600 dark:text-blue-300">
+          매일 할 일
+        </h2>
       </div>
 
-      <div className="space-y-1 px-1 pt-0">
-        {timelineEntries.map((entry) => {
-          if (entry.type === "divider") {
-            return renderTimeDivider(entry.key, entry.label);
-          }
+      {showList && (
+        <>
+          <div className="mt-1 space-y-1 px-0 pt-0">
+            {timelineEntries.map((entry) => {
+              if (entry.type === "divider") {
+                return renderTimeDivider(entry.key, entry.label);
+              }
 
-          return (
-            <div key={entry.key}>
-              <div className="grid grid-cols-2 gap-1">
-                {timetableColumns.map((column) => {
-                  const rowItems = column.schedules
-                    .filter(
-                      (item) =>
-                        item.start === entry.startTime &&
-                        shouldShowSchedule(column.id, item)
-                    )
-                    .sort((a, b) => a.end.localeCompare(b.end) || a.title.localeCompare(b.title));
+              return (
+                <div key={entry.key}>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {timetableColumns.map((column) => {
+                      const rowItems = column.schedules
+                        .filter(
+                          (item) =>
+                            item.start === entry.startTime &&
+                            shouldShowSchedule(column.id, item)
+                        )
+                        .sort((a, b) => a.end.localeCompare(b.end) || a.title.localeCompare(b.title));
 
-                  return (
-                    <div
-                      key={column.id}
-                      className={`${rowItems.length > 0 ? "min-h-[54px]" : ""} space-y-1 px-1 pb-1 pt-0`}
-                    >
-                      {rowItems.map((item) => renderScheduleCard(column.id, item))}
-                    </div>
-                  );
-                })}
-              </div>
+                      return (
+                        <div
+                          key={column.id}
+                          className={`${rowItems.length > 0 ? "min-h-[38px]" : ""} space-y-1 px-0 pb-1 pt-0`}
+                        >
+                          {rowItems.map((item) => renderScheduleCard(column.id, item))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="grid grid-cols-2 gap-1.5">
+              {timetableColumns.map((column) => (
+                <div key={column.id} className="px-0 pb-1 pt-0">
+                  <button
+                    type="button"
+                    onClick={() => handleAddSchedule(column.id)}
+                    className="w-full rounded border border-dashed border-[#2b3036] bg-transparent px-2 py-1 text-xs font-bold text-zinc-500 transition hover:border-[#a891ff] hover:text-[#a891ff] dark:text-zinc-400"
+                  >
+                    +
+                  </button>
+                </div>
+              ))}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </>
+      )}
 
       {scheduleForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">

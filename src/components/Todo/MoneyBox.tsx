@@ -595,15 +595,17 @@ export default function MoneyBox() {
               >
                 자세히
               </button>
-              <button
-                onClick={handleSave}
-                className={`px-3 py-1 text-xs rounded transition ${hasChanges
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                  }`}
-              >
-                저장
-              </button>
+              {showUsers && (
+                <button
+                  onClick={handleSave}
+                  className={`px-3 py-1 text-xs rounded transition ${hasChanges
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                    }`}
+                >
+                  저장
+                </button>
+              )}
             </div>
 
           </div>

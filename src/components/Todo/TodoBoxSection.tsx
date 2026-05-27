@@ -94,6 +94,7 @@ function SortableBox({
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingCountId, setEditingCountId] = useState<string | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [showNewItemInput, setShowNewItemInput] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -131,7 +132,7 @@ function SortableBox({
     setNewText("");
     setNewCount("");
     setNewUnit("");
-    nameRef.current?.focus();
+    setShowNewItemInput(false);
   };
 
   return (
@@ -189,7 +190,7 @@ function SortableBox({
         />
         <button
           onClick={() => onRemoveItem(box.id, "__box__")}
-          className="ml-2 px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0 opacity-0 xs:opacity-0 xs:group-hover:opacity-100 opacity-100"
+          className="ml-2 px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0 opacity-0 group-hover:opacity-100"
           title="소주제 삭제"
         >
           X
@@ -249,63 +250,89 @@ function SortableBox({
             </SortableContext>
           </DndContext>
 
-          {/* 새 항목 입력 */}
-          <div className="group flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded min-w-0 opacity-0 xs:opacity-0 xs:hover:opacity-100 opacity-100 transition-opacity">
+          <div
+            className={`group flex items-center border p-1 rounded min-w-0 transition ${
+              showNewItemInput
+                ? "border-gray-300 dark:border-zinc-700"
+                : "w-fit border-transparent"
+            }`}
+          >
             {/* 체크박스 공간 확보용 여백 */}
-            <div className="w-5 h-5 mr-2" />
+            {showNewItemInput && <div className="w-5 h-5 mr-2" />}
 
-            <input
-              ref={nameRef}
-              className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded select-auto"
-              placeholder="새 항목"
-              value={newText}
-              onChange={(e) => setNewText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddItem();
-                }
-              }}
-            />
-            {box.mode === "shopping" && (
+            {showNewItemInput ? (
               <>
-                <input
-                  ref={countRef}
-                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 select-auto"
-                  placeholder="수량"
-                  value={newCount}
-                  onChange={(e) => setNewCount(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddItem();
-                    }
-                  }}
-                />
-                <input
-                  ref={unitRef}
-                  className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 select-auto"
-                  placeholder="단위"
-                  value={newUnit}
-                  onChange={(e) => setNewUnit(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddItem();
-                    }
-                  }}
-                />
+              <input
+                ref={nameRef}
+                className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded select-auto"
+                placeholder="새 항목"
+                value={newText}
+                onChange={(e) => setNewText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddItem();
+                  }
+                }}
+              />
+              {box.mode === "shopping" && (
+                <>
+                  <input
+                    ref={countRef}
+                    className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 select-auto"
+                    placeholder="수량"
+                    value={newCount}
+                    onChange={(e) => setNewCount(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddItem();
+                      }
+                    }}
+                  />
+                  <input
+                    ref={unitRef}
+                    className="flex-[2] min-w-0 outline-none bg-white dark:bg-zinc-900 text-black dark:text-white text-sm text-right px-1 py-0.5 select-auto"
+                    placeholder="단위"
+                    value={newUnit}
+                    onChange={(e) => setNewUnit(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddItem();
+                      }
+                    }}
+                  />
+                </>
+              )}
               </>
+            ) : (
+              null
             )}
-            <button
-              onClick={handleAddItem}
-              className="px-1 py-0.5 text-sm shrink-0 rounded transition
-             bg-gray-200 text-black hover:bg-gray-300
-             dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
-            >
-              +
-            </button>
-          </div>
+              <button
+                onClick={() => {
+                  if (!showNewItemInput) {
+                    setShowNewItemInput(true);
+                    window.setTimeout(() => nameRef.current?.focus(), 0);
+                    return;
+                  }
+
+                  if (!newText.trim() && !newCount.trim() && !newUnit.trim()) {
+                    setShowNewItemInput(false);
+                    return;
+                  }
+
+                  handleAddItem();
+                }}
+                className={`px-1 py-0.5 text-sm shrink-0 rounded transition ${
+                  showNewItemInput
+                    ? "bg-gray-200 text-black hover:bg-gray-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
+                    : "bg-transparent text-zinc-500 hover:text-blue-500 dark:text-zinc-400 dark:hover:text-blue-300"
+                }`}
+              >
+                +
+              </button>
+            </div>
         </>
       )}
     </div>
@@ -522,10 +549,10 @@ export default function TodoBoxSection() {
             />
           ))}
           </div>
-          <div className="flex gap-2 mt-2 min-w-0">
+          <div className="flex justify-start gap-2 mt-2 min-w-0">
             <button
               onClick={() => addTodoBox("default")}
-              className="border-none text-xs flex-1 h-12"
+              className="border-none text-xs h-12 px-3"
             >
               + 할일
             </button>
