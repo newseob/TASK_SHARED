@@ -89,7 +89,7 @@ export default function SortableItem({
         ...style,
         transition: transform ? 'transform 0.2s ease-out, opacity 0.2s ease-out' : 'none',
       }}
-      className={`group p-1 mb-1 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg} ${borderColorClass}`}
+      className={`group px-1 py-0.5 mb-0.5 rounded-md border border-gray-300 flex items-center justify-between transition-colors duration-300 ${baseBg} ${borderColorClass}`}
     >
       {/* ✅ 왼쪽 체크 버튼 */}
       <button
@@ -99,7 +99,7 @@ export default function SortableItem({
           onToggle(boxId, item.id); // ① 선택 토글
           handleToggleStatus(); // ② 상태 토글(기존 로직)
         }}
-        className={`mr-2 w-3 h-3 rounded-full border flex items-center justify-center text-xs transition-colors ${isLowCount
+        className={`mr-1.5 w-3 h-3 rounded-full border flex items-center justify-center text-xs transition-colors ${isLowCount
           ? "bg-gray-100 dark:bg-gray-900 text-red-600 dark:text-red-400 border-red-400"
           : item.status === "blue"
             ? "bg-blue-500 text-white border-blue-500"
@@ -110,7 +110,7 @@ export default function SortableItem({
       ></button>
 
       {/* ✅ 장보기 모드일 때 텍스트 + 개수 + 단위 간격을 입력창과 동일하게 맞춤 */}
-      <div className="flex-1 flex items-center gap-2 overflow-hidden leading-none min-w-0">
+      <div className="flex-1 flex items-center gap-1.5 overflow-hidden leading-none min-w-0">
         {boxMode === "shopping" ? (
           <>
             {/* 텍스트 */}

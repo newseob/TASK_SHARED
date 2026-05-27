@@ -114,11 +114,11 @@ export default function DateReference() {
     return (
       <li
         key={item.id}
-        className={`list-none border rounded px-2 py-1 space-y-1 text-sm ${liClass}`}
+        className={`list-none border rounded px-1.5 py-0.5 space-y-0.5 text-sm ${liClass}`}
               >
         {/* 상단: 이름 + D±표시 + lastChecked 인라인 달력 */}
         <div className="flex justify-between items-center font-medium">
-          <div className="flex items-center space-x-2 font-bold text-sm">
+          <div className="flex items-center space-x-1.5 font-bold text-sm">
             <span>{item.name}</span>
           </div>
           <span className="flex items-center gap-1 shrink-0 text-right ml-2 whitespace-nowrap">
@@ -177,7 +177,7 @@ export default function DateReference() {
         <div className="text-[11px] font-light">
           {/* 메모: 1.3fr, 마지막 체크: 0.7fr 로 살짝 메모를 넓힘 */}
           <div
-            className="grid gap-x-3 gap-y-1"
+            className="grid gap-x-2 gap-y-0.5"
             style={{ gridTemplateColumns: "1.3fr 0.7fr" }}
           >
             {/* 1행 왼쪽: 메모 (배치 유지, 폭만 조금 더 확보) */}
@@ -272,13 +272,13 @@ export default function DateReference() {
 
       {showList && (
         // 날짜 참고 박스
-        <div className="space-y-[40px] mt-1 mb-[40px] opacity-50">
+        <div className="space-y-[24px] mt-1 mb-[32px] opacity-50">
           <section className="bg-transparent p-0 shadow-none">
             <div>
               {/* 주기 0인 항목들 */}
               {preparedZeroCycleItems.length > 0 && (
-                <div className="pt-1">
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="pt-0.5">
+                  <div className="grid grid-cols-1 gap-1">
                     {preparedZeroCycleItems.map(item => renderZeroCycleItem(item))}
                   </div>
                 </div>

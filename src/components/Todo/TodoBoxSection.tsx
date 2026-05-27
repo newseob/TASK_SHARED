@@ -189,8 +189,26 @@ function SortableBox({
           onChange={(e) => onChangeTitle(box.id, e.target.value)}
         />
         <button
+          type="button"
+          onClick={() => {
+            setShowNewItemInput((prev) => !prev);
+            if (showNewItemInput) {
+              setNewText("");
+              setNewCount("");
+              setNewUnit("");
+              return;
+            }
+            setCollapsed(false);
+            window.setTimeout(() => nameRef.current?.focus(), 0);
+          }}
+          className="ml-2 px-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0 opacity-0 group-hover:opacity-100"
+          title="항목 추가"
+        >
+          +
+        </button>
+        <button
           onClick={() => onRemoveItem(box.id, "__box__")}
-          className="ml-2 px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0 opacity-0 group-hover:opacity-100"
+          className="px-2 mr-1 text-zinc-400 rounded hover:bg-zinc-700 transition text-sm shrink-0 opacity-0 group-hover:opacity-100"
           title="소주제 삭제"
         >
           X
@@ -250,18 +268,11 @@ function SortableBox({
             </SortableContext>
           </DndContext>
 
-          <div
-            className={`group flex items-center border p-1 rounded min-w-0 transition ${
-              showNewItemInput
-                ? "border-gray-300 dark:border-zinc-700"
-                : "w-fit border-transparent"
-            }`}
-          >
-            {/* 체크박스 공간 확보용 여백 */}
-            {showNewItemInput && <div className="w-5 h-5 mr-2" />}
+          {showNewItemInput && (
+            <div className="group flex items-center border border-gray-300 dark:border-zinc-700 p-1 rounded min-w-0 transition">
+              {/* 체크박스 공간 확보용 여백 */}
+              <div className="w-5 h-5 mr-2" />
 
-            {showNewItemInput ? (
-              <>
               <input
                 ref={nameRef}
                 className="flex-[6] min-w-0 outline-none text-sm bg-white dark:bg-zinc-900 text-black dark:text-white px-1 py-0.5 rounded select-auto"
@@ -305,18 +316,8 @@ function SortableBox({
                   />
                 </>
               )}
-              </>
-            ) : (
-              null
-            )}
               <button
                 onClick={() => {
-                  if (!showNewItemInput) {
-                    setShowNewItemInput(true);
-                    window.setTimeout(() => nameRef.current?.focus(), 0);
-                    return;
-                  }
-
                   if (!newText.trim() && !newCount.trim() && !newUnit.trim()) {
                     setShowNewItemInput(false);
                     return;
@@ -324,15 +325,12 @@ function SortableBox({
 
                   handleAddItem();
                 }}
-                className={`px-1 py-0.5 text-sm shrink-0 rounded transition ${
-                  showNewItemInput
-                    ? "bg-gray-200 text-black hover:bg-gray-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
-                    : "bg-transparent text-zinc-500 hover:text-blue-500 dark:text-zinc-400 dark:hover:text-blue-300"
-                }`}
+                className="px-1 py-0.5 text-sm shrink-0 rounded transition bg-gray-200 text-black hover:bg-gray-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
               >
                 +
               </button>
             </div>
+          )}
         </>
       )}
     </div>
@@ -549,12 +547,12 @@ export default function TodoBoxSection() {
             />
           ))}
           </div>
-          <div className="flex justify-start gap-2 mt-2 min-w-0">
+          <div className="mt-2 min-w-0">
             <button
               onClick={() => addTodoBox("default")}
-              className="border-none text-xs h-12 px-3"
+              className="w-full rounded border border-dashed border-[#2b3036] bg-transparent px-2 py-1 text-center text-xs font-bold text-zinc-500 transition hover:border-[#a891ff] hover:text-[#a891ff] dark:text-zinc-400"
             >
-              + 할일
+              +
             </button>
           </div>
           <div className="mb-2">

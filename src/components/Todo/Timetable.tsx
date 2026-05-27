@@ -40,10 +40,7 @@ const DEFAULT_SCHEDULES: ScheduleItem[] = [];
 const DEFAULT_ITEM_COLOR = "#27272a";
 const ACTIVE_ITEM_COLOR = "#7a3f16";
 const CHECKED_HIDE_DELAY_MS = 10 * 1000;
-const TIME_DIVIDERS = [
-  { time: "12:00", label: "" },
-  { time: "19:00", label: "" },
-];
+const TIME_DIVIDERS: Array<{ time: string; label: string }> = [];
 
 const PERSON_LABELS: Record<TimetablePerson, string> = {
   kyungin: "경인",
@@ -421,10 +418,10 @@ export default function Timetable() {
       minutesFromDay(item.start) <= currentMinutes &&
       currentMinutes < minutesFromDay(item.end);
     const cardClassName = isRoutine
-      ? `grid min-h-[38px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-1.5 py-1.5 shadow-[0_10px_24px_rgba(0,0,0,0.22)] transition-opacity ${
+      ? `grid min-h-[32px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-white/10 px-1.5 py-1 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-opacity ${
           checked ? "opacity-45" : "opacity-100"
         }`
-      : "grid min-h-[38px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-1.5 py-1.5 transition-opacity";
+      : "grid min-h-[32px] cursor-pointer content-center items-center gap-y-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-1.5 py-1 transition-opacity";
     const cardStyle = isRoutine
       ? { background: isCurrentItem ? ACTIVE_ITEM_COLOR : DEFAULT_ITEM_COLOR }
       : undefined;
@@ -498,7 +495,7 @@ export default function Timetable() {
                       return (
                         <div
                           key={column.id}
-                          className={`${rowItems.length > 0 ? "min-h-[38px]" : ""} space-y-1 px-0 pb-1 pt-0`}
+                          className={`${rowItems.length > 0 ? "min-h-[32px]" : ""} space-y-0.5 px-0 pb-0.5 pt-0`}
                         >
                           {rowItems.map((item) => renderScheduleCard(column.id, item))}
                         </div>
