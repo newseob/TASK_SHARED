@@ -8,6 +8,7 @@ import { useGlobalUndoScope } from "../../hooks/useGlobalUndoScope";
 interface MoneyData {
   categoryBudget: string[];
   categoryCurrent: string[];
+  categoryOrder?: string[];
   memo?: string[];
   cumulative?: string[];
   users?: {
@@ -31,6 +32,47 @@ interface MoneySnapshot {
   current: string[][];
   memo: string[];
   cumulative: string[];
+}
+
+const LEGACY_CATEGORIES = [
+  "장보기",
+  "식비",
+  "생활",
+  "간식/카페",
+  "꾸밈",
+  "여가",
+  "여행",
+  "고양이",
+  "경조사비",
+  "구독",
+  "기타",
+];
+
+const MONEY_CATEGORIES = [
+  "장보기",
+  "생활",
+  "식비",
+  "간식/카페",
+  "꾸밈",
+  "여가",
+  "기타",
+  "여행",
+  "고양이",
+  "경조사비",
+  "구독",
+];
+
+function remapCategoryRow(row: string[] = [], fromOrder: string[]) {
+  return MONEY_CATEGORIES.map((category) => {
+    const oldIndex = fromOrder.indexOf(category);
+    return oldIndex >= 0 ? row[oldIndex] ?? "" : "";
+  });
+}
+
+function remapCategoryRows(rows: string[][] = [], fromOrder: string[]) {
+  return Array.from({ length: 3 }, (_, index) =>
+    remapCategoryRow(rows[index] ?? [], fromOrder)
+  );
 }
 
 function cloneMoneySnapshot(snapshot: MoneySnapshot): MoneySnapshot {
@@ -67,19 +109,7 @@ export default function MoneyBox() {
     localStorage.setItem("moneyBox_showUsers", JSON.stringify(showUsers));
   }, [showUsers]);
 
-  const categories = [
-    "장보기",
-    "식비",
-    "생활",
-    "간식/카페",
-    "꾸밈",
-    "여가",
-    "여행",
-    "고양이",
-    "경조사비",
-    "구독",
-    "기타",
-  ];
+  const categories = MONEY_CATEGORIES;
 
   const [categoryBudget, setCategoryBudget] = useState<string[][]>(
     Array(3).fill(null).map(() => Array(categories.length).fill(""))
@@ -207,6 +237,9 @@ export default function MoneyBox() {
           let loadedCurrent: string[][];
           let loadedMemo: string[];
           let loadedCumulative: string[];
+          const savedCategoryOrder = Array.isArray(data.categoryOrder)
+            ? data.categoryOrder
+            : LEGACY_CATEGORIES;
 
           if (data.cumulative) {
             loadedCumulative = data.cumulative;
@@ -252,10 +285,10 @@ export default function MoneyBox() {
           }
 
           const loadedSnapshot: MoneySnapshot = {
-            budget: loadedBudget,
-            current: loadedCurrent,
-            memo: loadedMemo,
-            cumulative: loadedCumulative,
+            budget: remapCategoryRows(loadedBudget, savedCategoryOrder),
+            current: remapCategoryRows(loadedCurrent, savedCategoryOrder),
+            memo: remapCategoryRow(loadedMemo, savedCategoryOrder),
+            cumulative: remapCategoryRow(loadedCumulative, savedCategoryOrder),
           };
 
           applySnapshot(loadedSnapshot);
@@ -286,7 +319,8 @@ export default function MoneyBox() {
               }
             },
             memo: defaultMemo,
-            cumulative: defaultCumulative
+            cumulative: defaultCumulative,
+            categoryOrder: categories
           }, { merge: true });
           console.log("[MoneyBox] 🟢 Created money data");
 
@@ -362,7 +396,8 @@ export default function MoneyBox() {
           }
         },
         memo: categoryMemo,
-        cumulative: categoryCumulative
+        cumulative: categoryCumulative,
+        categoryOrder: categories
       }, { merge: true });
       console.log("[MoneyBox] ✅ Save complete");
 
@@ -380,23 +415,10 @@ export default function MoneyBox() {
     }
   };
 
-  const totalBudget = categoryBudget[0].reduce(
-    (sum, v) => sum + (Number(v) || 0),
-    0
-  );
-
-  const totalExpense = categories.reduce((sum, _, i) => {
-    const yuseop = Number(categoryCurrent[0][i]) || 0;
-    const gyeongin = Number(categoryCurrent[1][i]) || 0;
-    const aca = Number(categoryCurrent[2][i]) || 0;
-
-    return sum + yuseop + gyeongin + aca;
-  }, 0);
-
   const categoryGridClass = showUsers
-    ? "grid-cols-[minmax(74px,1.3fr)_repeat(6,minmax(64px,1fr))]"
-    : "grid-cols-[minmax(74px,1.3fr)_repeat(3,minmax(64px,1fr))]";
-  const categoryMinWidthClass = showUsers ? "min-w-[380px]" : "min-w-[224px]";
+    ? "grid-cols-[minmax(74px,1.3fr)_repeat(5,minmax(64px,1fr))]"
+    : "grid-cols-[minmax(74px,1.3fr)_repeat(2,minmax(64px,1fr))]";
+  const categoryMinWidthClass = showUsers ? "min-w-[316px]" : "min-w-[160px]";
 
   return (
     <div className="rounded shadow-none bg-transparent w-full transition-opacity">
@@ -420,29 +442,14 @@ export default function MoneyBox() {
 
           <div className="text-sm text-zinc-600 dark:text-zinc-400 rounded space-y-3">
 
-            {/* 통계 */}
-            <div className="grid grid-cols-2 gap-2 text-base max-[500px]:grid-cols-1">
-
-              {/* 1행 */}
-              <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
-                <span className="font-medium">총예산</span>
-                <span className="font-semibold">{formatNumber(totalBudget)}</span>
-              </div>
-
-              <div className="flex justify-between border border-zinc-200 dark:border-zinc-700 rounded p-2">
-                <span className="font-medium">지출</span>
-                <span className="font-semibold">{formatNumber(totalExpense)}</span>
-              </div>
-            </div>
-
             {/* 카테고리 표 */}
-            <div className="show-scrollbar moneybox-scrollbar pt-4 border-t border-zinc-200 dark:border-zinc-700 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
+            <div className="show-scrollbar moneybox-scrollbar overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-transparent">
 
               <div className={`text-sm w-full ${categoryMinWidthClass}`}>
 
                 <div className={`grid ${categoryGridClass} gap-1.5 font-medium mb-2 text-[12px]`}>
                   <span>카테고리</span>
-                  <span className="text-center">예산</span>
+                  <span className="text-center">{showUsers ? "예산" : "남은금액"}</span>
                   {showUsers && (
                   <span className="text-center">유섭</span>
                 )}
@@ -452,8 +459,7 @@ export default function MoneyBox() {
                 {showUsers && (
                   <span className="text-center">아카</span>
                 )}
-                  <span className="text-center">이번달</span>
-                  <span className="text-center opacity-50">올해누적</span>
+                  <span className="text-center">{showUsers ? "이번달" : "%"}</span>
                 </div>
 
                 {categories.map((cat, i) => {
@@ -462,6 +468,9 @@ export default function MoneyBox() {
                   const gyeonginCurrent = Number(categoryCurrent[1][i]) || 0;
                   const acaCurrent = Number(categoryCurrent[2][i]) || 0;
                   const sum = yuseopCurrent + gyeonginCurrent + acaCurrent;
+                  const remaining = budget - sum;
+                  const usagePercent = budget > 0 ? Math.round((sum / budget) * 100) : 0;
+                  const usageBarPercent = Math.min(usagePercent, 100);
 
                   const isOver = sum > budget && budget !== 0;
 
@@ -473,14 +482,20 @@ export default function MoneyBox() {
                     >
                       <span className="text-[12px] xs:text-sm">{cat}</span>
 
-                      <input
-                        type="text"
-                        value={formatNumber(categoryBudget[0][i])}
-                        onChange={(e) =>
-                          handleCategoryInput(0, i, e.target.value, "budget")
-                        }
-                        className="text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border-none outline-none select-auto min-w-0"
-                      />
+                      {showUsers ? (
+                        <input
+                          type="text"
+                          value={formatNumber(categoryBudget[0][i])}
+                          onChange={(e) =>
+                            handleCategoryInput(0, i, e.target.value, "budget")
+                          }
+                          className="text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border-none outline-none select-auto min-w-0"
+                        />
+                      ) : (
+                        <span className={`text-[12px] xs:text-sm px-1.5 py-1 text-right font-medium ${remaining < 0 ? "text-red-500" : ""}`}>
+                          {remaining === 0 ? "0" : formatNumber(remaining)}
+                        </span>
+                      )}
 
                       {showUsers && (
                       <input
@@ -516,57 +531,55 @@ export default function MoneyBox() {
                       />
                     )}
 
-                      <span
-                        title={categoryMemo[i] || ""}
-                        onClick={() => {
-                          const newMemo = prompt("메모 수정", categoryMemo[i] || "");
-                          if (newMemo !== null) {
-                            const updated = [...categoryMemo];
-                            updated[i] = newMemo;
-                            applyMoneyChange({
-                              budget: categoryBudget,
-                              current: categoryCurrent,
-                              memo: updated,
-                              cumulative: categoryCumulative,
-                            });
-                          }
-                        }}
-                        className={`text-[12px] xs:text-sm text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
-                          } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
-                      >
-                        {formatNumber(sum)}
-                      </span>
+                      {showUsers ? (
+                        <span
+                          title={categoryMemo[i] || ""}
+                          onClick={() => {
+                            const newMemo = prompt("메모 수정", categoryMemo[i] || "");
+                            if (newMemo !== null) {
+                              const updated = [...categoryMemo];
+                              updated[i] = newMemo;
+                              applyMoneyChange({
+                                budget: categoryBudget,
+                                current: categoryCurrent,
+                                memo: updated,
+                                cumulative: categoryCumulative,
+                              });
+                            }
+                          }}
+                          className={`text-[12px] xs:text-sm text-right font-medium cursor-pointer ${isOver ? "text-red-500" : ""
+                            } ${categoryMemo[i] ? "underline decoration-dotted" : ""}`}
+                        >
+                          {formatNumber(sum)}
+                        </span>
+                      ) : (
+                        <div
+                          title={categoryMemo[i] || `${usagePercent}%`}
+                          onClick={() => {
+                            const newMemo = prompt("메모 수정", categoryMemo[i] || "");
+                            if (newMemo !== null) {
+                              const updated = [...categoryMemo];
+                              updated[i] = newMemo;
+                              applyMoneyChange({
+                                budget: categoryBudget,
+                                current: categoryCurrent,
+                                memo: updated,
+                                cumulative: categoryCumulative,
+                              });
+                            }
+                          }}
+                          className={`relative h-5 cursor-pointer overflow-hidden rounded bg-zinc-200 dark:bg-zinc-800 ${categoryMemo[i] ? "ring-1 ring-zinc-400/60" : ""}`}
+                        >
+                          <div
+                            className={`absolute inset-y-0 left-0 rounded ${isOver ? "bg-red-500" : "bg-blue-500"}`}
+                            style={{ width: `${usageBarPercent}%` }}
+                          />
+                          <span className="relative z-10 flex h-full items-center justify-center text-[10px] font-bold text-zinc-800 dark:text-zinc-100">
+                            {usagePercent}%
+                          </span>
+                        </div>
+                      )}
 
-                      <input
-                        type="text"
-                        value={
-                          categoryCumulative[i]
-                            ? Number(categoryCumulative[i]).toLocaleString()
-                            : ""
-                        }
-                        onChange={(e) => {
-                          let value = e.target.value;
-
-                          // 숫자만 허용
-                          value = value.replace(/[^0-9-]/g, "");
-
-                          // -는 맨 앞에만 허용
-                          if (value.indexOf("-") > 0) {
-                            value = value.replace(/-/g, "");
-                          }
-
-                          const updated = [...categoryCumulative];
-                          updated[i] = value;
-                          applyMoneyChange({
-                            budget: categoryBudget,
-                            current: categoryCurrent,
-                            memo: categoryMemo,
-                            cumulative: updated,
-                          });
-                        }}
-                        className={`text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border-none outline-none select-auto opacity-50 min-w-0 ${Number(categoryCumulative[i]) < 0 ? "text-red-500" : ""
-                          }`}
-                      />
                     </div>
                   );
                 })}
@@ -580,7 +593,7 @@ export default function MoneyBox() {
                 onClick={() => setShowUsers(!showUsers)}
                 className="px-3 py-1 text-xs rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition"
               >
-                편집
+                자세히
               </button>
               <button
                 onClick={handleSave}
