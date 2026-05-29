@@ -22,6 +22,7 @@ export default function DataManager({ onSave, onLoad }: DataManagerProps) {
         { name: "routineItems", collection: "routineItems", docId: "config" },
         { name: "timetableData", collection: "timetableData", docId: "main" },
         { name: "planData", collection: "planData", docId: "main" },
+        { name: "workLogData", collection: "workLogData", docId: "main" },
         { name: "moneyData", collection: "moneyData", docId: "main" },
         { name: "kyunginMemo", collection: "memos", docId: "kyunginMemo" },
         { name: "yuseopMemo", collection: "memos", docId: "YuseopMemo" }
@@ -80,6 +81,7 @@ export default function DataManager({ onSave, onLoad }: DataManagerProps) {
             { name: "routineItems", collection: "routineItems", docId: "config" },
             { name: "timetableData", collection: "timetableData", docId: "main" },
             { name: "planData", collection: "planData", docId: "main" },
+            { name: "workLogData", collection: "workLogData", docId: "main" },
             { name: "moneyData", collection: "moneyData", docId: "main" },
             { name: "kyunginMemo", collection: "memos", docId: "kyunginMemo" },
             { name: "yuseopMemo", collection: "memos", docId: "YuseopMemo" }

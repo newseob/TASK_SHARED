@@ -79,7 +79,7 @@ export default function PlanBox() {
           aria-label={showList ? "숨기기" : "펼치기"}
           title={showList ? "숨기기" : "펼치기"}
         >
-          {showList ? "▾" : "▸"}
+          {showList ? "▽" : "▷"}
         </button>
 
         <h2 className="min-w-0 flex-1 truncate bg-transparent text-xs text-blue-600 outline-none dark:text-blue-300">

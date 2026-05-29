@@ -61,6 +61,12 @@ html, body, #root {
   background-color: #52525b;
 }
 
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.4);
+  opacity: 0.85;
+}
+
 
 .tiptap [style*="font-size"] {
   font-size: inherit;
