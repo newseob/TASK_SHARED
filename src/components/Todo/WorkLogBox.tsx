@@ -146,8 +146,8 @@ export default function WorkLogBox() {
 
       {showList && (
         <div className="mt-2 overflow-x-auto">
-          <div className="min-w-[520px]">
-            <div className="mb-4 grid grid-cols-[120px_150px_42px_minmax(0,1fr)] items-center gap-1">
+          <div className="min-w-[470px]">
+            <div className="mb-4 grid grid-cols-[120px_150px_54px_minmax(0,1fr)] items-center gap-1">
               <input
                 type="month"
                 value={monthFilter}
@@ -174,7 +174,7 @@ export default function WorkLogBox() {
                   setMonthFilter("");
                   setProjectFilter("");
                 }}
-                className="justify-self-start rounded border border-zinc-200 px-2 py-1 text-xs text-zinc-500 transition hover:text-blue-500 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-blue-300"
+                className="h-7 justify-self-start whitespace-nowrap rounded border border-zinc-200 px-2 py-1 text-xs text-zinc-500 transition hover:text-blue-500 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-blue-300"
               >
                 전체
               </button>
@@ -236,7 +236,7 @@ export default function WorkLogBox() {
                 return (
                   <div
                     key={item.id}
-                    className={`group grid grid-cols-[92px_130px_minmax(200px,1fr)_70px_24px] items-center gap-1 rounded px-1.5 py-0.5 text-sm transition ${
+                    className={`group grid grid-cols-[88px_120px_minmax(150px,1fr)_58px_24px] items-center gap-1 rounded px-1.5 py-0.5 text-sm transition ${
                       isToday
                         ? "bg-blue-50 text-blue-900 dark:bg-blue-500/15 dark:text-blue-100"
                         : ""
@@ -293,7 +293,7 @@ export default function WorkLogBox() {
               })}
             </div>
 
-            <div className="mt-1 grid grid-cols-[92px_130px_minmax(200px,1fr)_70px_24px] items-center gap-1 rounded border border-zinc-200 p-1 dark:border-zinc-700">
+            <div className="mt-1 grid grid-cols-[88px_120px_minmax(150px,1fr)_58px_24px] items-center gap-1 rounded border border-zinc-200 p-1 dark:border-zinc-700">
               <input
                 type="date"
                 value={input.date}
