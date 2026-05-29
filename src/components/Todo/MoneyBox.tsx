@@ -417,8 +417,8 @@ export default function MoneyBox() {
 
   const categoryGridClass = showUsers
     ? "grid-cols-[minmax(74px,1.3fr)_repeat(5,minmax(64px,1fr))]"
-    : "grid-cols-[minmax(74px,1.3fr)_repeat(2,minmax(64px,1fr))]";
-  const categoryMinWidthClass = showUsers ? "min-w-[316px]" : "min-w-[160px]";
+    : "grid-cols-[minmax(68px,0.9fr)_minmax(96px,1.25fr)_minmax(72px,0.85fr)]";
+  const categoryMinWidthClass = showUsers ? "min-w-[316px]" : "min-w-[248px]";
 
   return (
     <div className="rounded shadow-none bg-transparent w-full transition-opacity">
@@ -449,7 +449,7 @@ export default function MoneyBox() {
 
                 <div className={`grid ${categoryGridClass} gap-1.5 font-medium mb-2 text-[12px]`}>
                   <span>카테고리</span>
-                  <span className="text-center">{showUsers ? "예산" : "남은금액"}</span>
+                  <span className="text-center">{showUsers ? "예산" : "남은/예산"}</span>
                   {showUsers && (
                   <span className="text-center">유섭</span>
                 )}
@@ -492,8 +492,13 @@ export default function MoneyBox() {
                           className="text-[12px] xs:text-sm px-1.5 py-1 text-right bg-transparent border-none outline-none select-auto min-w-0"
                         />
                       ) : (
-                        <span className={`text-[12px] xs:text-sm px-1.5 py-1 text-right font-medium ${remaining < 0 ? "text-red-500" : ""}`}>
-                          {remaining === 0 ? "0" : formatNumber(remaining)}
+                        <span className="px-1.5 py-1 text-center text-[12px] font-medium xs:text-sm">
+                          <span className={remaining < 0 ? "text-red-500" : ""}>
+                            {remaining === 0 ? "0" : formatNumber(remaining)}
+                          </span>
+                          <span className="ml-1 text-[10px] text-zinc-400 dark:text-zinc-500">
+                            / {budget === 0 ? "0" : formatNumber(budget)}
+                          </span>
                         </span>
                       )}
 
