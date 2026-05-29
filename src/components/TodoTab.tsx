@@ -5,6 +5,7 @@ import CycleRoutine from "./Todo/CycleRoutine.tsx";
 import MoneyBox from "./Todo/MoneyBox.tsx";
 import DateReference from "./Todo/DateReference.tsx";
 import Timetable from "./Todo/Timetable.tsx";
+import PlanBox from "./Todo/PlanBox.tsx";
 
 export default function TodoTab() {
   return (
@@ -33,6 +34,12 @@ export default function TodoTab() {
             </div>
           </section>
         </div>
+
+        <section className="w-full">
+          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <PlanBox />
+          </div>
+        </section>
 
         <section className="w-full">
           <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">

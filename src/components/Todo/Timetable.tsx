@@ -456,7 +456,7 @@ export default function Timetable() {
 
   return (
     <div
-      className="mx-auto w-full max-w-[1280px] py-2 text-white [--hour-height:86px] max-[520px]:[--hour-height:78px]"
+      className="mx-auto w-full max-w-[1280px] pb-2 pt-0 text-white [--hour-height:86px] max-[520px]:[--hour-height:78px]"
       aria-label="하루 시간표"
     >
       <div className="flex items-center justify-between mt-[3px]">
