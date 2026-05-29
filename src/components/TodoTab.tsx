@@ -16,21 +16,23 @@ export default function TodoTab() {
           </div>
         </section>
 
-        <section className="w-full">
-          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
-            <Timetable />
-          </div>
-        </section>
-
-        <section className="w-full">
-          <div className="grid h-full grid-cols-1 gap-4 rounded-lg bg-white p-1 md:grid-cols-2 dark:bg-zinc-900">
-            <CycleRoutine />
-
-            <div>
-              <DateReference />
+        <div className="grid w-full grid-cols-1 gap-3 xs:grid-cols-2">
+          <section className="w-full min-w-0">
+            <div className="h-full rounded-lg bg-white p-1 dark:bg-zinc-900">
+              <Timetable />
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section className="w-full min-w-0">
+            <div className="grid h-full grid-cols-1 gap-3 rounded-lg bg-white p-1 dark:bg-zinc-900">
+              <CycleRoutine />
+
+              <div>
+                <DateReference />
+              </div>
+            </div>
+          </section>
+        </div>
 
         <section className="w-full">
           <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
