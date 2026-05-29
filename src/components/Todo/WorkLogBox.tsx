@@ -9,6 +9,13 @@ interface WorkLogItem {
   time: string;
 }
 
+interface WorkLogProject {
+  name: string;
+  archived?: boolean;
+}
+
+type StoredWorkLogProject = string | WorkLogProject;
+
 const emptyInput = {
   date: "",
   project: "",
@@ -17,7 +24,7 @@ const emptyInput = {
 };
 
 const DEFAULT_WORK_LOGS: WorkLogItem[] = [];
-const DEFAULT_PROJECTS: string[] = [];
+const DEFAULT_PROJECTS: StoredWorkLogProject[] = [];
 
 const getTodayKey = () => {
   const now = new Date();
@@ -26,6 +33,58 @@ const getTodayKey = () => {
 };
 
 const getCurrentMonthKey = () => getTodayKey().slice(0, 7);
+
+const uniqueSorted = (values: string[]) =>
+  Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).sort(
+    (a, b) => a.localeCompare(b)
+  );
+
+const normalizeProjects = (projects: StoredWorkLogProject[]) => {
+  const projectMap = new Map<string, WorkLogProject>();
+
+  projects.forEach((project) => {
+    const normalized =
+      typeof project === "string"
+        ? { name: project.trim(), archived: false }
+        : { name: project.name.trim(), archived: Boolean(project.archived) };
+
+    if (!normalized.name) return;
+
+    const previous = projectMap.get(normalized.name);
+    projectMap.set(normalized.name, {
+      name: normalized.name,
+      archived: previous?.archived || normalized.archived,
+    });
+  });
+
+  return Array.from(projectMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+};
+
+const parseWorkHours = (value: string) => {
+  const text = value.trim();
+  if (!text) return 0;
+
+  const colonMatch = text.match(/^(\d+(?:\.\d+)?):(\d{1,2})$/);
+  if (colonMatch) {
+    return Number(colonMatch[1]) + Number(colonMatch[2]) / 60;
+  }
+
+  const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:시간|h|hr|hrs)/i);
+  const minuteMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:분|m|min|mins)/i);
+  if (hourMatch || minuteMatch) {
+    return (hourMatch ? Number(hourMatch[1]) : 0) + (minuteMatch ? Number(minuteMatch[1]) / 60 : 0);
+  }
+
+  const numberMatch = text.match(/\d+(?:\.\d+)?/);
+  return numberMatch ? Number(numberMatch[0]) : 0;
+};
+
+const formatWorkHours = (hours: number) => {
+  if (!hours) return "0";
+  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+};
 
 export default function WorkLogBox() {
   const [showList, setShowList] = useState(() => {
@@ -37,6 +96,7 @@ export default function WorkLogBox() {
   const [projectFilter, setProjectFilter] = useState("");
   const [newProject, setNewProject] = useState("");
   const [showProjectInput, setShowProjectInput] = useState(false);
+  const [showProjectManager, setShowProjectManager] = useState(false);
 
   const { items, updateWithHistory } = useFirestoreHistory<WorkLogItem>(
     "workLogData",
@@ -45,7 +105,7 @@ export default function WorkLogBox() {
     "items"
   );
   const { items: projects, updateWithHistory: updateProjects } =
-    useFirestoreHistory<string>(
+    useFirestoreHistory<StoredWorkLogProject>(
       "workLogData",
       "main",
       DEFAULT_PROJECTS,
@@ -55,10 +115,32 @@ export default function WorkLogBox() {
   const inferredProjects = Array.from(
     new Set(items.map((item) => item.project.trim()).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b));
-  const projectOptions = projects
-    .map((project) => project.trim())
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
+  const normalizedProjects = normalizeProjects(projects);
+  const activeProjectOptions = normalizedProjects
+    .filter((project) => !project.archived)
+    .map((project) => project.name);
+  const sortedProjects = [...normalizedProjects].sort((a, b) => {
+    if (a.archived !== b.archived) return a.archived ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  });
+  const filterProjectOptions = uniqueSorted([
+    ...normalizedProjects.map((project) => project.name),
+    ...inferredProjects,
+  ]);
+  const projectStats = new Map(
+    normalizedProjects.map((project) => {
+      const projectItems = items.filter((item) => item.project === project.name);
+      const dateCount = new Set(
+        projectItems.map((item) => item.date.trim()).filter(Boolean)
+      ).size;
+      const totalHours = projectItems.reduce(
+        (sum, item) => sum + parseWorkHours(item.time),
+        0
+      );
+
+      return [project.name, { dateCount, totalHours }];
+    })
+  );
   const filteredItems = items.filter((item) => {
     const matchesMonth = !monthFilter || item.date.startsWith(monthFilter);
     const matchesProject = !projectFilter || item.project === projectFilter;
@@ -71,7 +153,7 @@ export default function WorkLogBox() {
 
   useEffect(() => {
     if (projects.length > 0 || inferredProjects.length === 0) return;
-    updateProjects(inferredProjects);
+    updateProjects(inferredProjects.map((name) => ({ name, archived: false })));
   }, [inferredProjects, projects.length, updateProjects]);
 
   const updateInput = (field: keyof typeof emptyInput, value: string) => {
@@ -80,21 +162,55 @@ export default function WorkLogBox() {
 
   const addProject = () => {
     const project = newProject.trim();
-    if (!project || projectOptions.includes(project)) return;
+    if (!project) return;
 
-    updateProjects([...projectOptions, project]);
+    const existing = normalizedProjects.find((item) => item.name === project);
+    if (existing) {
+      updateProjects(
+        normalizedProjects.map((item) =>
+          item.name === project ? { ...item, archived: false } : item
+        )
+      );
+      setNewProject("");
+      setShowProjectInput(false);
+      return;
+    }
+
+    updateProjects([...normalizedProjects, { name: project, archived: false }]);
     setNewProject("");
     setShowProjectInput(false);
   };
 
-  const deleteProject = () => {
-    if (!projectFilter) return;
-
-    updateProjects(projectOptions.filter((project) => project !== projectFilter));
-    if (input.project === projectFilter) {
+  const archiveProject = (project: string) => {
+    updateProjects(
+      normalizedProjects.map((item) =>
+        item.name === project ? { ...item, archived: true } : item
+      )
+    );
+    if (projectFilter === project) {
+      setProjectFilter("");
+    }
+    if (input.project === project) {
       updateInput("project", "");
     }
-    setProjectFilter("");
+  };
+
+  const restoreProject = (project: string) => {
+    updateProjects(
+      normalizedProjects.map((item) =>
+        item.name === project ? { ...item, archived: false } : item
+      )
+    );
+  };
+
+  const removeProject = (project: string) => {
+    updateProjects(normalizedProjects.filter((item) => item.name !== project));
+    if (projectFilter === project) {
+      setProjectFilter("");
+    }
+    if (input.project === project) {
+      updateInput("project", "");
+    }
   };
 
   const addItem = () => {
@@ -147,7 +263,7 @@ export default function WorkLogBox() {
       {showList && (
         <div className="mt-2 overflow-x-auto">
           <div className="min-w-[470px]">
-            <div className="mb-4 grid grid-cols-[120px_150px_54px_minmax(0,1fr)] items-center gap-1">
+            <div className="mb-2 grid grid-cols-[120px_150px_54px_minmax(0,1fr)] items-center gap-1">
               <input
                 type="month"
                 value={monthFilter}
@@ -162,7 +278,7 @@ export default function WorkLogBox() {
                 title="프로젝트별 필터"
               >
                 <option value="">전체 프로젝트</option>
-                {projectOptions.map((project) => (
+                {filterProjectOptions.map((project) => (
                   <option key={project} value={project}>
                     {project}
                   </option>
@@ -179,15 +295,84 @@ export default function WorkLogBox() {
                 전체
               </button>
               <div className="flex min-w-0 items-center justify-end gap-1">
-                {projectFilter && (
-                  <button
-                    type="button"
-                    onClick={deleteProject}
-                    className="rounded border border-zinc-200 px-2 py-1 text-xs text-zinc-500 transition hover:text-red-400 dark:border-zinc-700 dark:text-zinc-400"
-                  >
-                    삭제
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowProjectManager((prev) => !prev)}
+                  className="whitespace-nowrap rounded border border-zinc-200 px-2 py-1 text-xs text-zinc-500 transition hover:text-blue-500 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-blue-300"
+                >
+                  프로젝트 관리
+                </button>
+              </div>
+            </div>
+
+            {showProjectManager && (
+              <div className="mb-4 rounded border border-zinc-200 p-1.5 dark:border-zinc-700">
+                <div className="mb-1 grid grid-cols-[minmax(110px,1fr)_54px_58px_104px] items-center gap-1 px-1 text-[11px] text-zinc-400">
+                  <div>프로젝트</div>
+                  <div className="text-center">날짜</div>
+                  <div className="text-center">시간</div>
+                  <div />
+                </div>
+                <div className="mb-1 space-y-1">
+                  {sortedProjects.map((project) => {
+                    const stats = projectStats.get(project.name) ?? {
+                      dateCount: 0,
+                      totalHours: 0,
+                    };
+
+                    return (
+                      <div
+                        key={project.name}
+                        className={`grid grid-cols-[minmax(110px,1fr)_54px_58px_104px] items-center gap-1 rounded px-1 py-0.5 text-xs ${
+                          project.archived ? "opacity-55" : ""
+                        }`}
+                      >
+                        <div
+                          className={`min-w-0 truncate ${
+                            project.archived ? "line-through" : ""
+                          }`}
+                        >
+                          {project.name}
+                        </div>
+                        <div className="text-center text-zinc-500 dark:text-zinc-400">
+                          {stats.dateCount}일
+                        </div>
+                        <div className="text-center text-zinc-500 dark:text-zinc-400">
+                          {formatWorkHours(stats.totalHours)}h
+                        </div>
+                        <div className="flex items-center justify-end gap-1">
+                          {project.archived ? (
+                            <button
+                              type="button"
+                              onClick={() => restoreProject(project.name)}
+                              className="text-zinc-400 transition hover:text-blue-400"
+                              title="프로젝트 선택 목록에 복구"
+                            >
+                              복구
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => archiveProject(project.name)}
+                              className="text-zinc-400 transition hover:text-orange-400"
+                              title="프로젝트 선택 목록에서 숨김"
+                            >
+                              숨김
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeProject(project.name)}
+                            className="text-zinc-400 transition hover:text-red-400"
+                            title="프로젝트 관리 목록에서 삭제"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
                 {showProjectInput ? (
                   <div className="flex min-w-0 items-center gap-1 rounded border border-zinc-200 px-1 py-0.5 dark:border-zinc-700">
                     <input
@@ -221,13 +406,13 @@ export default function WorkLogBox() {
                   <button
                     type="button"
                     onClick={() => setShowProjectInput(true)}
-                    className="rounded border border-zinc-200 px-2 py-1 text-xs text-zinc-500 transition hover:text-blue-500 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-blue-300"
+                    className="w-full rounded border border-dashed border-zinc-300 px-2 py-1 text-center text-xs font-bold text-zinc-500 transition hover:border-[#a891ff] hover:text-[#a891ff] dark:border-zinc-700 dark:text-zinc-400"
                   >
-                    프로젝트 +
+                    +
                   </button>
                 )}
               </div>
-            </div>
+            )}
 
             <div className="space-y-1">
               {filteredItems.map((item) => {
@@ -258,7 +443,7 @@ export default function WorkLogBox() {
                       className="min-w-0 bg-white text-sm text-zinc-900 outline-none select-auto dark:bg-zinc-900 dark:text-zinc-100"
                     >
                       <option value="">프로젝트</option>
-                      {projectOptions.map((project) => (
+                      {uniqueSorted([...activeProjectOptions, item.project]).map((project) => (
                         <option key={project} value={project}>
                           {project}
                         </option>
@@ -306,7 +491,7 @@ export default function WorkLogBox() {
                 className="min-w-0 bg-white text-sm text-zinc-900 outline-none select-auto dark:bg-zinc-900 dark:text-zinc-100"
               >
                 <option value="">프로젝트</option>
-                {projectOptions.map((project) => (
+                {activeProjectOptions.map((project) => (
                   <option key={project} value={project}>
                     {project}
                   </option>
