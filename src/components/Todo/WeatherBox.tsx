@@ -32,10 +32,9 @@ const getWeatherIcon = (code: number) => {
   return "🌡️";
 };
 
-const formatDate = (value: string, index: number) => {
+const formatDate = (value: string) => {
   const date = new Date(`${value}T00:00:00`);
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
-  if (index === 0) return `오늘 ${weekday}`;
 
   return `${date.getMonth() + 1}/${date.getDate()} ${weekday}`;
 };
@@ -151,7 +150,7 @@ export default function WeatherBox() {
                         : "text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
-                    {formatDate(day.date, index)}
+                    {formatDate(day.date)}
                   </div>
                   <div className="py-1 text-lg leading-none">{getWeatherIcon(day.code)}</div>
                   <div className="text-[11px] text-zinc-500 dark:text-zinc-400">

@@ -40,7 +40,7 @@ export default function TodoTab() {
           </section>
 
           <section className="w-full min-w-0">
-            <div className="grid h-full grid-cols-1 gap-3 rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <div className="grid h-full grid-cols-1 gap-3 rounded-lg bg-white p-1 md:grid-cols-2 dark:bg-zinc-900">
               <CycleRoutine />
 
               <div>
@@ -50,17 +50,19 @@ export default function TodoTab() {
           </section>
         </div>
 
-        <section className="w-full">
-          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
-            <PlanBox />
-          </div>
-        </section>
+        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2">
+          <section className="w-full min-w-0">
+            <div className="h-full rounded-lg bg-white p-1 dark:bg-zinc-900">
+              <PlanBox />
+            </div>
+          </section>
 
-        <section className="w-full">
-          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
-            <WorkLogBox />
-          </div>
-        </section>
+          <section className="w-full min-w-0">
+            <div className="h-full rounded-lg bg-white p-1 dark:bg-zinc-900">
+              <WorkLogBox />
+            </div>
+          </section>
+        </div>
 
         <section className="w-full">
           <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">

@@ -16,7 +16,7 @@ export default function DateReference() {
   const [showList, setShowList] = useState(() => {
     // localStorage에서 상태 복원
     const saved = localStorage.getItem('dateReference_showList');
-    return saved !== null ? JSON.parse(saved) : true;
+    return saved !== null ? JSON.parse(saved) : false;
   });
 
   // 상태 변경 시 localStorage에 저장

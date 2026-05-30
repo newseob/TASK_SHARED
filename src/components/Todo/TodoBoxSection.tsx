@@ -527,7 +527,7 @@ export default function TodoBoxSection() {
           items={todoBoxes.map((b) => b.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-1 items-start gap-4 xs:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 xs:grid-cols-2 md:grid-cols-4">
             {todoBoxes.map((b, i) => (
             <SortableBox
               key={b.id}

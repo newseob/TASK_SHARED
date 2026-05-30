@@ -259,14 +259,14 @@ export default function GalleryBox() {
 
       {selectedPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black"
           onClick={closePhoto}
         >
           <div
-            className="relative flex max-h-full max-w-full flex-col items-center"
+            className="relative h-screen w-screen"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mb-2 flex items-center gap-1 rounded bg-black/55 p-1 text-xs font-bold text-white">
+            <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 items-center gap-1 rounded bg-black/55 p-1 text-xs font-bold text-white">
               <button
                 type="button"
                 onClick={zoomOut}
@@ -296,7 +296,9 @@ export default function GalleryBox() {
             </div>
 
             <div
-              className="max-h-[86vh] max-w-[96vw] touch-none overflow-auto rounded"
+              className={`flex h-screen w-screen touch-none overflow-auto ${
+                zoom > 1 ? "items-start justify-start" : "items-center justify-center"
+              }`}
               onWheel={handleWheelZoom}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -306,17 +308,18 @@ export default function GalleryBox() {
               <img
                 src={selectedPhoto.imageData}
                 alt={selectedPhoto.name}
-                className="block max-h-[86vh] max-w-[96vw] rounded object-contain"
+                className="block object-contain"
                 style={{
-                  transform: `scale(${zoom})`,
-                  transformOrigin: "top center",
+                  maxWidth: `${zoom * 100}vw`,
+                  maxHeight: `${zoom * 100}vh`,
+                  minWidth: zoom > 1 ? `${zoom * 100}vw` : undefined,
                 }}
               />
             </div>
             <button
               type="button"
               onClick={closePhoto}
-              className="absolute right-2 top-2 rounded bg-black/55 px-2 py-1 text-xs font-bold text-white"
+              className="absolute right-2 top-2 z-10 rounded bg-black/55 px-2 py-1 text-xs font-bold text-white"
               title="닫기"
             >
               X
