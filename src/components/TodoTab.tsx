@@ -7,6 +7,8 @@ import DateReference from "./Todo/DateReference.tsx";
 import Timetable from "./Todo/Timetable.tsx";
 import PlanBox from "./Todo/PlanBox.tsx";
 import WorkLogBox from "./Todo/WorkLogBox.tsx";
+import WeatherBox from "./Todo/WeatherBox.tsx";
+import GalleryBox from "./Todo/GalleryBox.tsx";
 
 export default function TodoTab() {
   return (
@@ -14,7 +16,19 @@ export default function TodoTab() {
       <div className="mx-auto flex w-full max-w-screen-lg flex-col gap-3 px-1 pb-2 pt-1">
         <section className="w-full">
           <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <WeatherBox />
+          </div>
+        </section>
+
+        <section className="w-full">
+          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
             <TodoBoxSection />
+          </div>
+        </section>
+
+        <section className="w-full">
+          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <GalleryBox />
           </div>
         </section>
 
