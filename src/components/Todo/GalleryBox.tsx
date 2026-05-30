@@ -1,4 +1,12 @@
-import { ChangeEvent, TouchEvent, WheelEvent, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  PointerEvent,
+  TouchEvent,
+  WheelEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   collection,
   deleteDoc,
@@ -47,9 +55,14 @@ const resizePhoto = async (file: File) => {
 export default function GalleryBox() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pinchDistanceRef = useRef<number | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(
+    null
+  );
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [showList, setShowList] = useState(() => {
@@ -123,11 +136,14 @@ export default function GalleryBox() {
   const openPhoto = (photo: GalleryPhoto) => {
     setSelectedPhoto(photo);
     setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   const closePhoto = () => {
     setSelectedPhoto(null);
     setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setIsPanning(false);
   };
 
   const zoomOut = () => {
@@ -140,6 +156,11 @@ export default function GalleryBox() {
 
   const setClampedZoom = (value: number) => {
     setZoom(Math.min(2.5, Math.max(0.5, Number(value.toFixed(2)))));
+  };
+
+  const resetViewer = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   const handleWheelZoom = (event: WheelEvent<HTMLDivElement>) => {
@@ -171,6 +192,36 @@ export default function GalleryBox() {
 
   const handleTouchEnd = () => {
     pinchDistanceRef.current = null;
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      panX: pan.x,
+      panY: pan.y,
+    };
+    setIsPanning(true);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return;
+
+    setPan({
+      x: dragStartRef.current.panX + event.clientX - dragStartRef.current.x,
+      y: dragStartRef.current.panY + event.clientY - dragStartRef.current.y,
+    });
+  };
+
+  const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragStartRef.current = null;
+    setIsPanning(false);
   };
 
   return (
@@ -278,7 +329,7 @@ export default function GalleryBox() {
               </button>
               <button
                 type="button"
-                onClick={() => setZoom(1)}
+                onClick={resetViewer}
                 className="min-w-[42px] rounded px-2 py-1 hover:bg-white/15"
                 title="기본 크기"
               >
@@ -296,10 +347,15 @@ export default function GalleryBox() {
             </div>
 
             <div
-              className={`flex h-screen w-screen touch-none overflow-auto ${
-                zoom > 1 ? "items-start justify-start" : "items-center justify-center"
+              className={`flex h-screen w-screen touch-none items-center justify-center overflow-hidden ${
+                isPanning ? "cursor-grabbing" : "cursor-grab"
               }`}
               onWheel={handleWheelZoom}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerEnd}
+              onPointerCancel={handlePointerEnd}
+              onPointerLeave={handlePointerEnd}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -308,11 +364,11 @@ export default function GalleryBox() {
               <img
                 src={selectedPhoto.imageData}
                 alt={selectedPhoto.name}
-                className="block object-contain"
+                className="block max-h-screen max-w-screen select-none object-contain"
+                draggable={false}
                 style={{
-                  maxWidth: `${zoom * 100}vw`,
-                  maxHeight: `${zoom * 100}vh`,
-                  minWidth: zoom > 1 ? `${zoom * 100}vw` : undefined,
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: "center center",
                 }}
               />
             </div>
