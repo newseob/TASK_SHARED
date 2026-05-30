@@ -9,6 +9,7 @@ import PlanBox from "./Todo/PlanBox.tsx";
 import WorkLogBox from "./Todo/WorkLogBox.tsx";
 import WeatherBox from "./Todo/WeatherBox.tsx";
 import GalleryBox from "./Todo/GalleryBox.tsx";
+import CalendarBox from "./Todo/CalendarBox.tsx";
 
 export default function TodoTab() {
   return (
@@ -17,6 +18,12 @@ export default function TodoTab() {
         <section className="w-full">
           <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
             <WeatherBox />
+          </div>
+        </section>
+
+        <section className="w-full">
+          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <CalendarBox />
           </div>
         </section>
 
