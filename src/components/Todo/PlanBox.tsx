@@ -12,7 +12,7 @@ type PlanSide = "left" | "right";
 
 const DEFAULT_PERSONAL_PLANS: PersonalPlanItem[] = [];
 
-const PLAN_SIDES: PlanSide[] = ["left", "right"];
+const VISIBLE_PLAN_SIDE: PlanSide = "left";
 
 export default function PlanBox() {
   const [showList, setShowList] = useState(() => {
@@ -23,7 +23,7 @@ export default function PlanBox() {
     left: "",
     right: "",
   });
-  const [openInputSide, setOpenInputSide] = useState<PlanSide | null>(null);
+  const [showInput, setShowInput] = useState(false);
 
   const {
     items: personalPlans,
@@ -53,7 +53,7 @@ export default function PlanBox() {
       },
     ]);
     setPersonalTitles((prev) => ({ ...prev, [side]: "" }));
-    setOpenInputSide(null);
+    setShowInput(false);
   };
 
   const updatePersonalPlan = (
@@ -88,12 +88,11 @@ export default function PlanBox() {
       </div>
 
       {showList && (
-        <div className="mt-2 grid grid-cols-1 gap-2 xs:grid-cols-2">
-          {PLAN_SIDES.map((side) => (
-            <div key={side} className="min-w-0">
+        <div className="mt-2">
+          <div className="min-w-0">
               <div className="space-y-1">
                 {personalPlans
-                  .filter((item) => (item.side ?? "left") === side)
+                  .filter((item) => (item.side ?? "left") === VISIBLE_PLAN_SIDE)
                   .map((item) => (
                     <div
                       key={item.id}
@@ -130,20 +129,20 @@ export default function PlanBox() {
                   ))}
               </div>
 
-              {openInputSide === side ? (
+              {showInput ? (
                 <div className="mt-1 flex items-center gap-1 rounded border border-zinc-200 p-1 dark:border-zinc-700">
                   <input
-                    value={personalTitles[side]}
+                    value={personalTitles[VISIBLE_PLAN_SIDE]}
                     onChange={(event) =>
                       setPersonalTitles((prev) => ({
                         ...prev,
-                        [side]: event.target.value,
+                        [VISIBLE_PLAN_SIDE]: event.target.value,
                       }))
                     }
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
-                        addPersonalPlan(side);
+                        addPersonalPlan(VISIBLE_PLAN_SIDE);
                       }
                     }}
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none select-auto"
@@ -153,11 +152,11 @@ export default function PlanBox() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!personalTitles[side].trim()) {
-                        setOpenInputSide(null);
+                      if (!personalTitles[VISIBLE_PLAN_SIDE].trim()) {
+                        setShowInput(false);
                         return;
                       }
-                      addPersonalPlan(side);
+                      addPersonalPlan(VISIBLE_PLAN_SIDE);
                     }}
                     className="rounded bg-transparent px-1 py-0.5 text-sm text-zinc-500 hover:text-blue-500 dark:text-zinc-400 dark:hover:text-blue-300"
                   >
@@ -167,14 +166,13 @@ export default function PlanBox() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setOpenInputSide(side)}
+                  onClick={() => setShowInput(true)}
                   className="mt-1 w-full rounded border border-dashed border-zinc-300 px-2 py-1 text-center text-xs font-bold text-zinc-500 transition hover:border-[#a891ff] hover:text-[#a891ff] dark:border-zinc-700 dark:text-zinc-400"
                 >
                   +
                 </button>
               )}
             </div>
-          ))}
         </div>
       )}
     </div>

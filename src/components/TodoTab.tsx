@@ -6,7 +6,6 @@ import MoneyBox from "./Todo/MoneyBox.tsx";
 import DateReference from "./Todo/DateReference.tsx";
 import Timetable from "./Todo/Timetable.tsx";
 import PlanBox from "./Todo/PlanBox.tsx";
-import WorkLogBox from "./Todo/WorkLogBox.tsx";
 import WeatherBox from "./Todo/WeatherBox.tsx";
 import GalleryBox from "./Todo/GalleryBox.tsx";
 import CalendarBox from "./Todo/CalendarBox.tsx";
@@ -57,19 +56,11 @@ export default function TodoTab() {
           </section>
         </div>
 
-        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2">
-          <section className="w-full min-w-0">
-            <div className="h-full rounded-lg bg-white p-1 dark:bg-zinc-900">
-              <PlanBox />
-            </div>
-          </section>
-
-          <section className="w-full min-w-0">
-            <div className="h-full rounded-lg bg-white p-1 dark:bg-zinc-900">
-              <WorkLogBox />
-            </div>
-          </section>
-        </div>
+        <section className="w-full">
+          <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
+            <PlanBox />
+          </div>
+        </section>
 
         <section className="w-full">
           <div className="rounded-lg bg-white p-1 dark:bg-zinc-900">
