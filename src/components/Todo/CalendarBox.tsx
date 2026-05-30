@@ -172,7 +172,7 @@ export default function CalendarBox() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 xs:grid-cols-2">
             {CALENDAR_DAYS.map((label) => {
               const dayEvents = groupedEvents[label] ?? [];
 
